@@ -1,0 +1,1529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sense of Scale — numbers too big to feel</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f17;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #dbe4f0; }
+  canvas { display: block; position: fixed; inset: 0; }
+
+  #panel { position: fixed; top: 16px; left: 16px; width: 330px; z-index: 10;
+    background: rgba(13, 19, 30, 0.86); border: 1px solid rgba(122, 150, 200, 0.18);
+    border-radius: 14px; padding: 14px 18px 12px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45); }
+  .brand { font-size: 10px; color: #516180; letter-spacing: 0.4px;
+    display: flex; justify-content: space-between; margin-bottom: 6px; }
+  #panel h1 { font-size: 16px; margin: 0 0 6px; }
+  #stage-copy { font-size: 12px; color: #9fb2cf; margin: 0 0 10px; line-height: 1.55; }
+  #stage-copy b { color: #c9d6ea; }
+
+  #task { display: flex; gap: 8px; align-items: baseline; font-size: 12px;
+    color: #cfdcf2; background: rgba(96, 165, 250, 0.07);
+    border: 1px solid rgba(96, 165, 250, 0.22); border-radius: 9px;
+    padding: 8px 10px; margin: 0 0 10px; line-height: 1.45; }
+  #task .tick { flex: none; color: #64789a; font-weight: 700; }
+  #task.done { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); }
+  #task.done .tick { color: #34d399; }
+
+  .ctl { margin: 8px 0; }
+  .ctl[hidden] { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .row label { width: 78px; flex: none; color: #9fb2cf; }
+  .row input[type="range"] { flex: 1; accent-color: #60a5fa; }
+  .row .val { width: 64px; flex: none; text-align: right;
+    font-variant-numeric: tabular-nums; font-weight: 600; }
+  .status { font-size: 11.5px; color: #7fd1f9; margin: 6px 0 0;
+    font-variant-numeric: tabular-nums; min-height: 14px; line-height: 1.4; }
+
+  .btn { background: #1c2a40; border: 1px solid rgba(122, 150, 200, 0.25);
+    color: #dbe4f0; border-radius: 8px; padding: 5px 11px; font-size: 12px;
+    cursor: pointer; margin: 2px 4px 2px 0; }
+  .btn:hover { background: #25364f; }
+  .btn.on { border-color: rgba(244, 114, 182, 0.65); color: #f9c1dd; }
+  .btn.primary { border-color: rgba(96, 165, 250, 0.5); }
+
+  .nav { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .nav .spacer { flex: 1; }
+  #next.glow { border-color: rgba(52, 211, 153, 0.7);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.35); }
+  #skip { font-size: 10.5px; color: #64789a; text-decoration: none; }
+  #skip:hover { color: #9fb2cf; text-decoration: underline; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="panel">
+  <div class="brand"><span>visualize · project 4</span><span id="stage-num"></span></div>
+  <h1 id="stage-title"></h1>
+  <p id="stage-copy"></p>
+  <div id="task"><span class="tick" id="task-tick">○</span><span id="task-text"></span></div>
+
+  <div class="ctl" id="ctl-race" hidden>
+    <div class="row">
+      <label for="cam">time speed</label>
+      <input type="range" id="cam" min="0" max="3.7" step="0.01" value="0">
+      <span class="val" id="cam-val">1×</span>
+    </div>
+    <button class="btn" id="race-reset">restart race</button>
+    <div class="status" id="race-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-zoom" hidden>
+    <div class="row">
+      <label for="zoom">view width</label>
+      <input type="range" id="zoom" min="-16" max="27.5" step="0.02" value="1">
+      <span class="val" id="zoom-val"></span>
+    </div>
+    <div class="status">scroll on the canvas also zooms</div>
+  </div>
+
+  <div class="ctl" id="ctl-units" hidden>
+    <div id="unit-buttons"></div>
+    <div class="status" id="count-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-ring" hidden>
+    <button class="btn on" id="ring-clock">train clock</button>
+    <button class="btn" id="ring-week">weekdays</button>
+    <div class="status">drag the hand</div>
+  </div>
+
+  <div class="ctl" id="ctl-rain" hidden>
+    <div class="row">
+      <label for="rain-rate">how hard</label>
+      <input type="range" id="rain-rate" min="-0.7" max="2.2" step="0.01" value="1.2">
+      <span class="val" id="rain-rate-val"></span>
+    </div>
+    <div class="status" id="rain-feel" style="color:#7fc8a9"></div>
+    <div style="margin-top:6px">
+      <button class="btn primary" id="rain-go">let it rain</button>
+      <button class="btn" id="rain-reset">reset</button>
+    </div>
+    <div style="margin-top:4px">
+      <button class="btn on" id="roof-house">🏠 your roof</button>
+      <button class="btn" id="roof-pitch">⚽ a pitch</button>
+    </div>
+    <div class="status" id="rain-status">drag the water level, or let it rain</div>
+  </div>
+
+  <div class="ctl" id="ctl-pour" hidden>
+    <div style="font-size:11px;color:#9fb2cf;margin-bottom:4px">pick a real amount:</div>
+    <div id="pour-things"></div>
+    <div style="font-size:11px;color:#9fb2cf;margin:9px 0 4px">measure it in:</div>
+    <div id="pour-vessels"></div>
+    <div class="status" id="pour-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-game" hidden>
+    <div class="row">
+      <label>your guess</label>
+      <input type="range" id="guess" min="0" max="6" step="0.02" value="1">
+      <span class="val" id="guess-val">10</span>
+    </div>
+    <button class="btn primary" id="lock">lock it in</button>
+    <button class="btn" id="game-next" hidden>next question</button>
+    <div class="status" id="game-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-pg" hidden>
+    <button class="btn" id="pg-back" hidden>⟵ back to the index</button>
+    <button class="btn" id="pg-unit" hidden>try a different unit</button>
+    <div class="status" id="pg-status">click any dot to open it in its natural view</div>
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="back">← Back</button>
+    <button class="btn" id="next">Next →</button>
+    <span class="spacer"></span>
+    <a id="skip" href="#9">skip to the index</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const TAU = Math.PI * 2;
+const PANEL_X = 380;
+
+// === data: the personal anchor collection ===========================================
+const RACERS = [
+  { v: 0.013, label: 'snail', icon: '🐌' },
+  { v: 1.3, label: 'you, walking', icon: '🚶' },
+  { v: 10.4, label: 'fastest man', icon: '🏃' },
+  { v: 31, label: 'cheetah', icon: '🐆' },
+  { v: 120, label: 'a fast car', icon: '🚗' },
+  { v: 343, label: 'sound', icon: '🔊' },
+  { v: 3e8, label: 'light', icon: '⚡' },
+];
+const TRACK_M = 100;
+
+// a continuous ladder of real objects/distances (metres), so something is always
+// on screen except in the genuine voids below. Filled to ≤ ~1 decade spacing in the
+// populated regimes; reconciled against the zoom-ladder verification workflow.
+const SIZES = [
+  { v: 1.68e-15, label: 'a proton' },
+  // [void: proton → atom]
+  { v: 1.06e-10, label: 'an atom' },
+  { v: 2.75e-10, label: 'a water molecule' },
+  { v: 2e-9, label: 'DNA, across' },
+  { v: 1e-8, label: 'an antibody' },
+  { v: 1e-7, label: 'a virus' },
+  { v: 5.5e-7, label: 'a wavelength of green light' },
+  { v: 1e-6, label: 'a mitochondrion' },
+  { v: 2e-6, label: 'an E. coli bacterium' },
+  { v: 7.5e-6, label: 'a red blood cell' },
+  { v: 1.5e-5, label: 'an animal cell' },
+  { v: 3e-5, label: 'a pollen grain' },
+  { v: 7e-5, label: 'a human hair (width)' },
+  { v: 3e-4, label: 'a grain of sand' },
+  { v: 3e-3, label: 'a sesame seed' },
+  { v: 6e-3, label: 'a mosquito' },
+  { v: 0.024, label: 'a coin' },
+  { v: 0.0427, label: 'a golf ball' },
+  { v: 0.067, label: 'a tennis ball' },
+  { v: 0.1, label: 'your fist' },
+  { v: 0.15, label: 'a smartphone' },
+  { v: 0.3, label: 'a sheet of paper' },
+  { v: 0.48, label: 'a house cat' },
+  { v: 1.0, label: 'a doorway' },
+  { v: 1.7, label: 'you' },
+  { v: 4.5, label: 'a car' },
+  { v: 10, label: 'a house' },
+  { v: 25, label: 'a large tree' },
+  { v: 30, label: 'a blue whale' },
+  { v: 93, label: 'the Statue of Liberty' },
+  { v: 330, label: 'the Eiffel Tower' },
+  { v: 828, label: 'the Burj Khalifa' },
+  { v: 2737, label: 'the Golden Gate Bridge' },
+  { v: 8849, label: 'Mount Everest' },
+  { v: 4.22e4, label: 'a marathon' },
+  { v: 1.4e5, label: 'Greater Tokyo' },
+  { v: 5.6e5, label: 'Kerala, north to south' },
+  { v: 3.21e6, label: 'India, Kashmir → Kanyakumari' },
+  { v: 3.47e6, label: 'the Moon (across)' },
+  { v: 1.276e7, label: 'Earth' },
+  { v: 4.9e7, label: 'Neptune (across)' },
+  { v: 1.43e8, label: 'Jupiter (across)' },
+  { v: 3.84e8, label: 'Earth → Moon' },
+  { v: 1.392e9, label: 'the Sun (across)' },
+  { v: 5.8e10, label: 'the Sun → Mercury' },
+  { v: 1.496e11, label: 'Earth → Sun (1 AU)' },
+  { v: 1.06e12, label: 'Betelgeuse, a red supergiant' },
+  { v: 1.079e12, label: 'one light-hour' },
+  { v: 4.5e12, label: 'Neptune’s orbit' },
+  { v: 1.8e13, label: 'the Solar System (heliosphere)' },
+  // [void: Solar System → nearest star]
+  { v: 9.461e15, label: 'one light-year' },
+  { v: 4.014e16, label: 'to Proxima Centauri' },
+  { v: 2.27e17, label: 'the Orion Nebula' },
+  { v: 1.4e18, label: 'Omega Centauri (a star cluster)' },
+  { v: 9.5e18, label: 'the Milky Way’s disc thickness' },
+  { v: 9.46e19, label: 'a spiral arm' },
+  { v: 2.5e20, label: 'us → the galactic centre' },
+  { v: 9.5e20, label: 'the Milky Way (across)' },
+  // [void: between galaxies]
+  { v: 2.4e22, label: 'to Andromeda' },
+  { v: 9.3e22, label: 'the Local Group of galaxies' },
+  // [void: cosmic-web voids]
+  { v: 4.9e24, label: 'the Laniakea Supercluster' },
+  // [void: thinning to the horizon]
+  { v: 8.8e26, label: 'the observable universe' },
+];
+
+// curated handful for the index strip (the full ladder is too dense to plot)
+const LENGTH_INDEX = [
+  { v: 1.06e-10, label: 'an atom' }, { v: 1e-7, label: 'a virus' },
+  { v: 7e-5, label: 'a human hair' }, { v: 1.7, label: 'you' },
+  { v: 828, label: 'the Burj Khalifa' }, { v: 8849, label: 'Mount Everest' },
+  { v: 1.276e7, label: 'Earth' }, { v: 1.392e9, label: 'the Sun' },
+  { v: 9.461e15, label: 'one light-year' }, { v: 9.5e20, label: 'the Milky Way' },
+  { v: 8.8e26, label: 'the observable universe' },
+];
+
+// the genuine voids — where there really is nothing of that size to draw, and the
+// emptiness itself is the point (workflow-verified). Each is a log10(view-width) range.
+const VOIDS = [
+  { zLo: -13.5, zHi: -10.6,
+    l1: 'empty space inside the atom.',
+    l2: 'the nucleus is ~60,000× smaller than the electron cloud — nothing lies between.' },
+  { zLo: 13.6, zHi: 15.7,
+    l1: 'from the edge of the Solar System to the nearest star.',
+    l2: 'past the heliosphere, near-empty space until Proxima — over 4 light-years off.' },
+  { zLo: 21.2, zHi: 22.3,
+    l1: 'the gulf between galaxies.',
+    l2: 'beyond the Milky Way, ~2 million light-years of thin nothing before Andromeda.' },
+  { zLo: 23.2, zHi: 24.4,
+    l1: 'cosmic-web voids between galaxy clusters.',
+    l2: 'between the Local Group and Laniakea stretch vast under-dense voids.' },
+  { zLo: 25.2, zHi: 26.6,
+    l1: 'beyond the superclusters, the web thins to the horizon —',
+    l2: 'mostly void, all the way to the edge of the observable universe.' },
+];
+
+const AREAS = [ // practical area units, drawn at true scale in the zoom view
+  { w: 10, h: 10, label: '1 are — 10 × 10 m = 100 m²' },
+  { w: 63.6, h: 63.6, label: '1 acre — a 63.6 m square = 4,047 m²' },
+  { w: 100, h: 100, label: '1 hectare — 100 × 100 m = 10,000 m² = 2.47 acres' },
+  { w: 105, h: 68, label: 'a FIFA pitch — 105 × 68 m = 7,140 m² ≈ 1.76 acres' },
+];
+
+const POP = {
+  total: { v: 1.4e9, label: 'India' },
+  units: [
+    { v: 1, label: 'one person', glyph: '🧍' },
+    { v: 1e5, label: 'a town (1L)', glyph: '🏘️' },
+    { v: 2.8e6, label: 'Palakkad (28L)', glyph: '🏘️' },
+    { v: 3.3e7, label: 'Kerala (3C)', glyph: '🗺️' },
+    { v: 2e8, label: 'UP (20C)', glyph: '🗺️' },
+  ],
+};
+const MONEY = {
+  total: { v: 1.541e13, label: '₹500/1000 notes withdrawn, Nov 2016' },
+  units: [
+    { v: 2000, label: 'a ₹2000 note', glyph: 'note' },
+    { v: 2e5, label: 'a brick — 100 notes (₹2L)', glyph: 'note' },
+    { v: 2e7, label: 'a carton — 100 bricks (₹2C)', glyph: 'note' },
+    { v: 2e9, label: 'a pallet — 100 cartons (₹200C)', glyph: 'note' },
+    { v: 2e12, label: 'a warehouse — 1000 pallets (₹2LC)', glyph: 'note' },
+  ],
+};
+const HUMAN_W = 80;
+const APPLIANCES = [
+  { v: 60, label: 'laptop' }, { v: 75, label: 'ceiling fan' },
+  { v: 100, label: '55″ TV' }, { v: 150, label: 'fridge' },
+  { v: 400, label: 'GPU at full tilt' }, { v: 1200, label: 'oven' },
+  { v: 1500, label: 'AC' }, { v: 2000, label: 'kettle' },
+];
+
+// volume as real things poured into real containers (all in millilitres)
+const POUR = {
+  vessels: [ // the everyday containers you measure other things in
+    { ml: 5, label: 'teaspoons' },
+    { ml: 30, label: 'shot glasses' },
+    { ml: 240, label: 'cups' },
+    { ml: 1000, label: 'water bottles' },
+    { ml: 5000, label: 'scooty tanks' },
+    { ml: 15000, label: 'buckets' },
+    { ml: 45000, label: 'car tanks' },
+    { ml: 150000, label: 'bathtubs' },
+    { ml: 1e7, label: 'water tankers' },
+  ],
+  things: [ // real, lived amounts — `unit` is the vessel that makes it land
+    { ml: 0.05, label: 'a single teardrop', unit: 0 },
+    { ml: 2, label: 'a good cry', unit: 0 },
+    { ml: 3.5, label: 'an ejaculation', unit: 0 },
+    { ml: 30, label: 'a dose of kashayam', unit: 0 },
+    { ml: 250, label: 'a glass of water', unit: 3 },
+    { ml: 500, label: 'a full bladder', unit: 2 },
+    { ml: 1500, label: 'a day’s worth of pee', unit: 3 },
+    { ml: 2700, label: 'the water you should drink in a day', unit: 3 },
+    { ml: 5000, label: 'all the blood in your body', unit: 3 },
+    { ml: 4500, label: 'filling a scooty', unit: 3 },
+    { ml: 45000, label: 'filling a car', unit: 4 },
+    { ml: 100000, label: 'a 10-minute shower', unit: 5 },
+    { ml: 150000, label: 'a full bathtub', unit: 5 },
+    { ml: 350000, label: 'filling a lorry', unit: 6 },
+  ],
+};
+
+// rainfall as a depth on your own body + runoff off your roof (placeholder values,
+// reconciled against the rainfall-anchors verification workflow)
+const HUMAN_MM = 1700;     // standing height, mm
+const RAIN_COMPRESS = 4;   // storm-hours per real second while "raining"
+const RAIN = {
+  // anthropometric water-depth landmarks for a ~1.7 m adult (workflow-verified)
+  body: [
+    { mm: 66, label: 'ankle deep' },
+    { mm: 370, label: 'mid-shin' },
+    { mm: 485, label: 'knee deep' },
+    { mm: 700, label: 'mid-thigh' },
+    { mm: 1035, label: 'waist deep' },
+    { mm: 1225, label: 'chest deep' },
+    { mm: 1480, label: 'neck deep' },
+    { mm: 1700, label: 'over your head' },
+  ],
+  // everyday + famous Indian events, fact-checked against sources
+  events: [
+    { mm: 10, tag: 'a normal rainy day', full: 'a normal rainy day — soaks the ground, puddles form' },
+    { mm: 100, tag: 'a heavy monsoon day', full: 'IMD “heavy rainfall” — the flood-causing kind' },
+    { mm: 398, tag: 'Kerala 2018 — worst day', full: 'Nilambur, Kerala: 398 mm in 24 h on 9 Aug 2018 — the great floods' },
+    { mm: 494, tag: 'Chennai, 1 Dec 2015', full: 'Chennai: up to 494 mm in 24 h — its wettest day in over a century' },
+    { mm: 800, tag: 'Peerumade — 3 days, 2018', full: 'Peerumade, Idukki: 800+ mm over 15–17 Aug 2018 — the dam-release burst' },
+    { mm: 944, tag: 'Mumbai, 26 Jul 2005 — a day', full: 'Mumbai (Santacruz): 944 mm in 24 h — its wettest day ever recorded' },
+    { mm: 1004, tag: 'Mawsynram — a single day', full: 'Mawsynram: 1,003.6 mm in 24 h on 17 Jun 2022 — wettest June day ever' },
+    { mm: 2347, tag: 'Kerala’s 2018 monsoon', full: 'Kerala averaged 2,346.6 mm statewide, 1 Jun–19 Aug 2018 — 42% above normal' },
+    { mm: 11871, tag: 'Mawsynram — a whole year', full: 'Mawsynram averages 11,871 mm/year — the wettest inhabited place on Earth' },
+    { mm: 26461, tag: 'Cherrapunji — record year', full: 'Cherrapunji’s world-record 12 months: 26,461 mm, Aug 1860–Jul 1861' },
+  ],
+  storeys: [
+    { mm: 3000, label: '1 storey' }, { mm: 6000, label: '2 storeys' },
+    { mm: 12000, label: '4 storeys' }, { mm: 26461, label: '9 storeys' },
+  ],
+};
+
+const GAME_ROUNDS = [
+  { q: 'A kettle (2 kW) is how many resting humans (80 W each)?', truth: 25 },
+  { q: 'India is how many Keralas?', truth: 42 },
+  { q: 'While the snail crosses the track once, how many crossings does sound make?', truth: 26385 },
+];
+
+const WEEK = [
+  ['Thingal', 'Mon'], ['Chovva', 'Tue'], ['Budhan', 'Wed'], ['Vyazham', 'Thu'],
+  ['Velli', 'Fri'], ['Shani', 'Sat'], ['Njayar', 'Sun'],
+];
+
+// index categories → which view a click opens
+const INDEX_CATS = [
+  { name: 'speed (m/s)', view: 'race', anchors: RACERS },
+  { name: 'length (m)', view: 'zoom', anchors: LENGTH_INDEX },
+  { name: 'population', view: 'count', anchors: [
+    { v: 1e5, label: 'a town (1L)' }, { v: 2.8e6, label: 'Palakkad (28L)' },
+    { v: 3.3e7, label: 'Kerala (3C)' }, { v: 2e8, label: 'UP (20C)' },
+    { v: 1.4e9, label: 'India (130C)' }, { v: 8e9, label: 'the world (8B)' }] },
+  { name: 'money (₹)', view: 'count', anchors: [
+    { v: 2000, label: 'a ₹2000 note' }, { v: 2e5, label: 'a brick of notes (₹2L)' },
+    { v: 2e9, label: 'a pallet of notes (₹200C)' },
+    { v: 1.541e13, label: 'demonetized notes (₹15.41LC)' }] },
+  { name: 'power (W)', view: 'count', anchors: [
+    { v: 60, label: 'laptop' }, { v: 80, label: 'you at rest' },
+    { v: 150, label: 'fridge' }, { v: 400, label: 'GPU' },
+    { v: 1500, label: 'AC' }, { v: 2000, label: 'kettle / your seconds-long max' }] },
+  { name: 'volume', view: 'pour', anchors: [
+    { v: 0.002, label: 'a good cry' }, { v: 0.0035, label: 'an ejaculation' },
+    { v: 2.7, label: 'a day’s drinking water' }, { v: 4.5, label: 'a scooty tank' },
+    { v: 45, label: 'a car tank' }, { v: 350, label: 'a lorry tank' }] },
+  { name: 'time (s)', view: 'count', anchors: [
+    { v: 1, label: 'one second' }, { v: 86400, label: 'a day' },
+    { v: 3.15e7, label: 'a year' }, { v: 3.15e9, label: 'a century' }] },
+  { name: 'pressure (Pa)', view: 'count', anchors: [
+    { v: 86, label: 'a penny lying flat' }, { v: 9333, label: 'blood pressure (70 mmHg)' },
+    { v: 101325, label: 'the atmosphere (1 atm)' }] },
+  { name: 'area (m²)', view: 'count', anchors: [
+    { v: 100, label: 'an are (10 m × 10 m)' }, { v: 4047, label: 'an acre' },
+    { v: 7140, label: 'a FIFA pitch' }, { v: 1e4, label: 'a hectare' }] },
+  { name: 'rainfall (mm)', view: 'rain', anchors: [
+    { v: 10, label: 'a rainy day' }, { v: 398, label: 'Kerala 2018, worst day' },
+    { v: 944, label: 'Mumbai, 26 Jul 2005 — one day' }, { v: 2347, label: 'Kerala’s 2018 monsoon' },
+    { v: 11871, label: 'Mawsynram in a year' }] },
+  { name: 'energy (J)', view: 'count', anchors: [
+    { v: 753, label: 'one stair step (0.18 Cal)' }, { v: 2.2e5, label: 'an apple (52 Cal)' },
+    { v: 9.2e5, label: 'a Snickers (220 Cal)' }, { v: 8.4e6, label: 'a day of food (2000 Cal)' },
+    { v: 7.9e8, label: 'your body-fat store (189k Cal)' }] },
+  { name: 'cycles', view: 'ring', anchors: [
+    { v: 0, label: 'the train clock (24h ↔ 12h)' }, { v: 1, label: 'the week (Malayalam ↔ English)' }] },
+];
+
+// === state ============================================================================
+const S = {
+  // race
+  camLog: 0, simT: 0,
+  // zoom
+  z: 1, sawAtom: false, sawGalaxy: false,
+  // count
+  count: null, // {total, units, idx, caption?}
+  flags: {},
+  // ring
+  ring: 'clock', hand: 13.5, day: 4,
+  // pour (practical volume)
+  pour: { thing: 1, unit: null },
+  // rain (depth on your body, runoff off your roof)
+  rain: { depth: 25, rate: 16, raining: false, stormH: 0, roof: 100, drops: [] },
+  // game
+  game: null,
+  // playground
+  pg: { view: 'index', cfg: null },
+};
+
+// === formatting =======================================================================
+const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+const sup = (n) => String(n).split('').map((c) => SUP[c] || c).join('');
+function fmt(n) {
+  if (n === 0) return '0';
+  const a = Math.abs(n);
+  if (a >= 1e4 || a < 0.01) {
+    const e = Math.floor(Math.log10(a));
+    const m = n / 10 ** e;
+    return `${(+m.toFixed(1)).toLocaleString()} × 10${sup(e)}`;
+  }
+  if (a >= 100) return Math.round(n).toLocaleString('en-IN');
+  return String(+n.toFixed(2));
+}
+function fmtCount(n) {
+  if (n < 1e7 && n >= 1) return Math.round(n) === n || n > 100
+    ? Math.round(n).toLocaleString('en-IN') : String(+n.toFixed(2));
+  return fmt(n);
+}
+function indianMoney(v) {
+  if (v >= 1e12) return `₹${+(v / 1e12).toFixed(2)} lakh crore`;
+  if (v >= 1e7) return `₹${+(v / 1e7).toFixed(2)} crore`;
+  if (v >= 1e5) return `₹${+(v / 1e5).toFixed(2)} lakh`;
+  return `₹${v.toLocaleString('en-IN')}`;
+}
+function westernMoney(v) {
+  if (v >= 1e12) return `${+(v / 1e12).toFixed(2)} trillion`;
+  if (v >= 1e9) return `${+(v / 1e9).toFixed(2)} billion`;
+  if (v >= 1e6) return `${+(v / 1e6).toFixed(2)} million`;
+  return v.toLocaleString();
+}
+function fmtMetres(m) {
+  if (m >= 9.46e15) {
+    const ly = m / 9.46e15;
+    if (ly >= 1e9) return `${+(ly / 1e9).toFixed(1)} billion light-years`;
+    if (ly >= 1e6) return `${+(ly / 1e6).toFixed(1)} million light-years`;
+    if (ly >= 1000) return `${Math.round(ly).toLocaleString('en-IN')} light-years`;
+    return `${+ly.toFixed(1)} light-years`;
+  }
+  if (m >= 1e3) return `${fmt(m / 1e3)} km`;
+  if (m >= 1) return `${fmt(m)} m`;
+  if (m >= 1e-3) return `${fmt(m * 1e3)} mm`;
+  if (m >= 1e-6) return `${fmt(m * 1e6)} µm`;
+  if (m >= 1e-9) return `${fmt(m * 1e9)} nm`;
+  return `${fmt(m)} m`;
+}
+
+// === stages ===========================================================================
+const STAGES = [
+  {
+    title: 'Speed wants to be a race',
+    copy: 'Numbers on a page hide ratios; a <b>racetrack</b> shows them. Every lane ' +
+      'moves at its true speed — the track is 100 m. At 1× almost nothing seems to ' +
+      'move… except the counters.',
+    task: 'Speed time up until the snail finishes one crossing. Glance at sound’s counter when it does.',
+    view: 'race', reveals: ['race'],
+    enter() { S.simT = 0; S.camLog = 0; $('cam').value = 0; },
+    done: () => S.simT * 0.013 >= TRACK_M,
+  },
+  {
+    title: 'Length wants to be a zoom',
+    copy: 'You can’t draw an atom and the galaxy on one page — but you can ' +
+      '<b>travel</b> between them. Every circle is real and concentric; the readout ' +
+      'tells you how wide your current view is.',
+    task: 'Zoom all the way in to the nucleus, and all the way out past the Milky Way.',
+    view: 'zoom', reveals: ['zoom'],
+    enter() { S.z = 1; S.sawAtom = false; S.sawGalaxy = false; $('zoom').value = 1; },
+    done: () => S.sawAtom && S.sawGalaxy,
+  },
+  {
+    title: 'Counts want to be crowds — until counting dies',
+    copy: 'India, in units you can feel. Icons work… then they shrink into a ' +
+      '<b>smear</b> — that smear is scope insensitivity, made visible. The nested ' +
+      'squares on the right are the rescue: every step inward is ÷10.',
+    task: 'Make the count die (≥10,000 of a unit), then pick a unit that makes India countable (≤100).',
+    view: 'count', reveals: ['units'],
+    enter() { setCount(POP.total, POP.units, 0); S.flags = {}; },
+    done: () => S.flags.sawSmear && S.flags.sawCountable,
+  },
+  {
+    title: 'The demonetization number',
+    copy: '₹15.41 <b>lakh crore</b> — the notes withdrawn in Nov 2016. On the western ' +
+      'rail that reads ₹15.41 <b>trillion</b>. Same number, two names — and in cash, ' +
+      'it’s a number of <b>warehouses</b>.',
+    task: 'Find the unit that makes the pile countable (≤100 of it).',
+    view: 'count', reveals: ['units'],
+    enter() { setCount(MONEY.total, MONEY.units, 0); S.flags = {}; },
+    done: () => S.flags.sawCountable,
+  },
+  {
+    title: 'Cycles want to be rings',
+    copy: 'Some numbers don’t grow — they <b>wrap</b>. The train clock is the 24-hour ' +
+      'and 12-hour names pinned to one wheel; the week wears Malayalam outside and ' +
+      'English inside.',
+    task: 'Drag the hand to 19:00 and read it in 12-hour time.',
+    view: 'ring', reveals: ['ring'],
+    enter() { S.ring = 'clock'; S.hand = 13.5; },
+    done: () => S.ring === 'clock' && Math.abs(S.hand - 19) < 0.4,
+  },
+  {
+    title: 'Appliances, in humans',
+    copy: 'Your body idles at <b>80 watts</b> — you are a warm machine. So every ' +
+      'appliance has a price in <b>resting humans</b>. A laptop is less than one of ' +
+      'you; a kettle is a small crowd.',
+    task: 'Check at least three appliances.',
+    view: 'count', reveals: ['units'],
+    enter() {
+      S.flags = { seen: new Set() };
+      setApplianceCount(7); // kettle first — 25 humans
+    },
+    done: () => (S.flags.seen?.size || 0) >= 3,
+  },
+  {
+    title: 'Volume is the stuff you actually pour',
+    copy: 'Forget abstract litres. A <b>good cry</b>, an <b>ejaculation</b>, the water ' +
+      'you should drink, a scooty tank vs a car tank — volume only means something as ' +
+      '<b>real containers you’ve held</b>. Pick an amount; measure it in things you know.',
+    task: 'Pour at least two amounts — feel how many teaspoons a cry is vs how many scooty-tanks a car holds.',
+    view: 'pour', reveals: ['pour'],
+    enter() { S.pour = { thing: 1, unit: null }; S.flags = { poured: new Set([1]) }; buildPourButtons(); },
+    done: () => (S.flags.poured?.size || 0) >= 2,
+  },
+  {
+    title: 'Rain is a depth you can stand in',
+    copy: 'A weather app says “120 mm” and it means nothing. But 1 mm of rain = ' +
+      '1 litre on every m² = how deep the water would stand if it didn’t drain. So ' +
+      'rainfall is a <b>depth on your own body</b>, and your roof turns it into <b>tankers</b>. ' +
+      'Mawsynram, in Meghalaya, gets almost <b>four storeys</b> of rain — every year.',
+    task: 'Set a cloudburst and let it rain past Mumbai’s one-day total (944 mm). Watch the storm clock.',
+    view: 'rain', reveals: ['rain'],
+    enter() {
+      S.rain.depth = 25; S.rain.rate = 16; S.rain.raining = false;
+      S.rain.stormH = 0; S.rain.drops = []; S.rain.roof = 100;
+      $('rain-rate').value = Math.log10(16); updateRainLabels();
+      $('rain-go').classList.remove('on'); $('rain-go').textContent = 'let it rain';
+      $('roof-house').classList.add('on'); $('roof-pitch').classList.remove('on');
+    },
+    done: () => S.rain.depth >= 944,
+  },
+  {
+    title: 'Calibrate yourself',
+    copy: 'Knowing the anchors is step one; <b>trusting your own estimates</b> is the ' +
+      'cure. Guess on the slider — within half an order of magnitude counts as a hit.',
+    task: 'Get at least 2 of 3 within half a decade.',
+    view: 'game', reveals: ['game'],
+    enter() { S.game = { i: 0, locked: false, results: [] }; syncGuess(); },
+    done: () => S.game && S.game.results.filter((r) => r.hit).length >= 2,
+  },
+  {
+    title: 'The index',
+    copy: 'Every quantity from the collection, one strip per ladder. The strips are ' +
+      'just the <b>map</b> — click any dot and it opens in its natural view: a race, ' +
+      'a zoom, a crowd, a ring.',
+    task: null,
+    view: 'pg', reveals: ['pg'],
+    enter() { S.pg = { view: 'index', cfg: null }; updatePgButtons(); },
+    done: null,
+  },
+];
+let stage = 0;
+let taskDone = false;
+
+// === layout ===========================================================================
+let W = 0, H = 0;
+function layout() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = `${W}px`; cv.style.height = `${H}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dotCache.clear();
+}
+window.addEventListener('resize', layout);
+
+// === drawing helpers ==================================================================
+function text(s, x, y, color = '#8fa3c0', size = 12, align = 'left', weight = 600) {
+  ctx.save(); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  ctx.font = `${weight} ${size}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function line(x1, y1, x2, y2, color, w = 1, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+
+// === view: RACE =======================================================================
+function camSpeed() { return 10 ** S.camLog; }
+function drawRace() {
+  const x0 = PANEL_X + 60, x1 = W - 60;
+  const trackPx = x1 - x0;
+  const lanes = RACERS.length;
+  const top = 90, laneH = Math.min(74, (H - top - 60) / lanes);
+  text(`a ${TRACK_M} m track · every lane at its true speed`, (x0 + x1) / 2, 44, '#8fa3c0', 13, 'center');
+  for (let i = 0; i < lanes; i++) {
+    const r = RACERS[i];
+    const y = top + i * laneH + laneH / 2;
+    line(x0, y, x1, y, '#2a3a55', 1.5);
+    line(x0, y - 9, x0, y + 9, '#46618f', 2);
+    line(x1, y - 9, x1, y + 9, '#46618f', 2);
+    const dist = r.v * S.simT;
+    const frac = (dist / TRACK_M) % 1;
+    const crossings = Math.floor(dist / TRACK_M);
+    const blur = r.v * camSpeed() / TRACK_M > 20; // >20 crossings per real second
+    if (blur) {
+      ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#60a5fa';
+      ctx.fillRect(x0, y - 7, trackPx, 14); ctx.restore();
+    } else {
+      text(r.icon, x0 + frac * trackPx, y - 2, '#fff', 22, 'center');
+    }
+    text(`${r.label} — ${fmt(r.v)} m/s`, x0, y - laneH * 0.33, '#9fb2cf', 12);
+    text(crossings > 0 ? `crossed ×${fmtCount(crossings)}` : '—',
+      x1, y - laneH * 0.33, crossings > 0 ? '#34d399' : '#516180', 12, 'right');
+  }
+}
+
+// === view: ZOOM =======================================================================
+function drawZoom() {
+  const cx = PANEL_X + (W - PANEL_X) / 2, cy = H / 2;
+  const viewW = 10 ** S.z;            // metres across the visible area
+  const mPerPx = viewW / (W - PANEL_X);
+  if (S.z <= -13.6) S.sawAtom = true;
+  if (S.z >= 21) S.sawGalaxy = true;
+  const labels = [];
+  for (const a of SIZES) {
+    const px = a.v / mPerPx;
+    if (px < 1.2 || px > (W - PANEL_X) * 12) continue;
+    ctx.save();
+    ctx.strokeStyle = '#60a5fa';
+    ctx.globalAlpha = Math.min(0.9, Math.max(0.15, 1.6 - px / (W - PANEL_X)));
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, px / 2, 0, TAU); ctx.stroke();
+    ctx.restore();
+    if (px > 22) labels.push({ s: `${a.label} — ${fmtMetres(a.v)}`, top: cy - px / 2 });
+  }
+  // labels just above each circle, de-colliding downward, on dark chips
+  labels.sort((a, b) => a.top - b.top);
+  const usedY = [];
+  for (const L of labels) {
+    let ly = Math.max(26, Math.min(H - 16, L.top - 11));
+    while (usedY.some((u) => Math.abs(u - ly) < 15)) ly += 16;
+    if (ly > H - 16) continue;
+    usedY.push(ly);
+    ctx.save();
+    ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+    const tw = ctx.measureText(L.s).width;
+    ctx.fillStyle = 'rgba(11,15,23,0.8)';
+    ctx.fillRect(cx - tw / 2 - 6, ly - 9, tw + 12, 18);
+    ctx.restore();
+    text(L.s, cx, ly, '#9fb2cf', 12, 'center');
+  }
+  // genuine voids — a caption near the foot of the screen (the rings stay on screen,
+  // but the *matter* between them is what's absent)
+  for (const vd of VOIDS) {
+    if (S.z > vd.zLo && S.z < vd.zHi) {
+      text(vd.l1, cx, H - 116, '#7388a8', 13, 'center');
+      text(vd.l2, cx, H - 96, '#7388a8', 13, 'center');
+    }
+  }
+
+  // practical area units as true-scale rectangles (rects first, labels on top)
+  const areaLabels = [];
+  const usedLabelY = [];
+  for (const a of AREAS) {
+    const pw = a.w / mPerPx, ph = a.h / mPerPx;
+    if (Math.max(pw, ph) < 10 || Math.min(pw, ph) > (W - PANEL_X) * 4) continue;
+    ctx.save();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.globalAlpha = Math.min(0.9, Math.max(0.18, 1.6 - pw / (W - PANEL_X)));
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - pw / 2, cy - ph / 2, pw, ph);
+    ctx.restore();
+    if (pw > 70) {
+      let ly = Math.min(H - 52, cy + ph / 2 + 13);
+      while (usedLabelY.some((u) => Math.abs(u - ly) < 16)) ly += 17;
+      if (ly < H - 36) { areaLabels.push({ label: a.label, ly }); usedLabelY.push(ly); }
+    }
+  }
+  for (const { label: s, ly } of areaLabels) {
+    ctx.save();
+    ctx.font = '600 11.5px ui-sans-serif, system-ui, sans-serif';
+    const tw = ctx.measureText(s).width;
+    ctx.fillStyle = 'rgba(11, 15, 23, 0.85)';
+    ctx.fillRect(cx - tw / 2 - 6, ly - 9, tw + 12, 18);
+    ctx.restore();
+    text(s, cx, ly, '#fbbf24', 11.5, 'center');
+  }
+  text(`your view is ${fmtMetres(viewW)} wide`, cx, H - 36, '#dbe4f0', 15, 'center', 700);
+  $('zoom-val').textContent = `10${sup(Math.round(S.z))} m`;
+}
+
+// === view: COUNT ======================================================================
+const dotCache = new Map();
+function setCount(total, units, idx, opts = {}) {
+  S.count = { total, units, idx, ...opts };
+  buildUnitButtons();
+}
+function setApplianceCount(i) {
+  const a = APPLIANCES[i];
+  S.count = {
+    total: { v: a.v, label: `${a.label} (${a.v} W)` },
+    units: [{ v: HUMAN_W, label: 'resting humans', glyph: '🧍' }],
+    idx: 0, appliance: i,
+  };
+  if (S.flags.seen) S.flags.seen.add(i);
+  buildUnitButtons();
+}
+function buildUnitButtons() {
+  const box = $('unit-buttons');
+  box.innerHTML = '';
+  if (!S.count) return;
+  if (S.count.appliance !== undefined) {
+    APPLIANCES.forEach((a, i) => {
+      const b = document.createElement('button');
+      b.className = `btn${S.count.appliance === i ? ' on' : ''}`;
+      b.textContent = a.label;
+      b.id = `appl-${i}`;
+      b.addEventListener('click', () => setApplianceCount(i));
+      box.appendChild(b);
+    });
+  } else {
+    S.count.units.forEach((u, i) => {
+      const b = document.createElement('button');
+      b.className = `btn${S.count.idx === i ? ' on' : ''}`;
+      b.textContent = u.label.split(' — ')[0].split(' (')[0];
+      b.id = `unit-${i}`;
+      b.addEventListener('click', () => { S.count.idx = i; buildUnitButtons(); });
+      box.appendChild(b);
+    });
+  }
+}
+function drawNote(x, y, w, h, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#b48ead'; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#0b0f17'; ctx.beginPath();
+  ctx.arc(x + w / 2, y + h / 2, h * 0.28, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+function drawCount() {
+  if (!S.count) return;
+  const { total, units, idx } = S.count;
+  const u = units[idx];
+  const n = total.v / u.v;
+  if (n >= 1e4) S.flags.sawSmear = true;
+  if (n <= 100) S.flags.sawCountable = true;
+
+  const ax = PANEL_X + 40, aw = W - PANEL_X - 360, ay = 92, ah = H - 190;
+  // caption
+  const capParts = total.v >= 1e10 && units[0].v >= 1000
+    ? `${indianMoney(total.v)}  =  ${westernMoney(total.v)} rupees`
+    : null;
+  text(total.label, ax + aw / 2, 40, '#dbe4f0', 15, 'center', 700);
+  if (capParts) text(capParts, ax + aw / 2, 62, '#fbbf24', 12.5, 'center');
+  text(`= ${fmtCount(n)} × ${u.label}`, ax + aw / 2, capParts ? 82 : 64, '#34d399', 14, 'center', 700);
+
+  if (n <= 400) {
+    const cols = Math.ceil(Math.sqrt(n * (aw / ah)));
+    const rows = Math.ceil(n / cols);
+    const cell = Math.min(aw / cols, ah / rows, 46);
+    const ox = ax + (aw - cols * cell) / 2, oy = ay + 26;
+    for (let k = 0; k < Math.ceil(n); k++) {
+      const x = ox + (k % cols) * cell + cell / 2;
+      const y = oy + Math.floor(k / cols) * cell + cell / 2;
+      const partial = k + 1 > n ? n - k : 1;
+      if (u.glyph === 'note') drawNote(x - cell * 0.36, y - cell * 0.2, cell * 0.72, cell * 0.4, partial);
+      else text(u.glyph || '●', x, y, '#dbe4f0', cell * 0.7, 'center');
+      if (partial < 1) { // dim overlay marking the fraction
+        ctx.save(); ctx.globalAlpha = 1 - partial; ctx.fillStyle = '#0b0f17';
+        ctx.fillRect(x - cell / 2 + cell * partial, y - cell / 2, cell * (1 - partial), cell);
+        ctx.restore();
+        text(`${(+n.toFixed(2))}`, x, y + cell * 0.62, '#9fb2cf', 11, 'center');
+      }
+    }
+  } else if (n <= 5e4) {
+    const key = `${total.v}|${u.v}|${aw}x${ah}`;
+    if (!dotCache.has(key)) {
+      const oc = document.createElement('canvas');
+      oc.width = aw; oc.height = ah;
+      const c2 = oc.getContext('2d');
+      c2.fillStyle = '#b48ead';
+      const cols = Math.ceil(Math.sqrt(n * (aw / ah)));
+      const cell = aw / cols;
+      for (let k = 0; k < n; k++) {
+        c2.fillRect((k % cols) * cell, Math.floor(k / cols) * cell, Math.max(1, cell * 0.55), Math.max(1, cell * 0.55));
+      }
+      dotCache.set(key, oc);
+    }
+    ctx.drawImage(dotCache.get(key), ax, ay + 26);
+    text('still a number — but you stopped counting a while ago', ax + aw / 2, ay + ah + 8, '#9fb2cf', 11.5, 'center');
+  } else {
+    ctx.save();
+    const g = ctx.createLinearGradient(ax, 0, ax + aw, 0);
+    g.addColorStop(0, 'rgba(180,142,173,0.85)'); g.addColorStop(1, 'rgba(180,142,173,0.35)');
+    ctx.fillStyle = g;
+    ctx.fillRect(ax, ay + ah * 0.3, aw, ah * 0.42);
+    ctx.restore();
+    text('a smear. counting has died.', ax + aw / 2, ay + ah * 0.51, '#0b0f17', 16, 'center', 700);
+  }
+
+  // nested tens — the rescue (only needed once counting has failed)
+  const nx = W - 290, nw = 240;
+  if (n <= 100) {
+    text('no rescue needed —', nx + nw / 2, ay + 40, '#34d399', 12.5, 'center');
+    text('you can simply count these', nx + nw / 2, ay + 58, '#34d399', 12.5, 'center');
+  } else {
+    text('the rescue: nested tens', nx + nw / 2, ay - 4, '#8fa3c0', 12, 'center');
+    const steps = Math.max(1, Math.ceil(Math.log10(Math.max(n, 1.0001))));
+    let side = Math.min(nw, H - ay - 140);
+    let y0 = ay + 22, x0 = nx + (nw - side) / 2;
+    const levels = Math.min(5, steps);
+    for (let l = 0; l < levels; l++) {
+      ctx.save(); ctx.strokeStyle = '#fbbf24'; ctx.globalAlpha = 0.85 - l * 0.13;
+      ctx.lineWidth = 1.5; ctx.strokeRect(x0, y0, side, side); ctx.restore();
+      const val = n / 10 ** l;
+      text(l === 0 ? fmtCount(n) : `÷10${l > 1 ? sup(l) : ''} → ${fmtCount(val)}`,
+        x0 + side / 2, y0 + 11, '#fbbf24', 10.5, 'center');
+      const ns = side / Math.sqrt(10);
+      x0 += (side - ns) / 2; y0 += (side - ns) * 0.72; side = ns;
+    }
+    text(`${steps} nested step${steps === 1 ? '' : 's'} of ÷10 reach a single unit`,
+      nx + nw / 2, H - 64, '#9fb2cf', 11, 'center');
+  }
+  $('count-status').textContent = `count: ${fmtCount(n)}`;
+}
+
+// === view: RING =======================================================================
+function ringGeom() {
+  const cx = PANEL_X + (W - PANEL_X) / 2, cy = H / 2 - 20;
+  return { cx, cy, R: Math.min((W - PANEL_X) / 2 - 80, H / 2 - 110) };
+}
+function label12(h) {
+  const x = ((h % 24) + 24) % 24;
+  if (x === 0) return '12 am'; if (x === 12) return '12 pm';
+  return x < 12 ? `${x} am` : `${x - 12} pm`;
+}
+function drawRing(now) {
+  const { cx, cy, R } = ringGeom();
+  ctx.save(); ctx.strokeStyle = '#2a3a55'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.72, 0, TAU); ctx.stroke();
+  ctx.restore();
+  if (S.ring === 'clock') {
+    for (let h = 1; h <= 24; h++) {
+      const a = (h / 24) * TAU - Math.PI / 2;
+      const big = h % 3 === 0;
+      text(`${h}`, cx + Math.cos(a) * (R + 22), cy + Math.sin(a) * (R + 22),
+        big ? '#dbe4f0' : '#64789a', big ? 14 : 11, 'center');
+      text(label12(h), cx + Math.cos(a) * R * 0.585, cy + Math.sin(a) * R * 0.585,
+        big ? '#7fd1f9' : '#46618f', big ? 11.5 : 9.5, 'center');
+      line(cx + Math.cos(a) * R * 0.97, cy + Math.sin(a) * R * 0.97,
+        cx + Math.cos(a) * R, cy + Math.sin(a) * R, '#46618f', big ? 2 : 1);
+    }
+    const ha = (S.hand / 24) * TAU - Math.PI / 2;
+    line(cx, cy, cx + Math.cos(ha) * R * 0.86, cy + Math.sin(ha) * R * 0.86, '#f472b6', 3);
+    const hr = Math.round(S.hand);
+    text(`${String(hr).padStart(2, '0')}:00  =  ${label12(hr)}`, cx, cy + R + 56, '#dbe4f0', 17, 'center', 700);
+  } else {
+    for (let d = 0; d < 7; d++) {
+      const a = (d / 7) * TAU - Math.PI / 2;
+      const sel = d === S.day;
+      text(WEEK[d][0], cx + Math.cos(a) * (R + 30), cy + Math.sin(a) * (R + 30),
+        sel ? '#f9c1dd' : '#9fb2cf', sel ? 14.5 : 12.5, 'center');
+      text(WEEK[d][1], cx + Math.cos(a) * R * 0.56, cy + Math.sin(a) * R * 0.56,
+        sel ? '#7fd1f9' : '#46618f', sel ? 12.5 : 10.5, 'center');
+    }
+    const a = (S.day / 7) * TAU - Math.PI / 2;
+    line(cx, cy, cx + Math.cos(a) * R * 0.84, cy + Math.sin(a) * R * 0.84, '#f472b6', 3);
+    text(`${WEEK[S.day][0]}  =  ${WEEK[S.day][1]} · one turn = an aazhcha (week)`,
+      cx, cy + R + 56, '#dbe4f0', 16, 'center', 700);
+  }
+  ctx.save(); ctx.fillStyle = '#64789a';
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, TAU); ctx.fill(); ctx.restore();
+}
+let draggingHand = false;
+function ringPointer(e, downOnly) {
+  const { cx, cy, R } = ringGeom();
+  const dx = e.clientX - cx, dy = e.clientY - cy;
+  const d = Math.hypot(dx, dy);
+  if (downOnly && (d < R * 0.2 || d > R * 1.3)) return false;
+  const ang = Math.atan2(dy, dx) + Math.PI / 2;
+  const frac = ((ang / TAU) % 1 + 1) % 1;
+  if (S.ring === 'clock') S.hand = Math.round(frac * 24 * 2) / 2 || 24;
+  else S.day = Math.round(frac * 7) % 7;
+  return true;
+}
+
+// === view: POUR (practical volume) ====================================================
+function fmtVol(ml) {
+  if (ml < 1) return `${+ml.toFixed(2)} ml`;
+  if (ml < 1000) return `${+ml.toFixed(ml < 10 ? 1 : 0)} ml`;
+  if (ml < 1e6) return `${+(ml / 1000).toFixed(ml < 1e4 ? 1 : 0)} L`;
+  return `${(ml / 1000).toLocaleString('en-IN')} L`;
+}
+function fmtN(n) {
+  if (n >= 10) return Math.round(n).toLocaleString('en-IN');
+  if (n >= 1) return `${+n.toFixed(1)}`;
+  if (n >= 0.1) return `${+n.toFixed(2)}`;
+  return `${+n.toFixed(3)}`;
+}
+function pourUnitIdx() {
+  return S.pour.unit == null ? POUR.things[S.pour.thing].unit : S.pour.unit;
+}
+function setPourThing(i) {
+  S.pour.thing = i; S.pour.unit = null;
+  if (S.flags && S.flags.poured) S.flags.poured.add(i);
+  buildPourButtons();
+}
+function setPourUnit(i) { S.pour.unit = i; buildPourButtons(); }
+function buildPourButtons() {
+  const tb = $('pour-things'); tb.innerHTML = '';
+  POUR.things.forEach((t, i) => {
+    const b = document.createElement('button');
+    b.className = `btn${S.pour.thing === i ? ' on' : ''}`;
+    b.textContent = t.label; b.id = `thing-${i}`;
+    b.addEventListener('click', () => setPourThing(i));
+    tb.appendChild(b);
+  });
+  const vb = $('pour-vessels'); vb.innerHTML = '';
+  const cur = pourUnitIdx();
+  POUR.vessels.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.className = `btn${cur === i ? ' on' : ''}`;
+    b.textContent = v.label; b.id = `vessel-${i}`;
+    b.addEventListener('click', () => setPourUnit(i));
+    vb.appendChild(b);
+  });
+}
+function drawVessel(cx, topY, w, h, fill) {
+  const fh = h * Math.max(0, Math.min(1, fill));
+  ctx.save();
+  ctx.fillStyle = 'rgba(80,150,235,0.55)';
+  ctx.fillRect(cx - w / 2, topY + h - fh, w, fh);
+  ctx.strokeStyle = '#7fa8d8'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(cx - w / 2, topY, w, h);
+  ctx.restore();
+}
+function drawPour() {
+  const t = POUR.things[S.pour.thing];
+  const unitIdx = pourUnitIdx();
+  const unit = POUR.vessels[unitIdx];
+  const n = t.ml / unit.ml;
+  const cx = PANEL_X + (W - PANEL_X) / 2;
+
+  text(t.label, cx, 50, '#dbe4f0', 21, 'center', 700);
+  text(fmtVol(t.ml), cx, 76, '#7fc8a9', 14, 'center');
+  text(`= ${fmtN(n)} ${n >= 0.95 && n < 1.05 ? unit.label.replace(/s$/, '') : unit.label}`,
+    cx, 104, '#34d399', 19, 'center', 700);
+
+  const ax = PANEL_X + 60, aw = W - PANEL_X - 120, ay = 138, ah = H - 220;
+  const full = Math.floor(n + 1e-9), frac = n - full;
+  const total = Math.max(1, Math.ceil(n - 1e-9));
+  if (total <= 60) {
+    const cols = Math.max(1, Math.min(total, Math.round(Math.sqrt(total * (aw / ah) * 1.6))));
+    const rows = Math.ceil(total / cols);
+    const cw = Math.min(aw / cols, 150), chh = Math.min(ah / rows, 190);
+    const vw = Math.max(10, Math.min(cw * 0.55, chh * 0.42)), vh = vw * 1.45;
+    const ox = ax + (aw - cols * cw) / 2, oy = ay;
+    for (let k = 0; k < total; k++) {
+      const gx = ox + (k % cols) * cw + cw / 2;
+      const gy = oy + Math.floor(k / cols) * chh + (chh - vh) / 2;
+      const fill = k < full ? 1 : (k === full ? frac : 0);
+      drawVessel(gx, gy, vw, vh, fill);
+    }
+    text(`each ${unit.label.replace(/s$/, '')} holds about ${fmtVol(unit.ml)}`,
+      cx, H - 54, '#64789a', 11.5, 'center');
+  } else {
+    text(`${fmtN(n)} ${unit.label}`, cx, ay + ah * 0.4, '#9fb2cf', 18, 'center', 700);
+    text('more than you could ever pour by hand — that’s the point. try a bigger vessel.',
+      cx, ay + ah * 0.4 + 26, '#64789a', 12.5, 'center');
+  }
+  $('pour-status').textContent = `${t.label} = ${fmtN(n)} ${unit.label}`;
+}
+
+// === view: RAIN (depth on your body, runoff off your roof) ============================
+let draggingWater = false;
+function rateFeel(hr) {
+  if (hr < 1) return 'drizzle — a fine mist, the pavement just darkens';
+  if (hr < 4) return 'light rain — a gentle patter, a thin umbrella does it';
+  if (hr < 10) return 'moderate — a steady drumming, you walk faster';
+  if (hr < 20) return 'heavy — soaked crossing the street, drains gurgling';
+  if (hr < 45) return 'very heavy — sheets of water, roads begin to flood';
+  return 'cloudburst — a wall of water, flash flooding in minutes';
+}
+function depthFeel(mm) {
+  if (mm < 1) return 'barely a trace';
+  if (mm < 50) return 'over your shoes';
+  if (mm < 120) return 'ankle deep';
+  if (mm < 430) return 'shin deep';
+  if (mm < 600) return 'knee deep';
+  if (mm < 780) return 'mid-thigh';
+  if (mm < 950) return 'hip deep';
+  if (mm < 1130) return 'waist deep';
+  if (mm < 1320) return 'chest deep';
+  if (mm < 1440) return 'shoulder deep';
+  if (mm < 1600) return 'neck deep';
+  if (mm < 2200) return 'over your head';
+  const st = mm / 3000;
+  return st < 1.2 ? 'about one storey deep' : `${st.toFixed(1)} storeys deep`;
+}
+function fmtStormTime(h) {
+  if (h < 1) return `${Math.round(h * 60)} min`;
+  if (h < 48) return `${Math.floor(h)} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')} m`;
+  return `${(h / 24).toFixed(1)} days`;
+}
+function updateRainLabels() {
+  $('rain-rate-val').textContent = `${S.rain.rate < 10 ? S.rain.rate.toFixed(1) : Math.round(S.rain.rate)} mm/hr`;
+  $('rain-feel').textContent = rateFeel(S.rain.rate);
+}
+function rainGeom() {
+  const gaugeW = Math.min(260, (W - PANEL_X) * 0.28);
+  const gxc = PANEL_X + (W - PANEL_X) * 0.36;
+  const gy0 = 70, gy1 = H - 96;
+  const topMM = Math.max(S.rain.depth * 1.25, HUMAN_MM * 1.15);
+  return {
+    gaugeW, gxc, gy0, gy1, topMM,
+    left: gxc - gaugeW / 2, right: gxc + gaugeW / 2,
+    mmToY: (mm) => gy1 - (mm / topMM) * (gy1 - gy0),
+    yToMM: (y) => Math.max(0, Math.min(15000, (gy1 - y) / (gy1 - gy0) * topMM)),
+  };
+}
+function drawHuman(cx, footY, headY) {
+  const h = footY - headY;
+  if (h < 7) {
+    ctx.save(); ctx.fillStyle = 'rgba(219,228,240,0.6)';
+    ctx.fillRect(cx - 1.5, headY, 3, h); ctx.restore(); return;
+  }
+  const r = h * 0.085;
+  const shoulderY = headY + r * 2.1, hipY = headY + h * 0.55;
+  const sw = h * 0.15, hw = h * 0.095, legW = h * 0.05;
+  ctx.save(); ctx.fillStyle = 'rgba(219,228,240,0.5)';
+  ctx.beginPath(); ctx.arc(cx, headY + r, r, 0, TAU); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx - sw, shoulderY); ctx.lineTo(cx + sw, shoulderY);
+  ctx.lineTo(cx + hw, hipY); ctx.lineTo(cx - hw, hipY); ctx.closePath(); ctx.fill();
+  ctx.fillRect(cx - hw, hipY, legW, footY - hipY);
+  ctx.fillRect(cx + hw - legW, hipY, legW, footY - hipY);
+  ctx.restore();
+}
+function rainTick(dt) {
+  const r = S.rain;
+  if (r.raining) {
+    r.depth = Math.min(15000, r.depth + r.rate * dt * RAIN_COMPRESS);
+    r.stormH += dt * RAIN_COMPRESS;
+    if (r.depth >= 15000) {
+      r.raining = false;
+      $('rain-go').classList.remove('on'); $('rain-go').textContent = 'let it rain';
+    }
+  }
+  const g = rainGeom();
+  const want = Math.min(9, Math.ceil(r.rate * 0.13));
+  for (let i = 0; i < want && r.drops.length < 220; i++) {
+    r.drops.push({ x: g.left + Math.random() * g.gaugeW, y: g.gy0 + Math.random() * 10, sp: 6 + Math.random() * 7 });
+  }
+  const surfaceY = g.mmToY(r.depth);
+  for (let i = r.drops.length - 1; i >= 0; i--) {
+    r.drops[i].y += r.drops[i].sp;
+    if (r.drops[i].y >= surfaceY) r.drops.splice(i, 1);
+  }
+}
+function drawRain(now) {
+  const r = S.rain, g = rainGeom(), depth = r.depth;
+  const surfaceY = g.mmToY(depth);
+  line(g.left, g.gy0, g.left, g.gy1, '#2a3a55', 1.5);
+  line(g.right, g.gy0, g.right, g.gy1, '#2a3a55', 1.5);
+  line(g.left, g.gy1, g.right, g.gy1, '#46618f', 2);
+  drawHuman(g.gxc, g.gy1, g.mmToY(HUMAN_MM));
+  // falling rain above the surface
+  ctx.save(); ctx.strokeStyle = 'rgba(150,195,250,0.7)'; ctx.lineWidth = 1.4;
+  for (const d of r.drops) if (d.y < surfaceY) {
+    ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - 1, d.y + d.sp * 1.3); ctx.stroke();
+  }
+  ctx.restore();
+  // water (translucent over the human)
+  ctx.save();
+  ctx.fillStyle = 'rgba(80,150,235,0.34)';
+  ctx.fillRect(g.left, surfaceY, g.gaugeW, g.gy1 - surfaceY);
+  ctx.strokeStyle = 'rgba(150,200,255,0.85)'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = g.left; x <= g.right; x += 6) {
+    const yy = surfaceY + Math.sin(x * 0.08 + now * 0.004) * 1.6;
+    x === g.left ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+  }
+  ctx.stroke(); ctx.restore();
+  // body landmarks (left)
+  let lastY = 1e9;
+  for (const b of RAIN.body) {
+    if (b.mm > g.topMM) continue;
+    const y = g.mmToY(b.mm);
+    if (lastY - y < 15) continue; lastY = y;
+    line(g.left - 7, y, g.left, y, '#46618f', 1.5);
+    text(b.label, g.left - 10, y, depth >= b.mm ? '#7fd1f9' : '#64789a', 10.5, 'right');
+  }
+  if (g.topMM > 2500) for (const s of RAIN.storeys) {
+    if (s.mm > g.topMM) continue;
+    const y = g.mmToY(s.mm);
+    line(g.left - 7, y, g.left, y, '#6a5320', 1.5);
+    text(s.label, g.left - 10, y, '#b08c1f', 10, 'right');
+  }
+  // event lines (right)
+  let lastE = 1e9;
+  for (const ev of RAIN.events) {
+    if (ev.mm > g.topMM * 1.01) continue;
+    const y = g.mmToY(ev.mm);
+    if (lastE - y < 14) continue; lastE = y;
+    ctx.save(); ctx.strokeStyle = '#fbbf24'; ctx.globalAlpha = 0.5;
+    ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(g.left, y); ctx.lineTo(g.right, y); ctx.stroke(); ctx.restore();
+    text(`${ev.tag} — ${ev.mm.toLocaleString('en-IN')} mm`, g.right + 10, y, '#fbbf24', 10.5);
+  }
+  const above = RAIN.events.filter((ev) => ev.mm > g.topMM * 1.01);
+  if (above.length) {
+    text(`↑ still far above: ${above[0].tag} (${above[0].mm.toLocaleString('en-IN')} mm)`,
+      g.gxc, g.gy0 + 10, '#7b6a3a', 11, 'center');
+  }
+  // readouts
+  text(`${Math.round(depth).toLocaleString('en-IN')} mm of rain`,
+    g.gxc, g.gy1 + 24, '#dbe4f0', 17, 'center', 700);
+  text(`= ${depthFeel(depth)}   ·   = ${Math.round(depth).toLocaleString('en-IN')} litres on every m²`,
+    g.gxc, g.gy1 + 44, '#9fb2cf', 12.5, 'center');
+  // roof runoff (top-right) — same vessels as the pour view
+  const litres = depth * r.roof;
+  const baths = litres / 150, tankers = litres / 10000;
+  const rx = W - 256, rw = 232;
+  ctx.save(); ctx.fillStyle = 'rgba(20,28,42,0.7)'; ctx.fillRect(rx, g.gy0, rw, 134); ctx.restore();
+  const rcx = rx + rw / 2;
+  text(r.roof === 100 ? 'rain on your roof (100 m²)' : 'rain on a FIFA pitch (7,140 m²)',
+    rcx, g.gy0 + 18, '#9fb2cf', 12, 'center');
+  text(`${fmtCount(litres)} litres`, rcx, g.gy0 + 47, '#60a5fa', 18, 'center', 700);
+  text('runs off in one storm', rcx, g.gy0 + 65, '#64789a', 10.5, 'center');
+  text(`= ${fmtCount(baths)} bathtubs`, rcx, g.gy0 + 92, '#dbe4f0', 13, 'center');
+  text(`= ${fmtCount(tankers)} water tankers`, rcx, g.gy0 + 112, '#dbe4f0', 13, 'center');
+  $('rain-status').textContent =
+    `${r.raining ? 'raining — ' : ''}storm clock: ${fmtStormTime(r.stormH)}`;
+}
+
+// === view: GAME =======================================================================
+function syncGuess() {
+  const g = 10 ** +$('guess').value;
+  $('guess-val').textContent = fmtCount(g);
+}
+$('guess').addEventListener('input', syncGuess);
+$('lock').addEventListener('click', () => {
+  const G = S.game;
+  if (!G || G.locked || G.i >= GAME_ROUNDS.length) return;
+  const guess = 10 ** +$('guess').value;
+  const truth = GAME_ROUNDS[G.i].truth;
+  const err = Math.abs(Math.log10(guess / truth));
+  G.results.push({ guess, truth, err, hit: err <= 0.5 });
+  G.locked = true;
+  $('game-next').hidden = false;
+});
+$('game-next').addEventListener('click', () => {
+  const G = S.game;
+  G.i++; G.locked = false;
+  $('game-next').hidden = true;
+  if (G.i >= GAME_ROUNDS.length) $('lock').hidden = true;
+});
+function drawGame() {
+  const G = S.game;
+  const cx = PANEL_X + (W - PANEL_X) / 2;
+  if (!G) return;
+  if (G.i >= GAME_ROUNDS.length) {
+    const hits = G.results.filter((r) => r.hit).length;
+    text(`${hits} / ${GAME_ROUNDS.length} within half a decade`, cx, H / 2 - 40, '#dbe4f0', 22, 'center', 700);
+    G.results.forEach((r, i) => {
+      text(`${GAME_ROUNDS[i].truth.toLocaleString('en-IN')} — you said ${fmtCount(r.guess)} ` +
+        `(${r.err.toFixed(2)} decades off) ${r.hit ? '✓' : '✗'}`,
+      cx, H / 2 + i * 26, r.hit ? '#34d399' : '#f87171', 13.5, 'center');
+    });
+    $('game-status').textContent = 'done — Back/Next to move on';
+    return;
+  }
+  const round = GAME_ROUNDS[G.i];
+  text(`question ${G.i + 1} / ${GAME_ROUNDS.length}`, cx, H * 0.2, '#8fa3c0', 13, 'center');
+  text(round.q, cx, H * 0.2 + 30, '#dbe4f0', 17, 'center', 700);
+  // log strip 10^0..10^6 with the guess marker
+  const x0 = PANEL_X + 100, x1 = W - 100, y = H * 0.55;
+  line(x0, y, x1, y, '#2a3a55', 2);
+  for (let d = 0; d <= 6; d++) {
+    const x = x0 + (d / 6) * (x1 - x0);
+    line(x, y - 6, x, y + 6, '#46618f', 1.5);
+    text(`10${sup(d)}`, x, y + 22, '#64789a', 11, 'center');
+  }
+  const gx = x0 + (+$('guess').value / 6) * (x1 - x0);
+  ctx.save(); ctx.fillStyle = '#60a5fa';
+  ctx.beginPath(); ctx.moveTo(gx, y - 8); ctx.lineTo(gx - 7, y - 22); ctx.lineTo(gx + 7, y - 22);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  text(`your guess: ${fmtCount(10 ** +$('guess').value)}`, gx, y - 36, '#60a5fa', 13, 'center');
+  if (G.locked) {
+    const r = G.results[G.i];
+    const tx = x0 + (Math.log10(r.truth) / 6) * (x1 - x0);
+    line(tx, y - 26, tx, y + 26, '#34d399', 3);
+    text(`truth: ${r.truth.toLocaleString('en-IN')}`, tx, y + 44, '#34d399', 13.5, 'center');
+    line(Math.min(gx, tx), y + 60, Math.max(gx, tx), y + 60, r.hit ? '#34d399' : '#f87171', 3);
+    text(r.hit ? `hit — ${r.err.toFixed(2)} decades off` : `${r.err.toFixed(2)} decades off — more than half a decade`,
+      (gx + tx) / 2, y + 78, r.hit ? '#34d399' : '#f87171', 13, 'center');
+    $('game-status').textContent = 'press “next question”';
+  } else {
+    $('game-status').textContent = 'slide, then lock it in';
+  }
+}
+
+// === view: INDEX (playground) =========================================================
+const indexHits = [];
+function drawIndex() {
+  indexHits.length = 0;
+  const x0 = PANEL_X + 130, x1 = W - 60;
+  const rowH = Math.min(64, (H - 110) / INDEX_CATS.length);
+  text('the collection — every dot is an anchor you know', (x0 + x1) / 2, 40, '#8fa3c0', 13, 'center');
+  INDEX_CATS.forEach((cat, ci) => {
+    const y = 86 + ci * rowH;
+    text(cat.name, x0 - 8, y, '#9fb2cf', 12, 'right');
+    if (cat.view === 'ring') {
+      cat.anchors.forEach((a, ai) => {
+        const x = x0 + 60 + ai * 220;
+        ctx.save(); ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(x, y, 7, 0, TAU); ctx.stroke(); ctx.restore();
+        text(a.label, x + 14, y, '#64789a', 11);
+        indexHits.push({ x, y, cat, a });
+      });
+      return;
+    }
+    const lo = Math.log10(cat.anchors[0].v), hi = Math.log10(cat.anchors[cat.anchors.length - 1].v);
+    const pad = Math.max(0.5, (hi - lo) * 0.06);
+    line(x0, y, x1, y, '#22304a', 1.5);
+    cat.anchors.forEach((a) => {
+      const f = (Math.log10(a.v) - lo + pad) / (hi - lo + 2 * pad);
+      const x = x0 + f * (x1 - x0);
+      ctx.save(); ctx.fillStyle = '#60a5fa';
+      ctx.beginPath(); ctx.arc(x, y, 5.5, 0, TAU); ctx.fill(); ctx.restore();
+      indexHits.push({ x, y, cat, a });
+    });
+  });
+  // hover label
+  if (hoverHit) {
+    text(hoverHit.a.label + (hoverHit.cat.view === 'ring' ? '' : ` — ${fmt(hoverHit.a.v)}`),
+      Math.min(hoverHit.x, W - 240), hoverHit.y - 18, '#dbe4f0', 12.5);
+  }
+}
+let hoverHit = null;
+function openFromIndex(hit) {
+  const { cat, a } = hit;
+  if (cat.view === 'race') { S.pg = { view: 'race' }; S.simT = 0; }
+  else if (cat.view === 'zoom') {
+    S.pg = { view: 'zoom' };
+    S.z = Math.log10(a.v) + 0.7;
+    $('zoom').value = S.z;
+  } else if (cat.view === 'ring') {
+    S.pg = { view: 'ring' };
+    S.ring = a.v === 0 ? 'clock' : 'week';
+  } else if (cat.view === 'pour') {
+    S.pg = { view: 'pour' };
+    const targ = a.v * 1000; // litres → ml
+    let best = 0, bd = Infinity;
+    POUR.things.forEach((t, i) => {
+      const d = Math.abs(Math.log10(t.ml / targ));
+      if (d < bd) { bd = d; best = i; }
+    });
+    S.pour = { thing: best, unit: null };
+    buildPourButtons();
+  } else if (cat.view === 'rain') {
+    S.pg = { view: 'rain' };
+    S.rain.depth = a.v; S.rain.raining = false;
+    $('rain-go').classList.remove('on'); $('rain-go').textContent = 'let it rain';
+  } else {
+    const smaller = cat.anchors.filter((x) => x.v < a.v);
+    const units = smaller.length ? smaller : cat.anchors.filter((x) => x !== a);
+    S.pg = { view: 'count', cat, anchor: a };
+    setCount({ v: a.v, label: a.label }, units.map((u) => ({ v: u.v, label: u.label })),
+      Math.max(0, units.length - 1));
+  }
+  updatePgButtons();
+}
+function updatePgButtons() {
+  const inView = S.pg.view !== 'index';
+  $('pg-back').hidden = !inView;
+  $('pg-unit').hidden = S.pg.view !== 'count';
+  $('pg-status').textContent = inView ? '' : 'click any dot to open it in its natural view';
+  const pg = isPlayground();
+  [['ctl-race', 'race'], ['ctl-zoom', 'zoom'], ['ctl-ring', 'ring'], ['ctl-pour', 'pour'], ['ctl-rain', 'rain']]
+    .forEach(([id, v]) => { $(id).hidden = !(pg && S.pg.view === v); });
+}
+$('pg-back').addEventListener('click', () => { S.pg = { view: 'index' }; updatePgButtons(); });
+$('pg-unit').addEventListener('click', () => {
+  if (S.count) { S.count.idx = (S.count.idx + 1) % S.count.units.length; buildUnitButtons(); }
+});
+
+// === pointer handling =================================================================
+cv.addEventListener('pointerdown', (e) => {
+  const view = currentView();
+  if (view === 'ring') { draggingHand = ringPointer(e, true); }
+  if (view === 'rain') {
+    const g = rainGeom();
+    if (e.clientX > g.left - 26 && e.clientX < g.right + 26 && e.clientY > g.gy0 - 10 && e.clientY < g.gy1 + 10) {
+      draggingWater = true;
+      if (S.rain.raining) { S.rain.raining = false; $('rain-go').classList.remove('on'); $('rain-go').textContent = 'let it rain'; }
+      S.rain.depth = g.yToMM(e.clientY);
+    }
+  }
+  if (view === 'index') {
+    const hit = indexHits.find((h) => (e.clientX - h.x) ** 2 + (e.clientY - h.y) ** 2 < 144);
+    if (hit) openFromIndex(hit);
+  }
+});
+window.addEventListener('pointermove', (e) => {
+  if (draggingHand) { ringPointer(e, false); return; }
+  if (draggingWater) { S.rain.depth = rainGeom().yToMM(e.clientY); return; }
+  if (currentView() === 'index') {
+    hoverHit = indexHits.find((h) => (e.clientX - h.x) ** 2 + (e.clientY - h.y) ** 2 < 144) || null;
+    cv.style.cursor = hoverHit ? 'pointer' : '';
+  }
+});
+window.addEventListener('pointerup', () => { draggingHand = false; draggingWater = false; });
+cv.addEventListener('wheel', (e) => {
+  if (currentView() !== 'zoom') return;
+  e.preventDefault();
+  S.z = Math.max(-16, Math.min(27.5, S.z + e.deltaY * 0.0025));
+  $('zoom').value = S.z;
+}, { passive: false });
+
+// === controls =========================================================================
+$('cam').addEventListener('input', (e) => {
+  S.camLog = +e.target.value;
+  $('cam-val').textContent = `${fmtCount(10 ** S.camLog)}×`;
+});
+$('race-reset').addEventListener('click', () => { S.simT = 0; });
+$('zoom').addEventListener('input', (e) => { S.z = +e.target.value; });
+$('ring-clock').addEventListener('click', () => {
+  S.ring = 'clock';
+  $('ring-clock').classList.add('on'); $('ring-week').classList.remove('on');
+});
+$('ring-week').addEventListener('click', () => {
+  S.ring = 'week';
+  $('ring-week').classList.add('on'); $('ring-clock').classList.remove('on');
+});
+$('rain-rate').addEventListener('input', (e) => { S.rain.rate = 10 ** (+e.target.value); updateRainLabels(); });
+$('rain-go').addEventListener('click', () => {
+  S.rain.raining = !S.rain.raining;
+  $('rain-go').classList.toggle('on', S.rain.raining);
+  $('rain-go').textContent = S.rain.raining ? 'raining…' : 'let it rain';
+});
+$('rain-reset').addEventListener('click', () => {
+  S.rain.depth = 0; S.rain.stormH = 0; S.rain.raining = false;
+  $('rain-go').classList.remove('on'); $('rain-go').textContent = 'let it rain';
+});
+$('roof-house').addEventListener('click', () => {
+  S.rain.roof = 100; $('roof-house').classList.add('on'); $('roof-pitch').classList.remove('on');
+});
+$('roof-pitch').addEventListener('click', () => {
+  S.rain.roof = 7140; $('roof-pitch').classList.add('on'); $('roof-house').classList.remove('on');
+});
+
+// === stage machinery ==================================================================
+function isPlayground() { return STAGES[stage] && STAGES[stage].view === 'pg'; }
+function currentView() {
+  if (isPlayground()) return S.pg.view;
+  return STAGES[stage].view;
+}
+function setStage(i) {
+  stage = Math.max(0, Math.min(STAGES.length - 1, i));
+  const st = STAGES[stage];
+  taskDone = false;
+  st.enter();
+  ['race', 'zoom', 'units', 'ring', 'pour', 'rain', 'game', 'pg'].forEach((k) => {
+    $(`ctl-${k}`).hidden = !st.reveals.includes(k);
+  });
+  $('lock').hidden = false;
+  $('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
+  $('stage-title').textContent = st.title;
+  $('stage-copy').innerHTML = st.copy;
+  $('task').style.display = st.task ? '' : 'none';
+  if (st.task) $('task-text').textContent = st.task;
+  $('back').disabled = stage === 0;
+  $('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  $('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
+}
+$('back').addEventListener('click', () => setStage(stage - 1));
+$('next').addEventListener('click', () => setStage(stage + 1));
+window.addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n !== stage) setStage(n);
+});
+
+// === testing hooks ====================================================================
+window.__viz = {
+  state() {
+    return {
+      stage, taskDone, view: currentView(),
+      simT: +S.simT.toFixed(2), cam: 10 ** S.camLog,
+      snailCross: Math.floor(0.013 * S.simT / TRACK_M),
+      z: +S.z.toFixed(2), sawAtom: S.sawAtom, sawGalaxy: S.sawGalaxy,
+      count: S.count ? +(S.count.total.v / S.count.units[S.count.idx].v).toFixed(3) : null,
+      flags: { smear: !!S.flags.sawSmear, countable: !!S.flags.sawCountable,
+        seen: S.flags.seen ? S.flags.seen.size : 0 },
+      ring: S.ring, hand: S.hand, day: S.day,
+      pour: (() => {
+        const t = POUR.things[S.pour.thing], u = POUR.vessels[pourUnitIdx()];
+        return { thing: t.label, unit: u.label, n: +(t.ml / u.ml).toFixed(3) };
+      })(),
+      poured: S.flags && S.flags.poured ? S.flags.poured.size : 0,
+      rain: { depth: +S.rain.depth.toFixed(1), rate: +S.rain.rate.toFixed(2),
+        raining: S.rain.raining, roof: S.rain.roof, stormH: +S.rain.stormH.toFixed(2) },
+      game: S.game ? { i: S.game.i, hits: S.game.results.filter((r) => r.hit).length,
+        results: S.game.results.length } : null,
+      visible: ['race', 'zoom', 'units', 'ring', 'pour', 'rain', 'game', 'pg'].filter((k) => !$(`ctl-${k}`).hidden),
+    };
+  },
+  setCam(log) {
+    S.camLog = log; $('cam').value = log;
+    $('cam-val').textContent = `${fmtCount(10 ** log)}×`;
+  },
+  setZ(z) { S.z = z; $('zoom').value = z; },
+  zoomCheck(z) {
+    const mPerPx = (10 ** z) / (W - PANEL_X);
+    const big = (W - PANEL_X) * 12;
+    let present = 0, sized = 0;
+    for (const a of SIZES) {
+      const px = a.v / mPerPx;
+      if (px >= 1.2 && px <= big) present++;
+      if (px >= 6 && px <= (W - PANEL_X) * 6) sized++;
+    }
+    for (const a of AREAS) {
+      const pw = a.w / mPerPx, ph = a.h / mPerPx;
+      if (Math.max(pw, ph) >= 10 && Math.min(pw, ph) <= (W - PANEL_X) * 4) { present++; sized++; }
+    }
+    const inVoid = VOIDS.some((v) => z > v.zLo && z < v.zHi);
+    return { present, sized, inVoid };
+  },
+  setUnit(i) {
+    if (S.count?.appliance !== undefined) setApplianceCount(i);
+    else if (S.count) { S.count.idx = i; buildUnitButtons(); }
+  },
+  setHand(h) { S.hand = h; },
+  setRing(r) { S.ring = r; },
+  pourThing(i) { setPourThing(i); },
+  pourUnit(i) { setPourUnit(i); },
+  setRainDepth(mm) { S.rain.depth = mm; },
+  setRainRate(hr) { S.rain.rate = hr; $('rain-rate').value = Math.log10(hr); updateRainLabels(); },
+  toggleRain() { $('rain-go').click(); },
+  setGuess(decades) { $('guess').value = decades; syncGuess(); },
+  openIndex(catName, anchorLabel) {
+    const cat = INDEX_CATS.find((c) => c.name.startsWith(catName));
+    const a = cat.anchors.find((x) => x.label.includes(anchorLabel));
+    openFromIndex({ cat, a, x: 0, y: 0 });
+  },
+  go(i) { setStage(i); },
+};
+
+// === boot + main loop =================================================================
+layout();
+const initial = parseInt(location.hash.slice(1), 10);
+setStage(Number.isNaN(initial) ? 0 : initial);
+
+let lastReal = performance.now();
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dt = Math.min((now - lastReal) / 1000, 0.05);
+  lastReal = now;
+  const view = currentView();
+  if (view === 'race') S.simT += dt * camSpeed();
+  if (view === 'rain') rainTick(dt);
+
+  ctx.clearRect(0, 0, W, H);
+  if (view === 'race') drawRace();
+  else if (view === 'zoom') drawZoom();
+  else if (view === 'count') drawCount();
+  else if (view === 'ring') drawRing(now);
+  else if (view === 'pour') drawPour();
+  else if (view === 'rain') drawRain(now);
+  else if (view === 'game') drawGame();
+  else if (view === 'index') drawIndex();
+
+  if (view === 'race') {
+    $('race-status').textContent =
+      `track time elapsed: ${fmtCount(Math.round(S.simT))} s — the snail needs ${fmtCount(Math.round(TRACK_M / 0.013))} s`;
+  }
+  const st = STAGES[stage];
+  if (!taskDone && st.done && st.done()) taskDone = true;
+  $('task').classList.toggle('done', taskDone);
+  $('task-tick').textContent = taskDone ? '✓' : '○';
+  $('next').classList.toggle('glow', taskDone);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

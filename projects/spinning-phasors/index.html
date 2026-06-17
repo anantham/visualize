@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spinning Phasors — frequency as radians per sample</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f17;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #dbe4f0; }
+  canvas { display: block; position: fixed; inset: 0; }
+
+  #panel { position: fixed; top: 16px; left: 16px; width: 330px; z-index: 10;
+    background: rgba(13, 19, 30, 0.86); border: 1px solid rgba(122, 150, 200, 0.18);
+    border-radius: 14px; padding: 14px 18px 12px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45); }
+
+  .brand { font-size: 10px; color: #516180; letter-spacing: 0.4px;
+    display: flex; justify-content: space-between; margin-bottom: 6px; }
+  #panel h1 { font-size: 16px; margin: 0 0 6px; letter-spacing: 0.3px; }
+  #stage-copy { font-size: 12px; color: #9fb2cf; margin: 0 0 10px; line-height: 1.55; }
+  #stage-copy b { color: #c9d6ea; }
+
+  #task { display: flex; gap: 8px; align-items: baseline; font-size: 12px;
+    color: #cfdcf2; background: rgba(96, 165, 250, 0.07);
+    border: 1px solid rgba(96, 165, 250, 0.22); border-radius: 9px;
+    padding: 8px 10px; margin: 0 0 10px; line-height: 1.45; }
+  #task .tick { flex: none; color: #64789a; font-weight: 700; }
+  #task.done { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); }
+  #task.done .tick { color: #34d399; }
+
+  .ctl { margin: 7px 0; }
+  .ctl[hidden] { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .row label { width: 86px; flex: none; color: #9fb2cf; }
+  .row input[type="range"] { flex: 1; accent-color: #60a5fa; }
+  .row .val { width: 76px; flex: none; text-align: right;
+    font-variant-numeric: tabular-nums; font-weight: 600; }
+  .row input[type="checkbox"] { accent-color: #f472b6; margin: 0; }
+  .row.chk label { width: auto; color: #c3d0e5; cursor: pointer; }
+
+  #dir { font-size: 11.5px; color: #7fd1f9; margin: 3px 0 1px; min-height: 14px; }
+  .ctx { font-size: 11px; color: #7fc8a9; font-style: italic; margin: 1px 0 0;
+    min-height: 14px; line-height: 1.4; }
+  #slowmo { color: #a78bfa; min-height: 0; }
+
+  .rps { margin: 10px 0 4px; padding: 9px 11px; border-radius: 9px;
+    background: rgba(96, 165, 250, 0.08); border: 1px solid rgba(96, 165, 250, 0.25); }
+  .rps .big { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rps .unit { font-size: 11px; color: #8fa3c0; }
+  .gauge { position: relative; height: 8px; border-radius: 4px; margin: 8px 0 2px;
+    background: linear-gradient(90deg, rgba(248,113,113,.25), rgba(96,165,250,.25) 30%,
+      rgba(96,165,250,.25) 70%, rgba(248,113,113,.25)); }
+  .gauge .mark { position: absolute; top: -3px; width: 3px; height: 14px; border-radius: 2px;
+    background: #7fd1f9; transform: translateX(-50%); }
+  .gauge-lab { display: flex; justify-content: space-between; font-size: 10px; color: #64789a; }
+  body.aliased .gauge .mark { background: #f87171; }
+
+  #alias-chip { display: none; margin: 8px 0 2px; padding: 8px 10px; border-radius: 8px;
+    font-size: 11.5px; line-height: 1.45; background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.4); color: #fca5a5;
+    font-variant-numeric: tabular-nums; }
+  body.aliased #alias-chip.allowed { display: block; }
+  .c-a { color: #f87171; }
+
+  .btn { background: #1c2a40; border: 1px solid rgba(122, 150, 200, 0.25);
+    color: #dbe4f0; border-radius: 8px; padding: 6px 12px; font-size: 12px;
+    cursor: pointer; }
+  .btn:hover { background: #25364f; }
+  .btn[disabled] { opacity: 0.35; cursor: default; }
+  .nav { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .nav .spacer { flex: 1; }
+  #next.glow { border-color: rgba(52, 211, 153, 0.7);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.35); }
+  #skip { font-size: 10.5px; color: #64789a; text-decoration: none; }
+  #skip:hover { color: #9fb2cf; text-decoration: underline; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="panel">
+  <div class="brand"><span>visualize · project 2</span><span id="stage-num"></span></div>
+  <h1 id="stage-title"></h1>
+  <p id="stage-copy"></p>
+  <div id="task"><span class="tick" id="task-tick">○</span><span id="task-text"></span></div>
+
+  <div class="ctl" id="ctl-freq">
+    <div class="row">
+      <label for="freq">frequency F</label>
+      <input type="range" id="freq" min="0" max="8" step="0.05" value="1">
+      <span class="val" style="color:#60a5fa" id="freq-val">1.00 Hz</span>
+    </div>
+    <div id="dir"></div>
+    <div class="ctx" id="real-world"></div>
+    <div class="ctx" id="slowmo"></div>
+  </div>
+
+  <div class="ctl" id="ctl-sampleit" hidden>
+    <div class="row chk">
+      <input type="checkbox" id="sampling" checked>
+      <label for="sampling">sample it</label>
+    </div>
+  </div>
+
+  <div class="ctl" id="ctl-fs" hidden>
+    <div class="row">
+      <label for="fs">strobe rate F<sub>s</sub></label>
+      <input type="range" id="fs" min="2" max="24" step="1" value="8">
+      <span class="val" style="color:#f472b6" id="fs-val">8 /s</span>
+    </div>
+    <div class="ctx" id="fs-context"></div>
+  </div>
+
+  <div class="ctl" id="ctl-rps" hidden>
+    <div class="rps">
+      <div><span class="big" id="rps-val">–</span>
+        <span class="unit">rad/sample &nbsp;=&nbsp; </span>
+        <span class="big" id="rps-pi">–</span></div>
+      <div class="gauge"><div class="mark" id="gauge-mark"></div></div>
+      <div class="gauge-lab"><span>−π</span><span>0</span><span>+π (Nyquist)</span></div>
+    </div>
+  </div>
+
+  <div id="alias-chip"><span id="alias-body"></span></div>
+
+  <div class="ctl" id="ctl-strobe" hidden>
+    <div class="row chk">
+      <input type="checkbox" id="strobe">
+      <label for="strobe">strobe view — hide the continuous phasor</label>
+    </div>
+  </div>
+
+  <div class="ctl" id="ctl-speed" hidden>
+    <div class="row">
+      <label for="speed">time speed</label>
+      <input type="range" id="speed" min="0.01" max="1" step="0.01" value="0.04">
+      <span class="val" id="speed-val">0.04×</span>
+    </div>
+  </div>
+
+  <div class="ctl" id="ctl-pause" hidden>
+    <button class="btn" id="pause">Pause</button>
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="back">← Back</button>
+    <button class="btn" id="next">Next →</button>
+    <span class="spacer"></span>
+    <a id="skip" href="#8">skip to playground</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const TAU = Math.PI * 2;
+const $ = (id) => document.getElementById(id);
+
+const COL = {
+  axis: '#2a3a55', text: '#8fa3c0', faint: '#64789a',
+  phasor: '#60a5fa', sin: '#34d399', cos: '#fbbf24',
+  sample: '#f472b6', alias: '#f87171',
+};
+
+// --- state -------------------------------------------------------------------
+const S = {
+  F: 1, Fs: 8, sampling: false, strobe: false, speed: 0.04, paused: false,
+  t: 0, phase: 0,
+  history: [], samples: [], nextSampleT: 0,
+  aliasPhase: 0, aliasAnchorT: 0,
+  lastFChange: -1e9, pausedAtPeak: false,
+};
+
+function apparentF() { return S.F - S.Fs * Math.round(S.F / S.Fs); }
+function radPerSample() { return TAU * S.F / S.Fs; }
+function wrappedRps() {
+  const r = radPerSample();
+  return r - TAU * Math.round(r / TAU);
+}
+function isAliased() { return Math.abs(S.F) > S.Fs / 2 + 1e-9; }
+
+// --- wide-range (logarithmic) slider mapping ----------------------------------------
+const FMAX = 20000, FS_MIN = 2, FS_MAX = 48000;
+const KF = Math.log10(FMAX + 1);
+const KS = Math.log10(FS_MAX / FS_MIN);
+let wide = false;
+function sliderToF(x) {
+  return wide ? Math.sign(x) * (10 ** (Math.abs(x) * KF) - 1) : x;
+}
+function fToSlider(F) {
+  return wide ? Math.sign(F) * Math.log10(Math.abs(F) + 1) / KF : F;
+}
+function sliderToFs(x) { return wide ? Math.round(FS_MIN * 10 ** (x * KS)) : x; }
+function fsToSlider(v) { return wide ? Math.log10(v / FS_MIN) / KS : v; }
+function snapF(F) { return wide ? Number(F.toPrecision(3)) : F; }
+
+// time auto-slows above 1 Hz so the spin stays watchable at any frequency
+function autoScale() { return 1 / Math.max(1, Math.abs(S.F)); }
+
+// --- stages: the declarative "document" -------------------------------------------
+const STAGES = [
+  {
+    title: 'Something spinning',
+    copy: 'The simplest possible motion: something turning at a steady rate. ' +
+      'The slider sets how many full turns it makes each second — that’s all ' +
+      '<b>frequency</b> is.',
+    task: 'Slow it down to a resting heartbeat — about 1.2 turns per second.',
+    preset: { F: 1, sampling: false }, freqMin: 0,
+    reveals: ['freq'], show: [],
+    done: () => Math.abs(S.F - 1.2) <= 0.25,
+  },
+  {
+    title: 'The other way',
+    copy: 'Frequency can be <b>negative</b>. Nothing mystical — it just means ' +
+      'the spin goes the other way.',
+    task: 'Drag the frequency below zero and watch the arrow reverse.',
+    preset: { F: 1.5, sampling: false }, freqMin: -8,
+    reveals: ['freq'], show: [],
+    done: () => S.F < -0.01,
+  },
+  {
+    title: 'The first shadow',
+    copy: 'Ignore the arrow — track only the <b>height</b> of its tip. ' +
+      'That single number, unrolled over time, is a wave.',
+    task: 'Press pause exactly at a peak of the wave — the arrow should point straight up.',
+    preset: { F: 1, sampling: false }, freqMin: -8,
+    reveals: ['freq', 'pause'], show: ['sine'],
+    done: () => S.pausedAtPeak,
+  },
+  {
+    title: 'The second shadow — and the name',
+    copy: 'The tip’s <b>horizontal</b> position is a wave too: the cosine. ' +
+      'One spinning point, two shadows. Engineers write the point as ' +
+      '<b>e<sup>jωt</sup></b>, where ω = 2πF is the spin rate in radians per second.',
+    task: 'Pause anywhere: the cosine peaks exactly where the sine crosses zero.',
+    preset: { F: 1, sampling: false }, freqMin: -8,
+    reveals: ['freq', 'pause'], show: ['sine', 'cos', 'labels'],
+    done: () => S.paused,
+  },
+  {
+    title: 'Strobe it',
+    copy: 'A camera, a strobe light, a computer — none of them see continuous ' +
+      'motion. They <b>sample</b> it: brief flashes, equally spaced in time.',
+    task: 'Drop the strobe to 4 flashes per second — sparse enough to watch each flash land.',
+    preset: { F: 1, Fs: 8, sampling: true }, freqMin: -8,
+    reveals: ['freq', 'pause', 'fs'], show: ['sine', 'cos', 'labels', 'samples'],
+    done: () => S.Fs <= 4,
+  },
+  {
+    title: 'Frequency as an angle step',
+    copy: 'Between flashes the phasor always turns the <b>same amount</b>: ' +
+      'Δθ = 2πF / F<sub>s</sub>. For a sampled signal, that angle step <i>is</i> ' +
+      'the frequency — measured in <b>radians per sample</b>.',
+    task: 'Make it exactly a quarter turn per flash: set F to a quarter of Fs (π/2 rad/sample).',
+    preset: { F: 1, Fs: 8, sampling: true }, freqMin: -8,
+    reveals: ['freq', 'pause', 'fs', 'rps'], show: ['sine', 'cos', 'labels', 'samples'],
+    done: () => Math.abs(Math.abs(wrappedRps()) - Math.PI / 2) < 0.02,
+  },
+  {
+    title: 'Break it',
+    copy: 'The gauge ends at <b>±π</b> — half a turn per flash. That edge is the ' +
+      '<b>Nyquist limit</b>. Beyond it, the flashes tell a different, slower ' +
+      'story than the truth.',
+    task: 'Push F past half the strobe rate and watch the red impostor appear.',
+    preset: { F: 3, Fs: 8, sampling: true }, freqMin: -8,
+    reveals: ['freq', 'pause', 'fs', 'rps'],
+    show: ['sine', 'cos', 'labels', 'samples', 'alias'],
+    done: () => isAliased(),
+  },
+  {
+    title: 'Up the octaves',
+    copy: 'Hearts and wheels fit inside ±8 Hz. The real world keeps going — ' +
+      'engines, wings, mains hum, music — to the edge of hearing. The slider is ' +
+      '<b>logarithmic</b> now, and time <b>auto-slows</b> so fast spins stay watchable.',
+    task: 'Find concert pitch — A440, the note an orchestra tunes to. Watch how far time must slow.',
+    preset: { F: 50, Fs: 240, sampling: true }, freqMin: -FMAX, wideRange: true,
+    reveals: ['freq', 'pause', 'fs', 'rps'],
+    show: ['sine', 'cos', 'labels', 'samples', 'alias'],
+    done: () => Math.abs(S.F - 440) <= 15,
+  },
+  {
+    title: 'Playground',
+    copy: 'Everything unlocked. <b>Strobe view</b> shows only what a camera sees. ' +
+      'Try a hummingbird (50/s) filmed by a phone at 60 fps — or A440 sampled at ' +
+      'CD rate (44.1k): Δθ becomes a whisker. That’s how finely music is sliced.',
+    task: null,
+    preset: {}, freqMin: -FMAX, wideRange: true,
+    reveals: ['freq', 'pause', 'fs', 'rps', 'sampleit', 'strobe', 'speed'],
+    show: ['sine', 'cos', 'labels', 'samples', 'alias'],
+    done: null,
+  },
+];
+let stage = 0;
+let taskDone = false;
+const shown = new Set();
+
+// --- real-world anchors -----------------------------------------------------------
+function realWorldF(F) {
+  const a = Math.abs(F);
+  if (a < 0.03) return 'standing still — like a battery’s steady DC voltage';
+  if (a < 0.15) return `ocean swell — one wave rolling in every ${Math.round(1 / a)} seconds`;
+  if (a < 0.4) return 'calm breathing — about 15 breaths a minute';
+  if (a < 0.8) return 'a vinyl LP turning at 33⅓ RPM (0.56 turns/s)';
+  if (a < 1.4) return `a heartbeat at ${Math.round(a * 60)} bpm — or a clock’s pendulum`;
+  if (a < 2.5) return `walking — about ${a.toFixed(1)} steps per second; a dog’s wagging tail`;
+  if (a < 4) return 'a sprinter’s stride, a horse’s gallop (~3/s)';
+  if (a < 6.5) return 'a wet dog shaking itself dry (~4–6 shakes/s); theta brain waves';
+  if (a < 10) return 'a pigeon’s wingbeat (~8/s); Earth’s Schumann resonance at 7.83 Hz';
+  if (a < 18) return 'a car engine idling — 750 RPM is 12.5 turns/s';
+  if (a < 35) return 'a washing machine at full spin (1,400 RPM)';
+  if (a < 57) return 'a hovering hummingbird (~50 wingbeats/s) — and Europe’s 50 Hz mains hum';
+  if (a < 85) return 'the 60 Hz hum of American power lines';
+  if (a < 160) return 'a car engine near redline (6,000+ RPM)';
+  if (a < 330) return 'a bumblebee’s wings (~230 beats/s)';
+  if (a < 520) return 'concert pitch — A440, the note an orchestra tunes to';
+  if (a < 800) return 'a mosquito’s whine (~600 wingbeats/s)';
+  if (a < 1300) return 'a soprano’s high C (1,047 Hz)';
+  if (a < 2600) return 'an alarm clock’s shrill beep (~2 kHz)';
+  if (a < 5500) return 'the top piano key (4,186 Hz) — near where your hearing is sharpest';
+  if (a < 11000) return 'a cricket chorus; the hiss of an “s” sound (~8 kHz)';
+  if (a < 17000) return 'the whine of an old CRT television (15,734 Hz) — adults stop hearing it';
+  return 'the edge of human hearing — beyond lies bat and dolphin territory';
+}
+function realWorldFs(Fs) {
+  if (Fs < 5) return 'barely faster than a car’s turn-signal blinker';
+  if (Fs < 10) return 'like a club strobe light flashing in the dark';
+  if (Fs < 16) return 'like cartoon animation — 12 drawings per second';
+  if (Fs < 22) return 'like a hand-cranked silent film (~18 frames/s)';
+  if (Fs < 28) return 'like a cinema camera — 24 frames every second';
+  if (Fs < 75) return 'like your phone’s video camera (30–60 fps)';
+  if (Fs < 300) return 'like a slow-motion camera (240 fps)';
+  if (Fs < 2000) return 'like an industrial vibration sensor (~1,000 readings/s)';
+  if (Fs < 10000) return 'like a telephone call — voice sampled 8,000 times a second';
+  if (Fs < 30000) return 'like a vintage lo-fi sampler (~22 kHz)';
+  return 'like a CD — music sliced 44,100 times every second';
+}
+function fmtHz(F) {
+  const a = Math.abs(F);
+  if (a >= 1000) return `${(F / 1000).toFixed(2)} kHz`;
+  if (a >= 100) return `${F.toFixed(0)} Hz`;
+  if (a >= 10) return `${F.toFixed(1)} Hz`;
+  return `${F.toFixed(2)} Hz`;
+}
+function fmtFs(Fs) {
+  return Fs >= 1000 ? `${(Fs / 1000).toFixed(1)}k /s` : `${Fs} /s`;
+}
+function fmtTimes(x) {
+  if (x >= 1e6) return `${(x / 1e6).toFixed(1)} million`;
+  if (x >= 1000) return `${Math.round(x / 100) / 10}k`;
+  return `${Math.round(x)}`;
+}
+
+// --- layout ------------------------------------------------------------------------
+let W = 0, H = 0, cy = 0, R = 0, cxLeft = 0, cxCenter = 0, sx0 = 0, sW = 0, cy0 = 0, cH = 0;
+let cxCur = null;
+function layout() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = `${W}px`; cv.style.height = `${H}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  R = Math.max(90, Math.min(170, H * 0.21, W * 0.13));
+  cxLeft = Math.max(376 + R, W * 0.34);
+  cxCenter = 380 + (W - 380) / 2;
+  cy = Math.max(R + 40, H * 0.38);
+  sx0 = cxLeft + R + 56; sW = Math.max(120, W - 30 - sx0);
+  cy0 = cy + R + 56; cH = Math.max(80, H - 24 - cy0);
+  if (cxCur === null) cxCur = shown.has('sine') ? cxLeft : cxCenter;
+}
+window.addEventListener('resize', layout);
+layout();
+
+// trace zoom adapts to frequency so a few cycles always fill the window
+const vNow = () => 130 * Math.max(1, Math.abs(S.F) / 1.5);
+const winSin = () => sW / vNow();
+const winCos = () => cH / vNow();
+const winMax = () => Math.max(winSin(), winCos());
+
+// --- physics -----------------------------------------------------------------------
+function step(dt) {
+  S.t += dt;
+  S.phase += TAU * S.F * dt;
+  const minGap = winMax() / 1200;
+  if (!S.history.length || S.t - S.history[S.history.length - 1].t >= minGap) {
+    S.history.push({ t: S.t, phase: S.phase });
+  }
+  while (S.history.length && S.t - S.history[0].t > winMax()) S.history.shift();
+  if (S.sampling) {
+    while (S.nextSampleT <= S.t) {
+      const ph = S.phase - TAU * S.F * (S.t - S.nextSampleT);
+      S.samples.push({ t: S.nextSampleT, phase: ph });
+      S.aliasPhase = ph;
+      S.aliasAnchorT = S.nextSampleT;
+      S.nextSampleT += 1 / S.Fs;
+    }
+  }
+  while (S.samples.length && S.t - S.samples[0].t > winMax()) S.samples.shift();
+  if (S.samples.length > 2200) S.samples.splice(0, S.samples.length - 2200);
+}
+function aliasPhaseAt(t) {
+  return S.aliasPhase + TAU * apparentF() * (t - S.aliasAnchorT);
+}
+function seedHistory() {
+  S.history = [];
+  const pts = Math.min(1400, Math.max(300, Math.ceil(winMax() * Math.abs(S.F) * 40)));
+  for (let i = pts; i >= 1; i--) {
+    const t = S.t - winMax() * (i / pts);
+    S.history.push({ t, phase: S.phase - TAU * S.F * (S.t - t) });
+  }
+}
+function seedSamples() {
+  S.samples = [];
+  const kEnd = Math.floor(S.t * S.Fs);
+  const k0 = Math.max(Math.ceil((S.t - winMax()) * S.Fs), kEnd - 2200);
+  for (let k = k0; k <= kEnd; k++) {
+    const t = k / S.Fs;
+    S.samples.push({ t, phase: S.phase - TAU * S.F * (S.t - t) });
+  }
+  if (S.samples.length) {
+    const last = S.samples[S.samples.length - 1];
+    S.aliasPhase = last.phase; S.aliasAnchorT = last.t;
+  }
+  S.nextSampleT = (kEnd + 1) / S.Fs;
+}
+
+// --- drawing helpers -----------------------------------------------------------------
+function line(x1, y1, x2, y2, color, width = 1, dash = null) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.restore();
+}
+function arrow(x1, y1, x2, y2, color, width = 3, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  const hl = 9 + width;
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hl * Math.cos(a - 0.42), y2 - hl * Math.sin(a - 0.42));
+  ctx.lineTo(x2 - hl * Math.cos(a + 0.42), y2 - hl * Math.sin(a + 0.42));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function dot(x, y, r, color, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.restore();
+}
+function label(text, x, y, color = COL.text, size = 12, align = 'left') {
+  ctx.save(); ctx.fillStyle = color; ctx.textAlign = align;
+  ctx.font = `600 ${size}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.fillText(text, x, y); ctx.restore();
+}
+
+// --- render ---------------------------------------------------------------------------
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  const target = shown.has('sine') ? cxLeft : cxCenter;
+  cxCur += (target - cxCur) * 0.08;
+  const cx = cxCur;
+  const v = vNow();
+  const px = (ph) => cx + R * Math.cos(ph);
+  const py = (ph) => cy - R * Math.sin(ph);
+  const ghost = shown.has('alias') && S.sampling && isAliased() ? 0.35 : 1;
+
+  line(cx - R - 26, cy, cx + R + 26, cy, COL.axis);
+  line(cx, cy - R - 26, cx, cy + R + 26, COL.axis);
+  ctx.save();
+  ctx.strokeStyle = COL.faint; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+  ctx.restore();
+  if (shown.has('labels')) {
+    label('Re', cx + R + 12, cy - 8, COL.cos);
+    label('Im', cx + 10, cy - R - 12, COL.sin);
+  }
+
+  if (shown.has('sine')) {
+    line(sx0, cy, sx0 + sW, cy, COL.axis);
+    label(shown.has('labels') ? 'Im — sin(ωt), time →' : 'height of the tip, time →',
+      sx0 + 4, cy - R - 12, COL.sin, 12);
+    ctx.save();
+    ctx.globalAlpha = ghost;
+    ctx.strokeStyle = COL.sin; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let started = false;
+    for (let i = S.history.length - 1; i >= 0; i--) {
+      const h = S.history[i], age = S.t - h.t;
+      if (age > winSin()) break;
+      const x = sx0 + age * v, y = cy - R * Math.sin(h.phase);
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (shown.has('cos')) {
+    line(cx, cy0, cx, cy0 + cH, COL.axis);
+    label('Re — cos(ωt), time ↓', cx + R + 12, cy0 + 14, COL.cos, 12);
+    ctx.save();
+    ctx.globalAlpha = ghost;
+    ctx.strokeStyle = COL.cos; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let started = false;
+    for (let i = S.history.length - 1; i >= 0; i--) {
+      const h = S.history[i], age = S.t - h.t;
+      if (age > winCos()) break;
+      const x = cx + R * Math.cos(h.phase), y = cy0 + age * v;
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (shown.has('alias') && S.sampling && isAliased()) {
+    const aph = aliasPhaseAt(S.t);
+    const fa = apparentF();
+    const segs = Math.max(120, Math.min(1200, Math.ceil(Math.abs(fa) * winMax() * 30)));
+    ctx.save(); ctx.globalAlpha = 0.85;
+    ctx.strokeStyle = COL.alias; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+    if (shown.has('sine')) {
+      ctx.beginPath();
+      for (let i = 0; i <= segs; i++) {
+        const age = (i / segs) * winSin();
+        const x = sx0 + age * v, y = cy - R * Math.sin(aph - TAU * fa * age);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+    if (shown.has('cos')) {
+      ctx.beginPath();
+      for (let i = 0; i <= segs; i++) {
+        const age = (i / segs) * winCos();
+        const x = cx + R * Math.cos(aph - TAU * fa * age), y = cy0 + age * v;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+    arrow(cx, cy, px(aph), py(aph), COL.alias, 2);
+  }
+
+  if (shown.has('samples') && S.sampling) {
+    const spacing = v / S.Fs; // px between samples on the traces
+    const stride = Math.max(1, Math.ceil(1.5 / spacing));
+    const stems = spacing >= 4;
+    for (let i = S.samples.length - 1; i >= 0; i -= stride) {
+      const s = S.samples[i];
+      const age = S.t - s.t;
+      let a = Math.max(0.15, 1 - age / winMax());
+      if (s.t < S.lastFChange) a *= 0.35;
+      dot(px(s.phase), py(s.phase), 4.5, COL.sample, a);
+      if (shown.has('sine') && age <= winSin()) {
+        const x = sx0 + age * v, y = cy - R * Math.sin(s.phase);
+        if (stems) line(x, cy, x, y, COL.sample, 1.5);
+        dot(x, y, stems ? 3.5 : 2.2, COL.sample, Math.max(0.3, a));
+      }
+      if (shown.has('cos') && age <= winCos()) {
+        const x = cx + R * Math.cos(s.phase), y = cy0 + age * v;
+        if (stems) line(cx, y, x, y, COL.sample, 1.5);
+        dot(x, y, stems ? 3.5 : 2.2, COL.sample, Math.max(0.3, a));
+      }
+    }
+    const n = S.samples.length;
+    if (n >= 2) {
+      const p0 = S.samples[n - 2].phase, p1 = S.samples[n - 1].phase;
+      if (Math.abs(p1 - p0) > 0.05) {
+        ctx.save();
+        ctx.strokeStyle = COL.sample; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * 0.32, -p0, -p1, p1 > p0);
+        ctx.stroke();
+        ctx.restore();
+        const mid = (p0 + p1) / 2;
+        label('Δθ', cx + R * 0.45 * Math.cos(mid), cy - R * 0.45 * Math.sin(mid) + 4,
+          COL.sample, 12, 'center');
+      }
+      arrow(cx, cy, px(S.samples[n - 1].phase), py(S.samples[n - 1].phase), COL.sample, 3);
+    }
+  }
+
+  if (!S.strobe) {
+    const tx = px(S.phase), ty = py(S.phase);
+    if (shown.has('sine')) line(tx, ty, sx0, ty, COL.sin, 1, [4, 4]);
+    if (shown.has('cos')) line(tx, ty, tx, cy0, COL.cos, 1, [4, 4]);
+    arrow(cx, cy, tx, ty, COL.phasor, 3.5, ghost);
+    dot(tx, ty, 5, COL.phasor, ghost);
+    if (shown.has('sine')) dot(sx0, ty, 4, COL.sin);
+    if (shown.has('cos')) dot(tx, cy0, 4, COL.cos);
+  }
+  dot(cx, cy, 3, COL.faint);
+}
+
+// --- panel ---------------------------------------------------------------------------
+function fmtPi(r) {
+  const inPi = r / Math.PI;
+  const a = Math.abs(inPi);
+  const body = a >= 0.01 || a === 0 ? a.toFixed(2) : a.toPrecision(2);
+  return `${inPi >= 0 ? '' : '−'}${body}π`;
+}
+function updatePanel() {
+  const st = STAGES[stage];
+  $('freq-val').textContent = fmtHz(S.F);
+  $('fs-val').textContent = fmtFs(S.Fs);
+  $('speed-val').textContent = `${S.speed.toFixed(2)}×`;
+  $('dir').textContent = S.F > 0.001 ? 'counter-clockwise — positive frequency'
+    : S.F < -0.001 ? 'clockwise — negative frequency'
+    : '0 Hz — standing still (DC)';
+  $('real-world').textContent = realWorldF(S.F);
+  $('fs-context').textContent = S.sampling ? realWorldFs(S.Fs) : '';
+  const slow = 1 / (S.speed * autoScale());
+  $('slowmo').textContent = slow >= 1.5 ? `time slowed ${fmtTimes(slow)}× so you can watch` : '';
+
+  const rps = radPerSample();
+  $('rps-val').textContent = Math.abs(rps) >= 0.005 || rps === 0
+    ? rps.toFixed(3) : rps.toExponential(1);
+  $('rps-pi').textContent = fmtPi(rps);
+  $('gauge-mark').style.left = `${((wrappedRps() + Math.PI) / TAU) * 100}%`;
+  document.body.classList.toggle('aliased', isAliased());
+  if (isAliased() && shown.has('alias')) {
+    const fa = apparentF();
+    $('alias-body').innerHTML = Math.abs(fa) < Math.max(0.05, Math.abs(S.F) * 0.002)
+      ? 'The strobe is <b>synced to the spin</b> — the dots freeze, like helicopter ' +
+        'blades filmed at exactly their rotor rate.'
+      : `Aliased — these flashes are indistinguishable from a <b>${fmtHz(fa)}</b> ` +
+        'phasor. The <span class="c-a">red impostor</span> threads the same dots. ' +
+        'This is the <b>wagon-wheel effect</b> — why stagecoach wheels in 24 fps ' +
+        'westerns roll backwards.';
+  }
+
+  if (!taskDone && st.done && st.done()) taskDone = true;
+  $('task').classList.toggle('done', taskDone);
+  $('task-tick').textContent = taskDone ? '✓' : '○';
+  $('next').classList.toggle('glow', taskDone);
+}
+
+// --- control wiring --------------------------------------------------------------------
+function applyF(val) {
+  S.F = val;
+  S.lastFChange = S.t;
+  $('freq').value = fToSlider(val);
+}
+function applyFs(val) {
+  S.Fs = val;
+  $('fs').value = fsToSlider(val);
+  if (S.sampling) seedSamples();
+}
+function applySampling(on) {
+  S.sampling = on;
+  $('sampling').checked = on;
+  if (on) seedSamples();
+}
+function applyPaused(p) {
+  S.paused = p;
+  $('pause').textContent = p ? 'Play' : 'Pause';
+  if (p && Math.sin(S.phase) > 0.93) S.pausedAtPeak = true;
+}
+$('freq').addEventListener('input', (e) => applyF(snapF(sliderToF(+e.target.value))));
+$('fs').addEventListener('input', (e) => applyFs(sliderToFs(+e.target.value)));
+$('speed').addEventListener('input', (e) => { S.speed = +e.target.value; });
+$('sampling').addEventListener('change', (e) => applySampling(e.target.checked));
+$('strobe').addEventListener('change', (e) => { S.strobe = e.target.checked; });
+$('pause').addEventListener('click', () => applyPaused(!S.paused));
+
+// --- stage machinery ---------------------------------------------------------------------
+function configureSliders(st) {
+  const f = $('freq'), fs = $('fs');
+  if (wide) {
+    f.min = st.freqMin < 0 ? -1 : 0; f.max = 1; f.step = 0.0005;
+    fs.min = 0; fs.max = 1; fs.step = 0.001;
+  } else {
+    f.min = st.freqMin; f.max = 8; f.step = 0.05;
+    fs.min = 2; fs.max = 24; fs.step = 1;
+  }
+}
+function setStage(i, applyPreset = true) {
+  stage = Math.max(0, Math.min(STAGES.length - 1, i));
+  const st = STAGES[stage];
+  taskDone = false;
+  S.pausedAtPeak = false;
+  applyPaused(false);
+  wide = !!st.wideRange;
+  configureSliders(st);
+
+  if (applyPreset) {
+    if (st.preset.F !== undefined) applyF(st.preset.F);
+    if (st.preset.Fs !== undefined) applyFs(st.preset.Fs);
+    if (st.preset.sampling !== undefined) applySampling(st.preset.sampling);
+    S.strobe = false; $('strobe').checked = false;
+    S.lastFChange = -1e9;
+    seedHistory();
+  }
+  if (!wide && Math.abs(S.F) > 8) applyF(st.preset.F !== undefined ? st.preset.F : 1);
+  if (!wide && S.Fs > 24) applyFs(8);
+  if (S.F < st.freqMin) applyF(st.freqMin === 0 ? 1 : st.freqMin);
+  $('freq').value = fToSlider(S.F);
+  $('fs').value = fsToSlider(S.Fs);
+
+  shown.clear();
+  st.show.forEach((k) => shown.add(k));
+  ['freq', 'sampleit', 'fs', 'rps', 'strobe', 'speed', 'pause'].forEach((k) => {
+    $(`ctl-${k}`).hidden = !st.reveals.includes(k);
+  });
+  $('alias-chip').classList.toggle('allowed', st.show.includes('alias'));
+
+  $('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
+  $('stage-title').textContent = st.title;
+  $('stage-copy').innerHTML = st.copy;
+  $('task').style.display = st.task ? '' : 'none';
+  if (st.task) $('task-text').textContent = st.task;
+  $('back').disabled = stage === 0;
+  $('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  $('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+
+  if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
+}
+$('back').addEventListener('click', () => setStage(stage - 1));
+$('next').addEventListener('click', () => setStage(stage + 1));
+window.addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n !== stage) setStage(n);
+});
+
+// --- testing hooks --------------------------------------------------------------------------
+window.__viz = {
+  state() {
+    const f = (x) => +x.toFixed(4);
+    return {
+      stage, taskDone, wide, F: S.F, Fs: S.Fs, sampling: S.sampling, strobe: S.strobe,
+      paused: S.paused, t: f(S.t), phase: f(S.phase),
+      radPerSample: f(radPerSample()), wrapped: f(wrappedRps()),
+      apparentF: f(apparentF()), aliased: isAliased(), samples: S.samples.length,
+      history: S.history.length,
+      visible: ['freq', 'sampleit', 'fs', 'rps', 'strobe', 'speed', 'pause']
+        .filter((k) => !$(`ctl-${k}`).hidden),
+    };
+  },
+  set(id, value) {
+    const el = $(id);
+    if (el.type === 'checkbox') { el.checked = value; el.dispatchEvent(new Event('change')); }
+    else { el.value = value; el.dispatchEvent(new Event('input')); }
+  },
+  setF(hz) { applyF(hz); },
+  setFs(v) { applyFs(v); },
+  go(i) { setStage(i); },
+};
+
+// --- boot + main loop -------------------------------------------------------------------------
+const initial = parseInt(location.hash.slice(1), 10);
+setStage(Number.isNaN(initial) ? 0 : initial);
+
+let lastReal = performance.now();
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dtReal = Math.min((now - lastReal) / 1000, 0.05);
+  lastReal = now;
+  if (!S.paused) step(dtReal * S.speed * autoScale());
+  updatePanel();
+  render();
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

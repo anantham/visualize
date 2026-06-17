@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pascal’s Paths — nCk as a walk</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f17;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #dbe4f0; }
+  canvas { display: block; position: fixed; inset: 0; }
+
+  #panel { position: fixed; top: 16px; left: 16px; width: 330px; z-index: 10;
+    background: rgba(13, 19, 30, 0.86); border: 1px solid rgba(122, 150, 200, 0.18);
+    border-radius: 14px; padding: 14px 18px 12px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45); }
+  .brand { font-size: 10px; color: #516180; letter-spacing: 0.4px;
+    display: flex; justify-content: space-between; margin-bottom: 6px; }
+  #panel h1 { font-size: 16px; margin: 0 0 6px; letter-spacing: 0.3px; }
+  #stage-copy { font-size: 12px; color: #9fb2cf; margin: 0 0 10px; line-height: 1.55; }
+  #stage-copy b { color: #c9d6ea; }
+
+  #task { display: flex; gap: 8px; align-items: baseline; font-size: 12px;
+    color: #cfdcf2; background: rgba(96, 165, 250, 0.07);
+    border: 1px solid rgba(96, 165, 250, 0.22); border-radius: 9px;
+    padding: 8px 10px; margin: 0 0 10px; line-height: 1.45; }
+  #task .tick { flex: none; color: #64789a; font-weight: 700; }
+  #task.done { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); }
+  #task.done .tick { color: #34d399; }
+
+  .ctl { margin: 8px 0; }
+  .ctl[hidden] { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .row label { width: 60px; flex: none; color: #9fb2cf; }
+  .row input[type="range"] { flex: 1; accent-color: #60a5fa; }
+  .row .val { width: 30px; flex: none; text-align: right;
+    font-variant-numeric: tabular-nums; font-weight: 600; }
+  .status { font-size: 11.5px; color: #7fd1f9; margin: 5px 0 0;
+    font-variant-numeric: tabular-nums; min-height: 14px; }
+
+  .btn { background: #1c2a40; border: 1px solid rgba(122, 150, 200, 0.25);
+    color: #dbe4f0; border-radius: 8px; padding: 6px 12px; font-size: 12px;
+    cursor: pointer; }
+  .btn:hover { background: #25364f; }
+  .btn[disabled] { opacity: 0.35; cursor: default; }
+  .btn.primary { border-color: rgba(96, 165, 250, 0.5); }
+
+  .nav { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .nav .spacer { flex: 1; }
+  #next.glow { border-color: rgba(52, 211, 153, 0.7);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.35); }
+  #skip { font-size: 10.5px; color: #64789a; text-decoration: none; }
+  #skip:hover { color: #9fb2cf; text-decoration: underline; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="panel">
+  <div class="brand"><span>visualize · project 3</span><span id="stage-num"></span></div>
+  <h1 id="stage-title"></h1>
+  <p id="stage-copy"></p>
+  <div id="task"><span class="tick" id="task-tick">○</span><span id="task-text"></span></div>
+
+  <div class="ctl" id="ctl-walk" hidden>
+    <div class="row" style="gap:6px">
+      <button class="btn" id="walk-l">⟵ left</button>
+      <button class="btn" id="walk-r">right ⟶</button>
+      <button class="btn" id="walk-reset">start over</button>
+    </div>
+    <div class="status" id="walk-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-race" hidden>
+    <button class="btn primary" id="race-btn">Race!</button>
+    <div class="status" id="race-status">watch the step counters</div>
+  </div>
+
+  <div class="ctl" id="ctl-galton" hidden>
+    <div class="row" style="gap:6px">
+      <button class="btn" id="drop1">drop 1</button>
+      <button class="btn" id="drop50">drop 50</button>
+      <button class="btn" id="gclear">clear</button>
+    </div>
+    <div class="status" id="galton-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-depth" hidden>
+    <div class="row">
+      <label for="depth">depth</label>
+      <input type="range" id="depth" min="4" max="12" step="1" value="8">
+      <span class="val" id="depth-val">8</span>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="back">← Back</button>
+    <button class="btn" id="next">Next →</button>
+    <span class="spacer"></span>
+    <a id="skip" href="#6">skip to playground</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const TAU = Math.PI * 2;
+
+const COL = {
+  cell: '#2a3a55', cellLit: '#46618f', text: '#8fa3c0', num: '#dbe4f0',
+  walker: '#60a5fa', ribbon: '#34d399', viaL: '#fbbf24', viaR: '#60a5fa',
+  target: '#f472b6', ball: '#e2e8f0', bar: '#f472b6', expect: '#fbbf24',
+  heat: '#fb923c', dp: '#34d399',
+};
+
+// --- pascal values ------------------------------------------------------------------
+const MAXN = 12;
+const P = [[1]];
+for (let r = 1; r <= MAXN; r++) {
+  P.push(Array.from({ length: r + 1 }, (_, i) =>
+    (P[r - 1][i - 1] || 0) + (P[r - 1][i] || 0)));
+}
+
+// --- state -----------------------------------------------------------------------
+const S = {
+  N: 8,
+  walk: { idxs: [0], turns: [] },
+  sel: null,            // {r, i, t0}
+  revealed: new Set(),  // 'r,i' cells with visible counts
+  race: null,
+  galton: { bins: [], landed: 0, balls: [], pending: 0, lastSpawn: 0 },
+  flags: {},            // per-stage scratch
+};
+function resetWalk() { S.walk = { idxs: [0], turns: [] }; }
+function resetGalton() {
+  S.galton = { bins: Array(S.N + 1).fill(0), landed: 0, balls: [], pending: 0, lastSpawn: 0 };
+}
+resetGalton();
+
+// --- stages: the declarative "document" -------------------------------------------
+const STAGES = [
+  {
+    title: 'Walk the triangle',
+    copy: 'Stand at the apex. Every step descends one level, and the only choice ' +
+      'you ever make is <b>left or right</b>.',
+    task: 'Walk 4 levels deep taking exactly 1 right turn — land on the marked cell.',
+    reveals: ['walk'], show: ['walker'], target: [4, 1],
+    enter() { resetWalk(); },
+    done: () => S.walk.idxs.length - 1 === 4 &&
+      S.walk.turns.filter((t) => t === 1).length === 1,
+  },
+  {
+    title: 'Order doesn’t matter',
+    copy: 'Where you land depends only on <b>how many</b> rights you took — not ' +
+      'when you took them. Any reshuffling of the same turns reaches the same cell.',
+    task: 'Reach the marked cell (4 deep, 2 rights) twice, by two different routes.',
+    reveals: ['walk'], show: ['walker'], target: [4, 2],
+    enter() { resetWalk(); S.flags.routes = new Set(); },
+    done: () => (S.flags.routes?.size || 0) >= 2,
+  },
+  {
+    title: 'Count every route',
+    copy: 'Different choice-sequences, same landing cell — so <b>how many</b> ' +
+      'routes end at a given cell? Click any cell to light up every route into it.',
+    task: 'Find a cell with exactly 6 routes into it.',
+    reveals: [], show: ['select', 'counts'],
+    enter() { S.sel = null; },
+    done: () => !!S.flags.found6,
+  },
+  {
+    title: 'Two doors in',
+    copy: 'Every route enters a cell through one of <b>two doors</b>: the parent ' +
+      'above-left or above-right. So routes(n,k) = routes(n−1,k−1) + routes(n−1,k) ' +
+      '— <b>Pascal’s identity</b>, found by your own clicks.',
+    task: 'Split a cell on row 5 or deeper and watch the two bundles add up.',
+    reveals: [], show: ['select', 'counts', 'split'],
+    enter() { S.sel = null; },
+    done: () => !!(S.sel && S.sel.r >= 5),
+  },
+  {
+    title: 'Re-walking vs remembering',
+    copy: 'Counting by walking <b>re-treads shared prefixes</b> over and over ' +
+      '(watch them glow). Filling the triangle computes each cell <b>once</b> from ' +
+      'its two parents. The triangle is the memo table — this is dynamic programming.',
+    task: 'Run the race.',
+    reveals: ['race'], show: ['race'],
+    enter() { S.race = null; },
+    done: () => !!(S.race && S.race.done),
+  },
+  {
+    title: 'Let chance choose',
+    copy: 'Stop choosing — flip a coin at every cell. Each bin fills in proportion ' +
+      'to its route count: the <b>binomial distribution</b>. A bell curve assembles ' +
+      'itself out of pure left-or-right luck.',
+    task: 'Drop 200 balls.',
+    reveals: ['galton'], show: ['galton'],
+    enter() { resetGalton(); },
+    done: () => S.galton.landed >= 200,
+  },
+  {
+    title: 'Playground',
+    copy: 'Everything unlocked. Deepen the triangle, walk it, click cells to split ' +
+      'their route bundles, rain balls on it. The numbers, the paths, and the ' +
+      'histogram are one object.',
+    task: null,
+    reveals: ['walk', 'galton', 'depth'],
+    show: ['walker', 'select', 'counts', 'split', 'galton'],
+    enter() {},
+    done: null,
+  },
+];
+let stage = 0;
+let taskDone = false;
+const shown = new Set();
+
+// --- layout ----------------------------------------------------------------------
+let W = 0, H = 0;
+function layout() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = `${W}px`; cv.style.height = `${H}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', layout);
+layout();
+
+function geom() {
+  const areaX = 380;
+  const galtonPad = shown.has('galton') ? 150 : 40;
+  const top = 64;
+  const dy = Math.min(58, (H - top - galtonPad - 30) / S.N);
+  const dx = Math.min(dy * 1.3, (W - areaX - 60) / (S.N + 0.5));
+  const cx = areaX + (W - areaX) / 2;
+  const rad = Math.max(8, Math.min(17, dx * 0.34));
+  return { cx, top, dx, dy, rad };
+}
+function cellXY(g, r, i) {
+  return { x: g.cx + (i - r / 2) * g.dx, y: g.top + r * g.dy };
+}
+
+// --- paths to a cell (cached) ---------------------------------------------------------
+const pathCache = new Map();
+function pathsTo(r, i) {
+  const key = `${r},${i}`;
+  if (pathCache.has(key)) return pathCache.get(key);
+  const res = [];
+  (function dfs(row, idx, acc) {
+    if (row === r) { if (idx === i) res.push(acc.slice()); return; }
+    if (idx > i || idx + (r - row) < i) return; // prune: can't reach
+    acc.push(idx); dfs(row + 1, idx, acc); acc.pop();         // left
+    acc.push(idx + 1); dfs(row + 1, idx + 1, acc); acc.pop(); // right
+  })(0, 0, []);
+  // each path in res is the idx at rows 1..r (the apex idx 0 is implicit)
+  pathCache.set(key, res);
+  return res;
+}
+
+// --- walking ------------------------------------------------------------------------
+function walkStep(turn) { // 0 = left, 1 = right
+  const w = S.walk;
+  const depth = w.idxs.length - 1;
+  if (depth >= S.N) return;
+  w.turns.push(turn);
+  w.idxs.push(w.idxs[depth] + turn);
+  const nd = w.idxs.length - 1;
+  if (stage === 1 && nd === 4 && w.idxs[4] === 2 && S.flags.routes) {
+    S.flags.routes.add(w.turns.slice(0, 4).join(''));
+  }
+}
+$('walk-l').addEventListener('click', () => walkStep(0));
+$('walk-r').addEventListener('click', () => walkStep(1));
+$('walk-reset').addEventListener('click', resetWalk);
+window.addEventListener('keydown', (e) => {
+  if ($('ctl-walk').hidden) return;
+  if (e.key === 'ArrowLeft') { walkStep(0); e.preventDefault(); }
+  if (e.key === 'ArrowRight') { walkStep(1); e.preventDefault(); }
+});
+
+// --- cell selection --------------------------------------------------------------------
+function selectCell(r, i) {
+  if (r < 1 || r > S.N || i < 0 || i > r) return;
+  S.sel = { r, i, t0: performance.now() };
+  S.revealed.add(`${r},${i}`);
+  if (shown.has('split')) {
+    if (i - 1 >= 0) S.revealed.add(`${r - 1},${i - 1}`);
+    if (i <= r - 1) S.revealed.add(`${r - 1},${i}`);
+  }
+  if (P[r][i] === 6) S.flags.found6 = true;
+}
+cv.addEventListener('pointerdown', (e) => {
+  if (!shown.has('select')) return;
+  const g = geom();
+  for (let r = 1; r <= S.N; r++) {
+    for (let i = 0; i <= r; i++) {
+      const p = cellXY(g, r, i);
+      const d2 = (e.clientX - p.x) ** 2 + (e.clientY - p.y) ** 2;
+      if (d2 < (g.rad * 1.5) ** 2) { selectCell(r, i); return; }
+    }
+  }
+});
+
+// --- race ---------------------------------------------------------------------------
+const RACE_N = 8, RACE_K = 4;
+function startRace() {
+  const paths = pathsTo(RACE_N, RACE_K);
+  S.race = {
+    paths, done: false, budget: 0,
+    enum: { p: 0, e: 0, steps: 0, heat: new Map(), done: false },
+    dp: { idx: 0, cells: 0, done: false }, // fills row-major
+  };
+}
+$('race-btn').addEventListener('click', startRace);
+function raceTick(dt) {
+  const rc = S.race;
+  if (!rc || rc.done) return;
+  rc.budget += dt * 70;
+  while (rc.budget >= 1) {
+    rc.budget -= 1;
+    if (!rc.enum.done) {
+      const path = rc.paths[rc.enum.p];
+      const fromIdx = rc.enum.e === 0 ? 0 : path[rc.enum.e - 1];
+      const toIdx = path[rc.enum.e];
+      const key = `${rc.enum.e},${fromIdx},${toIdx - fromIdx}`;
+      rc.enum.heat.set(key, (rc.enum.heat.get(key) || 0) + 1);
+      rc.enum.steps++;
+      rc.enum.e++;
+      if (rc.enum.e === RACE_N) { rc.enum.e = 0; rc.enum.p++; }
+      if (rc.enum.p === rc.paths.length) rc.enum.done = true;
+    }
+    if (!rc.dp.done) {
+      rc.dp.idx++; rc.dp.cells++;
+      const total = (RACE_N + 1) * (RACE_N + 2) / 2;
+      if (rc.dp.cells >= total) rc.dp.done = true;
+    }
+    if (rc.enum.done && rc.dp.done) { rc.done = true; break; }
+  }
+}
+
+// --- galton -------------------------------------------------------------------------
+function dropBalls(n) { S.galton.pending += n; }
+$('drop1').addEventListener('click', () => dropBalls(1));
+$('drop50').addEventListener('click', () => dropBalls(50));
+$('gclear').addEventListener('click', resetGalton);
+function galtonTick(now) {
+  const G = S.galton;
+  if (G.pending > 0 && now - G.lastSpawn > 25) {
+    G.lastSpawn = now;
+    G.pending--;
+    G.balls.push({ r: 0, i: 0, turn: Math.random() < 0.5 ? 0 : 1, t0: now, dur: 70 });
+  }
+  for (let b = G.balls.length - 1; b >= 0; b--) {
+    const ball = G.balls[b];
+    if (now - ball.t0 >= ball.dur) {
+      ball.i += ball.turn; ball.r++;
+      if (ball.r >= S.N) {
+        G.bins[ball.i]++; G.landed++;
+        G.balls.splice(b, 1);
+      } else {
+        ball.turn = Math.random() < 0.5 ? 0 : 1;
+        ball.t0 = now;
+      }
+    }
+  }
+}
+
+// --- drawing helpers ---------------------------------------------------------------
+function circle(x, y, r, fill, stroke, lw = 1.5, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+  ctx.restore();
+}
+function text(s, x, y, color, size = 12, align = 'center', weight = 600) {
+  ctx.save(); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  ctx.font = `${weight} ${size}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function seg(x1, y1, x2, y2, color, w, alpha) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = w;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+
+// --- render: main triangle -------------------------------------------------------------
+function drawTriangle(now) {
+  const g = geom();
+  const st = STAGES[stage];
+
+  // selected-cell ribbons
+  if (S.sel && shown.has('select')) {
+    const { r, i, t0 } = S.sel;
+    let paths = pathsTo(r, i);
+    let noteSampled = '';
+    if (paths.length > 400) {
+      if (!S.sel.sample) {
+        S.sel.sample = [...paths].sort(() => Math.random() - 0.5).slice(0, 400);
+      }
+      paths = S.sel.sample;
+      noteSampled = `showing 400 of ${P[r][i]} routes`;
+    }
+    const reveal = Math.min(1, (now - t0) / 800);
+    const count = Math.max(1, Math.floor(paths.length * reveal));
+    const alpha = Math.min(0.35, 6 / paths.length + 0.08);
+    for (let p = 0; p < count; p++) {
+      const path = paths[p];
+      const split = shown.has('split');
+      const parent = r >= 2 ? path[r - 2] : 0; // idx at row r-1, the door it came through
+      const color = !split ? COL.ribbon : (parent === i - 1 ? COL.viaL : COL.viaR);
+      let prev = cellXY(g, 0, 0);
+      for (let row = 1; row <= r; row++) {
+        const cur = cellXY(g, row, path[row - 1]);
+        seg(prev.x, prev.y, cur.x, cur.y, color, 2, alpha);
+        prev = cur;
+      }
+    }
+    if (noteSampled) text(noteSampled, g.cx, g.top - 28, COL.text, 11);
+    // equation
+    if (shown.has('split') && reveal >= 1) {
+      const viaL = i - 1 >= 0 ? P[r - 1][i - 1] : 0;
+      const viaR = i <= r - 1 ? P[r - 1][i] : 0;
+      const p0 = cellXY(g, r, i);
+      const eqY = Math.min(H - 14, p0.y + g.rad + 22);
+      ctx.save(); ctx.textBaseline = 'middle'; ctx.font = '700 14px ui-sans-serif, system-ui';
+      const parts = [[`${P[r][i]}`, COL.num], [' = ', COL.text],
+        [`${viaL}`, COL.viaL], [' + ', COL.text], [`${viaR}`, COL.viaR]];
+      let tw = 0;
+      parts.forEach(([s]) => { tw += ctx.measureText(s).width; });
+      let x = p0.x - tw / 2;
+      parts.forEach(([s, c]) => {
+        ctx.fillStyle = c; ctx.textAlign = 'left'; ctx.fillText(s, x, eqY);
+        x += ctx.measureText(s).width;
+      });
+      ctx.restore();
+    }
+  }
+
+  // walker path
+  if (shown.has('walker') && S.walk.idxs.length > 1) {
+    let prev = cellXY(g, 0, 0);
+    for (let r = 1; r < S.walk.idxs.length; r++) {
+      const cur = cellXY(g, r, S.walk.idxs[r]);
+      seg(prev.x, prev.y, cur.x, cur.y, COL.walker, 3, 0.9);
+      prev = cur;
+    }
+  }
+
+  // cells
+  for (let r = 0; r <= S.N; r++) {
+    for (let i = 0; i <= r; i++) {
+      const p = cellXY(g, r, i);
+      const isSel = shown.has('select') && S.sel && S.sel.r === r && S.sel.i === i;
+      const revealedHere = shown.has('counts') && S.revealed.has(`${r},${i}`);
+      circle(p.x, p.y, g.rad, '#0e1522', isSel ? COL.target : COL.cell, isSel ? 2 : 1.5);
+      if (revealedHere || (r === 0)) {
+        text(`${P[r][i]}`, p.x, p.y, COL.num, Math.min(13, g.rad), 'center');
+      }
+    }
+  }
+
+  // stage target ring
+  if (st.target) {
+    const p = cellXY(g, st.target[0], st.target[1]);
+    const pulse = 1 + 0.12 * Math.sin(now / 280);
+    circle(p.x, p.y, g.rad * 1.35 * pulse, null, COL.target, 2, 0.8);
+  }
+
+  // walker dot
+  if (shown.has('walker')) {
+    const d = S.walk.idxs.length - 1;
+    const p = cellXY(g, d, S.walk.idxs[d]);
+    circle(p.x, p.y, g.rad * 0.55, COL.walker, null, 0, 1);
+  }
+
+  // galton
+  if (shown.has('galton')) {
+    const G = S.galton;
+    const binW = g.dx * 0.7;
+    const baseY = g.top + S.N * g.dy + 34;
+    const maxH = Math.max(60, H - baseY - 26);
+    const expected = (k) => G.landed * P[S.N][k] / 2 ** S.N;
+    const peak = Math.max(...G.bins, expected(Math.floor(S.N / 2)), 1);
+    for (let k = 0; k <= S.N; k++) {
+      const p = cellXY(g, S.N, k);
+      const h = (G.bins[k] / peak) * maxH;
+      ctx.save(); ctx.fillStyle = COL.bar; ctx.globalAlpha = 0.75;
+      ctx.fillRect(p.x - binW / 2, baseY + (maxH - h), binW, h);
+      ctx.restore();
+      if (G.landed > 0) {
+        const eh = (expected(k) / peak) * maxH;
+        seg(p.x - binW / 2 - 3, baseY + (maxH - eh), p.x + binW / 2 + 3,
+          baseY + (maxH - eh), COL.expect, 2, 0.9);
+      }
+      if (G.bins[k] > 0) {
+        text(`${G.bins[k]}`, p.x, baseY + maxH + 11, COL.text, 10);
+      }
+    }
+    for (const b of G.balls) {
+      const f = Math.min(1, (now - b.t0) / b.dur);
+      const from = cellXY(g, b.r, b.i);
+      const to = b.r + 1 <= S.N ? cellXY(g, b.r + 1, b.i + b.turn) : from;
+      circle(from.x + (to.x - from.x) * f, from.y + (to.y - from.y) * f,
+        4, COL.ball, null, 0, 0.95);
+    }
+  }
+}
+
+// --- render: race view --------------------------------------------------------------------
+function drawRace(now) {
+  const areaX = 380;
+  const top = 86;
+  const dy = Math.min(40, (H - top - 130) / RACE_N);
+  const dx = dy * 1.25;
+  const rad = Math.max(5, dx * 0.26);
+  const centers = [areaX + (W - areaX) * 0.27, areaX + (W - areaX) * 0.73];
+  const rc = S.race;
+  const pos = (side, r, i) => ({
+    x: centers[side] + (i - r / 2) * dx, y: top + r * dy,
+  });
+
+  text('walk every route', centers[0], top - 44, COL.heat, 14);
+  text('fill each cell once', centers[1], top - 44, COL.dp, 14);
+
+  // enum side: heat + current path
+  if (rc) {
+    for (const [key, visits] of rc.enum.heat) {
+      const [row, idx, dir] = key.split(',').map(Number);
+      const a = pos(0, row, idx), b = pos(0, row + 1, idx + dir);
+      seg(a.x, a.y, b.x, b.y, COL.heat, 2.5, Math.min(0.85, 0.1 + visits * 0.05));
+    }
+    if (!rc.enum.done && rc.enum.e > 0) {
+      const path = rc.paths[rc.enum.p];
+      let prev = pos(0, 0, 0);
+      for (let s = 0; s < rc.enum.e; s++) {
+        const cur = pos(0, s + 1, path[s]);
+        seg(prev.x, prev.y, cur.x, cur.y, '#fff', 2, 0.9);
+        prev = cur;
+      }
+    }
+  }
+  for (let side = 0; side < 2; side++) {
+    let filled = Infinity;
+    if (side === 1) filled = rc ? rc.dp.cells : 0;
+    let count = 0;
+    for (let r = 0; r <= RACE_N; r++) {
+      for (let i = 0; i <= r; i++) {
+        const p = pos(side, r, i);
+        const isTarget = r === RACE_N && i === RACE_K;
+        const isFilled = side === 1 && count < filled;
+        circle(p.x, p.y, rad, '#0e1522', isTarget ? COL.target : COL.cell, isTarget ? 2 : 1.2);
+        if (isFilled) text(`${P[r][i]}`, p.x, p.y, COL.dp, Math.min(10, rad * 1.3));
+        count++;
+      }
+    }
+  }
+  const cy2 = top + RACE_N * dy + 36;
+  if (rc) {
+    text(`routes walked ${Math.min(rc.enum.p, rc.paths.length)} / ${rc.paths.length}`,
+      centers[0], cy2, COL.text, 12);
+    text(`steps taken: ${rc.enum.steps}`, centers[0], cy2 + 18, COL.heat, 13);
+    const total = (RACE_N + 1) * (RACE_N + 2) / 2;
+    text(`cells filled ${Math.min(rc.dp.cells, total)} / ${total}`, centers[1], cy2, COL.text, 12);
+    text(`steps taken: ${Math.min(rc.dp.cells, total)}`, centers[1], cy2 + 18, COL.dp, 13);
+    if (rc.dp.done && !rc.enum.done) {
+      text('…done. waiting for the other guy…', centers[1], cy2 + 40, COL.dp, 12);
+    }
+    if (rc.done) {
+      text(`Same answer: ${P[RACE_N][RACE_K]} routes — the memo table needed ` +
+        `${Math.round(rc.enum.steps / ((RACE_N + 1) * (RACE_N + 2) / 2))}× fewer steps.`,
+      (centers[0] + centers[1]) / 2, cy2 + 46, COL.num, 14);
+    }
+  } else {
+    text('press Race! — both sides count routes from the apex to the marked cell',
+      (centers[0] + centers[1]) / 2, cy2, COL.text, 12);
+  }
+}
+
+// --- panel -----------------------------------------------------------------------------
+function updatePanel() {
+  const st = STAGES[stage];
+  const d = S.walk.idxs.length - 1;
+  const rights = S.walk.turns.filter((t) => t === 1).length;
+  $('walk-status').textContent =
+    `level ${d} · ${rights} right${rights === 1 ? '' : 's'}, ${d - rights} left${d - rights === 1 ? '' : 's'}` +
+    (d >= S.N ? ' — bottom!' : '');
+  $('walk-l').disabled = d >= S.N;
+  $('walk-r').disabled = d >= S.N;
+  $('galton-status').textContent =
+    `balls landed: ${S.galton.landed}` + (S.galton.pending > 0 ? ` (+${S.galton.pending} falling)` : '');
+  if (S.race) {
+    $('race-status').textContent = S.race.done ? 'run it again?' : 'racing…';
+  }
+  if (!taskDone && st.done && st.done()) taskDone = true;
+  $('task').classList.toggle('done', taskDone);
+  $('task-tick').textContent = taskDone ? '✓' : '○';
+  $('next').classList.toggle('glow', taskDone);
+}
+
+// --- depth slider ----------------------------------------------------------------------
+$('depth').addEventListener('input', (e) => {
+  S.N = +e.target.value;
+  $('depth-val').textContent = S.N;
+  pathCache.clear();
+  S.sel = null;
+  S.revealed.clear();
+  resetWalk();
+  resetGalton();
+});
+
+// --- stage machinery ----------------------------------------------------------------------
+function setStage(i) {
+  stage = Math.max(0, Math.min(STAGES.length - 1, i));
+  const st = STAGES[stage];
+  taskDone = false;
+  S.flags = {};
+  if (stage !== 6 && S.N !== 8) {
+    S.N = 8; $('depth').value = 8; $('depth-val').textContent = 8;
+    pathCache.clear(); S.revealed.clear(); resetGalton();
+  }
+  st.enter();
+  shown.clear();
+  st.show.forEach((k) => shown.add(k));
+  ['walk', 'race', 'galton', 'depth'].forEach((k) => {
+    $(`ctl-${k}`).hidden = !st.reveals.includes(k);
+  });
+  $('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
+  $('stage-title').textContent = st.title;
+  $('stage-copy').innerHTML = st.copy;
+  $('task').style.display = st.task ? '' : 'none';
+  if (st.task) $('task-text').textContent = st.task;
+  $('back').disabled = stage === 0;
+  $('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  $('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
+}
+$('back').addEventListener('click', () => setStage(stage - 1));
+$('next').addEventListener('click', () => setStage(stage + 1));
+window.addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n !== stage) setStage(n);
+});
+
+// --- testing hooks ---------------------------------------------------------------------------
+window.__viz = {
+  state() {
+    return {
+      stage, taskDone, N: S.N,
+      walk: { depth: S.walk.idxs.length - 1, rights: S.walk.turns.filter((t) => t === 1).length },
+      sel: S.sel ? {
+        r: S.sel.r, i: S.sel.i, count: P[S.sel.r][S.sel.i],
+        viaL: S.sel.i - 1 >= 0 ? P[S.sel.r - 1][S.sel.i - 1] : 0,
+        viaR: S.sel.i <= S.sel.r - 1 ? P[S.sel.r - 1][S.sel.i] : 0,
+      } : null,
+      race: S.race ? {
+        done: S.race.done, enumSteps: S.race.enum.steps, dpCells: S.race.dp.cells,
+      } : null,
+      galton: { landed: S.galton.landed, pending: S.galton.pending },
+      visible: ['walk', 'race', 'galton', 'depth'].filter((k) => !$(`ctl-${k}`).hidden),
+    };
+  },
+  cellPos(r, i) {
+    const p = cellXY(geom(), r, i);
+    return { x: p.x, y: p.y };
+  },
+  selectCell(r, i) { selectCell(r, i); },
+  go(i) { setStage(i); },
+};
+
+// --- boot + main loop ---------------------------------------------------------------------------
+const initial = parseInt(location.hash.slice(1), 10);
+setStage(Number.isNaN(initial) ? 0 : initial);
+
+let lastReal = performance.now();
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dt = Math.min((now - lastReal) / 1000, 0.05);
+  lastReal = now;
+  if (shown.has('race')) raceTick(dt);
+  if (shown.has('galton')) galtonTick(now);
+  updatePanel();
+  ctx.clearRect(0, 0, W, H);
+  if (shown.has('race')) drawRace(now);
+  else drawTriangle(now);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
