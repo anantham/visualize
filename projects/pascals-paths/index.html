@@ -81,9 +81,18 @@
     <div class="row" style="gap:6px">
       <button class="btn" id="drop1">drop 1</button>
       <button class="btn" id="drop50">drop 50</button>
+      <button class="btn primary" id="drop200">drop 200</button>
       <button class="btn" id="gclear">clear</button>
     </div>
     <div class="status" id="galton-status"></div>
+  </div>
+
+  <div class="ctl" id="ctl-mode" hidden>
+    <div class="row" style="gap:6px">
+      <button class="btn on" id="mode-enum">enumerate routes</button>
+      <button class="btn" id="mode-dp">DP fill</button>
+    </div>
+    <div class="status" id="mode-status">light every route into the cell</div>
   </div>
 
   <div class="ctl" id="ctl-depth" hidden>
@@ -130,10 +139,47 @@ const S = {
   walk: { idxs: [0], turns: [] },
   sel: null,            // {r, i, t0}
   revealed: new Set(),  // 'r,i' cells with visible counts
+  mode: 'enum',
+  dpFill: null,
   race: null,
   galton: { bins: [], landed: 0, balls: [], pending: 0, lastSpawn: 0 },
   flags: {},            // per-stage scratch
 };
+function setMode(m) {
+  S.mode = m;
+  S.dpFill = null;
+  $('mode-enum').classList.toggle('on', m === 'enum');
+  $('mode-dp').classList.toggle('on', m === 'dp');
+  $('mode-status').textContent = m === 'enum'
+    ? 'light every route into the cell'
+    : 'fill each cell once, level by level';
+}
+function startDpFill(r, i) {
+  S.dpFill = {
+    target: { r, i }, maxRow: r, row: 0, budget: 0, steps: 0, done: false,
+    values: { '0,0': 1 },
+  };
+  S.sel = { r, i, t0: performance.now() };
+  for (let rr = 0; rr <= r; rr++) for (let ii = 0; ii <= rr; ii++) S.revealed.add(`${rr},${ii}`);
+}
+function dpFillTick(dt) {
+  const df = S.dpFill;
+  if (!df || df.done) return;
+  df.budget += dt * 14;
+  while (df.budget >= 1 && !df.done) {
+    df.budget -= 1;
+    df.row++;
+    if (df.row > df.maxRow) { df.done = true; break; }
+    for (let ii = 0; ii <= df.row; ii++) {
+      const viaL = ii - 1 >= 0 ? df.values[`${df.row - 1},${ii - 1}`] : 0;
+      const viaR = ii <= df.row - 1 ? df.values[`${df.row - 1},${ii}`] : 0;
+      df.values[`${df.row},${ii}`] = viaL + viaR;
+      df.steps++;
+    }
+  }
+}
+$('mode-enum').addEventListener('click', () => setMode('enum'));
+$('mode-dp').addEventListener('click', () => setMode('dp'));
 function resetWalk() { S.walk = { idxs: [0], turns: [] }; }
 function resetGalton() {
   S.galton = { bins: Array(S.N + 1).fill(0), landed: 0, balls: [], pending: 0, lastSpawn: 0 };
@@ -144,8 +190,8 @@ resetGalton();
 const STAGES = [
   {
     title: 'Walk the triangle',
-    copy: 'Stand at the apex. Every step descends one level, and the only choice ' +
-      'you ever make is <b>left or right</b>.',
+    copy: 'Four steps with one right turn — <b>how many different ways</b> could you ' +
+      'have done that? First: stand at the apex. Every step is <b>left or right</b>.',
     task: 'Walk 4 levels deep taking exactly 1 right turn — land on the marked cell.',
     reveals: ['walk'], show: ['walker'], target: [4, 1],
     enter() { resetWalk(); },
@@ -158,27 +204,28 @@ const STAGES = [
       'when you took them. Any reshuffling of the same turns reaches the same cell.',
     task: 'Reach the marked cell (4 deep, 2 rights) twice, by two different routes.',
     reveals: ['walk'], show: ['walker'], target: [4, 2],
-    enter() { resetWalk(); S.flags.routes = new Set(); },
+    enter() { resetWalk(); S.flags.routes = new Set(); S.flags.ghostTurns = null; },
     done: () => (S.flags.routes?.size || 0) >= 2,
   },
   {
     title: 'Count every route',
     copy: 'Different choice-sequences, same landing cell — so <b>how many</b> ' +
-      'routes end at a given cell? Click any cell to light up every route into it.',
-    task: 'Find a cell with exactly 6 routes into it.',
-    reveals: [], show: ['select', 'counts'],
-    enter() { S.sel = null; },
-    done: () => !!S.flags.found6,
+      'routes end there? Click the pink target from earlier and watch every route light up.',
+    task: 'Click the marked cell (4 deep, 2 rights) and read its route count.',
+    reveals: [], show: ['select', 'counts'], target: [4, 2],
+    enter() { S.sel = null; S.flags.clickedTarget = false; },
+    done: () => !!S.flags.clickedTarget,
   },
   {
     title: 'Two doors in',
     copy: 'Every route enters a cell through one of <b>two doors</b>: the parent ' +
-      'above-left or above-right. So routes(n,k) = routes(n−1,k−1) + routes(n−1,k) ' +
-      '— <b>Pascal’s identity</b>, found by your own clicks.',
-    task: 'Split a cell on row 5 or deeper and watch the two bundles add up.',
-    reveals: [], show: ['select', 'counts', 'split'],
-    enter() { S.sel = null; },
-    done: () => !!(S.sel && S.sel.r >= 5),
+      'above-left or above-right. Click a deep cell — the two coloured bundles are ' +
+      'the two parent counts adding up. Toggle <b>DP fill</b> on the same triangle: ' +
+      'counts appear level by level, one cell at a time.',
+    task: 'Click a cell on row 5+ and confirm its count equals the two parent counts.',
+    reveals: ['mode'], show: ['select', 'counts', 'split'],
+    enter() { S.sel = null; S.flags.splitOk = false; setMode('enum'); },
+    done: () => !!S.flags.splitOk,
   },
   {
     title: 'Re-walking vs remembering',
@@ -206,9 +253,9 @@ const STAGES = [
       'their route bundles, rain balls on it. The numbers, the paths, and the ' +
       'histogram are one object.',
     task: null,
-    reveals: ['walk', 'galton', 'depth'],
+    reveals: ['walk', 'galton', 'depth', 'mode'],
     show: ['walker', 'select', 'counts', 'split', 'galton'],
-    enter() {},
+    enter() { setMode('enum'); },
     done: null,
   },
 ];
@@ -268,7 +315,9 @@ function walkStep(turn) { // 0 = left, 1 = right
   w.idxs.push(w.idxs[depth] + turn);
   const nd = w.idxs.length - 1;
   if (stage === 1 && nd === 4 && w.idxs[4] === 2 && S.flags.routes) {
-    S.flags.routes.add(w.turns.slice(0, 4).join(''));
+    const key = w.turns.slice(0, 4).join('');
+    if (!S.flags.routes.size) S.flags.ghostTurns = w.turns.slice(0, 4);
+    S.flags.routes.add(key);
   }
 }
 $('walk-l').addEventListener('click', () => walkStep(0));
@@ -283,13 +332,23 @@ window.addEventListener('keydown', (e) => {
 // --- cell selection --------------------------------------------------------------------
 function selectCell(r, i) {
   if (r < 1 || r > S.N || i < 0 || i > r) return;
-  S.sel = { r, i, t0: performance.now() };
+  if (S.mode === 'dp' && shown.has('select')) {
+    startDpFill(r, i);
+  } else {
+    S.dpFill = null;
+    S.sel = { r, i, t0: performance.now() };
+  }
   S.revealed.add(`${r},${i}`);
   if (shown.has('split')) {
     if (i - 1 >= 0) S.revealed.add(`${r - 1},${i - 1}`);
     if (i <= r - 1) S.revealed.add(`${r - 1},${i}`);
   }
-  if (P[r][i] === 6) S.flags.found6 = true;
+  if (stage === 2 && r === 4 && i === 2) S.flags.clickedTarget = true;
+  if (shown.has('split') && r >= 5) {
+    const viaL = i - 1 >= 0 ? P[r - 1][i - 1] : 0;
+    const viaR = i <= r - 1 ? P[r - 1][i] : 0;
+    if (P[r][i] === viaL + viaR) S.flags.splitOk = true;
+  }
 }
 cv.addEventListener('pointerdown', (e) => {
   if (!shown.has('select')) return;
@@ -344,6 +403,7 @@ function raceTick(dt) {
 function dropBalls(n) { S.galton.pending += n; }
 $('drop1').addEventListener('click', () => dropBalls(1));
 $('drop50').addEventListener('click', () => dropBalls(50));
+$('drop200').addEventListener('click', () => dropBalls(200));
 $('gclear').addEventListener('click', resetGalton);
 function galtonTick(now) {
   const G = S.galton;
@@ -391,8 +451,8 @@ function drawTriangle(now) {
   const g = geom();
   const st = STAGES[stage];
 
-  // selected-cell ribbons
-  if (S.sel && shown.has('select')) {
+  // selected-cell ribbons (enumerate mode)
+  if (S.sel && shown.has('select') && S.mode === 'enum' && !S.dpFill) {
     const { r, i, t0 } = S.sel;
     let paths = pathsTo(r, i);
     let noteSampled = '';
@@ -418,7 +478,13 @@ function drawTriangle(now) {
         prev = cur;
       }
     }
-    if (noteSampled) text(noteSampled, g.cx, g.top - 28, COL.text, 11);
+    if (noteSampled) {
+      text(noteSampled, g.cx, g.top - 28, '#fbbf24', 11);
+      text(`(${P[r][i]} routes total — sample shown)`, g.cx, g.top - 14, COL.text, 10);
+    }
+    if (reveal >= 1 && r >= 1) {
+      text(`C(${r}, ${i}) = ${P[r][i]}`, g.cx, g.top - (noteSampled ? 44 : 28), '#34d399', 12);
+    }
     // equation
     if (shown.has('split') && reveal >= 1) {
       const viaL = i - 1 >= 0 ? P[r - 1][i - 1] : 0;
@@ -438,6 +504,38 @@ function drawTriangle(now) {
       ctx.restore();
     }
   }
+  if (S.sel && shown.has('select') && S.mode === 'dp' && S.dpFill?.done && shown.has('split')) {
+    const { r, i } = S.sel;
+    const viaL = i - 1 >= 0 ? P[r - 1][i - 1] : 0;
+    const viaR = i <= r - 1 ? P[r - 1][i] : 0;
+    text(`C(${r}, ${i}) = ${P[r][i]}`, g.cx, g.top - 28, '#34d399', 12);
+    const p0 = cellXY(g, r, i);
+    const eqY = Math.min(H - 14, p0.y + g.rad + 22);
+    ctx.save(); ctx.textBaseline = 'middle'; ctx.font = '700 14px ui-sans-serif, system-ui';
+    const parts = [[`${P[r][i]}`, COL.num], [' = ', COL.text],
+      [`${viaL}`, COL.viaL], [' + ', COL.text], [`${viaR}`, COL.viaR]];
+    let tw = 0;
+    parts.forEach(([s]) => { tw += ctx.measureText(s).width; });
+    let x = p0.x - tw / 2;
+    parts.forEach(([s, c]) => {
+      ctx.fillStyle = c; ctx.textAlign = 'left'; ctx.fillText(s, x, eqY);
+      x += ctx.measureText(s).width;
+    });
+    ctx.restore();
+  }
+
+  // ghost path (stage 2 — first route, when walking a second)
+  if (stage === 1 && S.flags.ghostTurns && S.flags.routes?.size >= 1) {
+    let prev = cellXY(g, 0, 0);
+    let idx = 0;
+    for (let r = 1; r <= S.flags.ghostTurns.length; r++) {
+      idx += S.flags.ghostTurns[r - 1];
+      const cur = cellXY(g, r, idx);
+      seg(prev.x, prev.y, cur.x, cur.y, '#a78bfa', 2, 0.45);
+      prev = cur;
+    }
+    text('first route (ghost)', g.cx, g.top - 44, '#a78bfa', 11);
+  }
 
   // walker path
   if (shown.has('walker') && S.walk.idxs.length > 1) {
@@ -455,8 +553,13 @@ function drawTriangle(now) {
       const p = cellXY(g, r, i);
       const isSel = shown.has('select') && S.sel && S.sel.r === r && S.sel.i === i;
       const revealedHere = shown.has('counts') && S.revealed.has(`${r},${i}`);
-      circle(p.x, p.y, g.rad, '#0e1522', isSel ? COL.target : COL.cell, isSel ? 2 : 1.5);
-      if (revealedHere || (r === 0)) {
+      const dpVal = S.dpFill?.values[`${r},${i}`];
+      const showDp = dpVal != null;
+      circle(p.x, p.y, g.rad, showDp ? 'rgba(52,211,153,.12)' : '#0e1522',
+        isSel ? COL.target : (showDp ? COL.dp : COL.cell), isSel ? 2 : 1.5);
+      if (showDp) {
+        text(`${dpVal}`, p.x, p.y, COL.dp, Math.min(13, g.rad), 'center');
+      } else if (revealedHere || (r === 0)) {
         text(`${P[r][i]}`, p.x, p.y, COL.num, Math.min(13, g.rad), 'center');
       }
     }
@@ -566,7 +669,7 @@ function drawRace(now) {
     text(`cells filled ${Math.min(rc.dp.cells, total)} / ${total}`, centers[1], cy2, COL.text, 12);
     text(`steps taken: ${Math.min(rc.dp.cells, total)}`, centers[1], cy2 + 18, COL.dp, 13);
     if (rc.dp.done && !rc.enum.done) {
-      text('…done. waiting for the other guy…', centers[1], cy2 + 40, COL.dp, 12);
+      text('enumeration still walking shared prefixes…', centers[0], cy2 + 40, COL.heat, 12);
     }
     if (rc.done) {
       text(`Same answer: ${P[RACE_N][RACE_K]} routes — the memo table needed ` +
@@ -584,15 +687,29 @@ function updatePanel() {
   const st = STAGES[stage];
   const d = S.walk.idxs.length - 1;
   const rights = S.walk.turns.filter((t) => t === 1).length;
-  $('walk-status').textContent =
+  let walkMsg =
     `level ${d} · ${rights} right${rights === 1 ? '' : 's'}, ${d - rights} left${d - rights === 1 ? '' : 's'}` +
     (d >= S.N ? ' — bottom!' : '');
+  if (stage === 1 && S.flags.routes?.size) {
+    walkMsg += ` · ${S.flags.routes.size} route${S.flags.routes.size === 1 ? '' : 's'} found`;
+  }
+  if (shown.has('split')) {
+    walkMsg += ' · amber = via upper-left, blue = via upper-right';
+  }
+  $('walk-status').textContent = walkMsg;
   $('walk-l').disabled = d >= S.N;
   $('walk-r').disabled = d >= S.N;
   $('galton-status').textContent =
     `balls landed: ${S.galton.landed}` + (S.galton.pending > 0 ? ` (+${S.galton.pending} falling)` : '');
   if (S.race) {
     $('race-status').textContent = S.race.done ? 'run it again?' : 'racing…';
+  }
+  if (S.dpFill) {
+    const df = S.dpFill;
+    const enumSteps = df.target ? pathsTo(df.target.r, df.target.i).length : 0;
+    $('mode-status').textContent = df.done
+      ? `DP: ${df.steps} cell-steps · enumerate would walk ${enumSteps} routes`
+      : `filling row ${df.row} / ${df.maxRow}…`;
   }
   if (!taskDone && st.done && st.done()) taskDone = true;
   $('task').classList.toggle('done', taskDone);
@@ -624,7 +741,7 @@ function setStage(i) {
   st.enter();
   shown.clear();
   st.show.forEach((k) => shown.add(k));
-  ['walk', 'race', 'galton', 'depth'].forEach((k) => {
+  ['walk', 'race', 'galton', 'depth', 'mode'].forEach((k) => {
     $(`ctl-${k}`).hidden = !st.reveals.includes(k);
   });
   $('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
@@ -659,7 +776,9 @@ window.__viz = {
         done: S.race.done, enumSteps: S.race.enum.steps, dpCells: S.race.dp.cells,
       } : null,
       galton: { landed: S.galton.landed, pending: S.galton.pending },
-      visible: ['walk', 'race', 'galton', 'depth'].filter((k) => !$(`ctl-${k}`).hidden),
+      mode: S.mode,
+      dpFill: S.dpFill ? { done: S.dpFill.done, steps: S.dpFill.steps, row: S.dpFill.row } : null,
+      visible: ['walk', 'race', 'galton', 'depth', 'mode'].filter((k) => !$(`ctl-${k}`).hidden),
     };
   },
   cellPos(r, i) {
@@ -667,6 +786,7 @@ window.__viz = {
     return { x: p.x, y: p.y };
   },
   selectCell(r, i) { selectCell(r, i); },
+  setMode(m) { setMode(m); },
   go(i) { setStage(i); },
 };
 
@@ -680,6 +800,7 @@ function tick(now) {
   const dt = Math.min((now - lastReal) / 1000, 0.05);
   lastReal = now;
   if (shown.has('race')) raceTick(dt);
+  if (S.dpFill) dpFillTick(dt);
   if (shown.has('galton')) galtonTick(now);
   updatePanel();
   ctx.clearRect(0, 0, W, H);

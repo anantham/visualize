@@ -1,1 +1,20 @@
 .DS_Store
+
+# Dependencies (reinstall from package-lock.json)
+node_modules/
+
+# Playwright debug artifacts
+.playwright-mcp/
+
+# Loose debug/iteration screenshots in repo root
+/*.png
+/*.jpeg
+/*.jpg
+
+# Local-only data kept on disk, never committed:
+#   personal reference data + research-pipeline debug artifacts
+#   (account screenshots / UI dumps / run logs can contain PII)
+data/personal-anchors.md
+projects/lineage-of-thought/research/out/insp_*.txt
+projects/lineage-of-thought/research/out/inspect_*.png
+projects/lineage-of-thought/research/out/*.log

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earth Seasons — sunlight & tilt</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f17;
+    font-family: ui-sans-serif, system-ui, sans-serif; color: #dbe4f0; }
+  #scene { position: fixed; inset: 0; }
+  #panel { position: fixed; top: 16px; left: 16px; width: 330px; z-index: 10;
+    background: rgba(13,19,30,.86); border: 1px solid rgba(122,150,200,.18);
+    border-radius: 14px; padding: 14px 18px; backdrop-filter: blur(12px); }
+  .brand { font-size: 10px; color: #516180; display: flex; justify-content: space-between; }
+  #panel h1 { font-size: 16px; margin: 6px 0; }
+  #stage-copy { font-size: 12px; color: #9fb2cf; line-height: 1.55; margin-bottom: 10px; }
+  #task { font-size: 12px; padding: 8px 10px; border-radius: 9px; margin-bottom: 10px;
+    background: rgba(96,165,250,.07); border: 1px solid rgba(96,165,250,.22); }
+  #task.done { border-color: rgba(52,211,153,.45); }
+  .ctl[hidden] { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 6px 0; }
+  .row label { width: 72px; color: #9fb2cf; }
+  .row input { flex: 1; accent-color: #60a5fa; }
+  .row .val { width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+  .status { font-size: 11.5px; color: #7fd1f9; margin-top: 6px; }
+  .btn { background: #1c2a40; border: 1px solid rgba(122,150,200,.25); color: #dbe4f0;
+    border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin-right: 4px; }
+  .btn.on { border-color: rgba(244,114,182,.6); color: #f9c1dd; }
+  .nav { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+  .spacer { flex: 1; }
+  #next.glow { box-shadow: 0 0 12px rgba(52,211,153,.35); }
+  #skip { font-size: 10.5px; color: #64789a; text-decoration: none; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="panel">
+  <div class="brand"><span>visualize · earth seasons</span><span id="stage-num"></span></div>
+  <h1 id="stage-title"></h1>
+  <p id="stage-copy"></p>
+  <div id="task"><span id="task-tick">○</span> <span id="task-text"></span></div>
+  <div class="ctl" id="ctl-day"><div class="row"><label>time of day</label><input type="range" id="day" min="0" max="24" step="0.1" value="12"><span class="val" id="day-val">12:00</span></div></div>
+  <div class="ctl" id="ctl-year" hidden><div class="row"><label>day of year</label><input type="range" id="year" min="0" max="365" step="1" value="172"><span class="val" id="year-val">Jun 21</span></div></div>
+  <div class="ctl" id="ctl-tilt" hidden><button class="btn on" id="tilt-on">tilt 23.4°</button><button class="btn" id="tilt-off">no tilt</button></div>
+  <div class="ctl" id="ctl-city" hidden><button class="btn" id="pin-city">pin Kochi</button></div>
+  <div class="status" id="readout"></div>
+  <div class="nav">
+    <button class="btn" id="back">← Back</button>
+    <button class="btn" id="next">Next →</button>
+    <span class="spacer"></span><a id="skip" href="#4">skip to playground</a>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const OBLIQUITY = 23.44 * Math.PI / 180;
+const container = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0f17);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 1.2, 4.2);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0x334466, 0.35));
+const sun = new THREE.DirectionalLight(0xfff5e6, 1.6);
+scene.add(sun);
+scene.add(sun.target);
+
+const earthGroup = new THREE.Group();
+scene.add(earthGroup);
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(1, 64, 48),
+  new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 8, specular: 0x223344 }),
+);
+earthGroup.add(earth);
+earthGroup.rotation.z = OBLIQUITY;
+
+const pin = new THREE.Mesh(
+  new THREE.SphereGeometry(0.04, 16, 12),
+  new THREE.MeshBasicMaterial({ color: 0xf472b6 }),
+);
+pin.visible = false;
+earth.add(pin);
+
+const S = { dayH: 12, yearD: 172, tilt: true, city: null };
+const KOCHI = { lat: 9.93 * Math.PI / 180, lon: 76.27 * Math.PI / 180, name: 'Kochi' };
+
+function sunDir() {
+  const decl = S.tilt ? OBLIQUITY * Math.sin((S.yearD / 365) * Math.PI * 2 - Math.PI / 2) : 0;
+  return new THREE.Vector3(Math.cos(decl), Math.sin(decl), 0).normalize();
+}
+function placePin(lat, lon) {
+  const phi = Math.PI / 2 - lat;
+  const theta = lon + earthGroup.rotation.y;
+  pin.position.setFromSphericalCoords(1.02, phi, theta);
+  pin.visible = true;
+}
+function daylightHours() {
+  if (!S.city) return null;
+  const decl = S.tilt ? OBLIQUITY * Math.sin((S.yearD / 365) * Math.PI * 2 - Math.PI / 2) : 0;
+  const lat = S.city.lat;
+  const h0 = -Math.tan(lat) * Math.tan(decl);
+  if (h0 >= 1) return 0;
+  if (h0 <= -1) return 24;
+  return (2 * Math.acos(h0) / Math.PI) * 12;
+}
+function monthLabel(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const m = Math.floor(d / 30.4);
+  return `${months[Math.min(11, m)]} ${Math.round(d % 30.4) + 1}`;
+}
+
+const STAGES = [
+  { title: 'Day and night', copy: 'Sunlight hits one hemisphere at a time. Scrub <b>time of day</b> — the terminator sweeps around.',
+    task: 'Spin through a full day (0h → 24h).', show: ['globe'], reveals: ['day'],
+    enter() { S.dayH = 6; }, done: () => S.flags?.spunDay },
+  { title: 'Axial tilt', copy: 'Earth\'s axis is tilted <b>23.4°</b>. As the year advances, the Sun\'s rays hit different latitudes more directly — that\'s seasons.',
+    task: 'Scrub day-of-year from winter to summer solstice.', show: ['globe'], reveals: ['day', 'year'],
+    enter() { S.yearD = 0; }, done: () => S.yearD >= 160 && S.yearD <= 190 },
+  { title: 'Pin a city', copy: 'Pin <b>Kochi</b> (9.9°N). Watch how many hours of daylight it gets across the year.',
+    task: 'Pin the city and compare daylight at day 80 vs day 172.', show: ['globe', 'pin'], reveals: ['day', 'year', 'city'],
+    enter() { S.city = null; pin.visible = false; S.flags = { compared: false }; },
+    done: () => !!S.flags?.compared },
+  { title: 'Remove the tilt', copy: 'Set tilt to <b>0°</b>. Seasons flatten — every day is an equinox everywhere.',
+    task: 'Toggle tilt off and scrub the year — terminator barely wobbles.', show: ['globe', 'pin'], reveals: ['day', 'year', 'tilt', 'city'],
+    enter() { S.city = KOCHI; placePin(KOCHI.lat, KOCHI.lon); S.tilt = true; },
+    done: () => !S.tilt },
+  { title: 'Playground', copy: 'Orbit, scrub day & year, pin Kochi, toggle tilt — why seasons happen.',
+    task: null, show: ['globe', 'pin'], reveals: ['day', 'year', 'tilt', 'city'], enter() {}, done: null },
+];
+let stage = 0, taskDone = false;
+const shown = new Set();
+
+function updateScene() {
+  earthGroup.rotation.y = (S.dayH / 24) * Math.PI * 2;
+  const sd = sunDir();
+  sun.position.copy(sd.clone().multiplyScalar(8));
+  sun.target.position.set(0, 0, 0);
+  if (S.city) placePin(S.city.lat, S.city.lon);
+  const dh = daylightHours();
+  $('readout').textContent = S.city && dh != null
+    ? `${S.city.name}: ~${dh.toFixed(1)} h daylight today · declination ${(Math.asin(Math.sin(OBLIQUITY)*Math.sin((S.yearD/365)*Math.PI*2-Math.PI/2))*180/Math.PI).toFixed(1)}°`
+    : 'scrub day & year';
+}
+
+function setStage(i) {
+  stage = Math.max(0, Math.min(STAGES.length - 1, i));
+  const st = STAGES[stage];
+  taskDone = !st.done;
+  if (st.enter) st.enter();
+  shown.clear(); st.show.forEach((k) => shown.add(k));
+  ['day', 'year', 'tilt', 'city'].forEach((k) => { $(`ctl-${k}`).hidden = !st.reveals.includes(k); });
+  $('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
+  $('stage-title').textContent = st.title;
+  $('stage-copy').innerHTML = st.copy;
+  $('task').style.display = st.task ? '' : 'none';
+  if (st.task) $('task-text').textContent = st.task;
+  $('back').disabled = !stage;
+  $('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  $('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
+  syncUI();
+  updateScene();
+}
+const $ = (id) => document.getElementById(id);
+function syncUI() {
+  $('day').value = S.dayH;
+  $('day-val').textContent = `${String(Math.floor(S.dayH)).padStart(2,'0')}:${String(Math.round((S.dayH%1)*60)).padStart(2,'0')}`;
+  $('year').value = S.yearD;
+  $('year-val').textContent = monthLabel(S.yearD);
+  $('tilt-on').classList.toggle('on', S.tilt);
+  $('tilt-off').classList.toggle('on', !S.tilt);
+  earthGroup.rotation.z = S.tilt ? OBLIQUITY : 0;
+}
+
+function applyDay(h) {
+  S.dayH = h;
+  if (stage === 0) {
+    if (!S.flags) S.flags = {};
+    if (S.dayH > 20 || S.dayH < 2) S.flags.spunDay = true;
+  }
+  syncUI(); updateScene(); tick();
+}
+function applyYear(d) {
+  S.yearD = d;
+  if (stage === 2 && S.city) {
+    if (!S.flags) S.flags = {};
+    if (S.yearD < 100 || S.yearD > 160) S.flags.compared = true;
+  }
+  syncUI(); updateScene(); tick();
+}
+$('day').oninput = (e) => applyDay(+e.target.value);
+$('year').oninput = (e) => applyYear(+e.target.value);
+$('tilt-on').onclick = () => { S.tilt = true; syncUI(); updateScene(); tick(); };
+$('tilt-off').onclick = () => { S.tilt = false; syncUI(); updateScene(); tick(); };
+$('pin-city').onclick = () => { S.city = KOCHI; placePin(KOCHI.lat, KOCHI.lon); updateScene(); tick(); };
+$('back').onclick = () => setStage(stage - 1);
+$('next').onclick = () => setStage(stage + 1);
+addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n !== stage) setStage(n);
+});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+function tick() {
+  const st = STAGES[stage];
+  if (!taskDone && st.done && st.done()) taskDone = true;
+  $('task').classList.toggle('done', taskDone);
+  $('task-tick').textContent = taskDone ? '✓' : '○';
+  $('next').classList.toggle('glow', taskDone);
+}
+
+window.__viz = {
+  state() {
+    return { stage, taskDone, dayH: S.dayH, yearD: S.yearD, tilt: S.tilt,
+      city: S.city?.name || null, daylight: daylightHours() };
+  },
+  setDay(h) { applyDay(h); },
+  setYear(d) { applyYear(d); },
+  setTilt(on) { S.tilt = on; syncUI(); updateScene(); tick(); },
+  go(i) { setStage(i); },
+};
+
+setStage(Number.isNaN(parseInt(location.hash.slice(1), 10)) ? 0 : parseInt(location.hash.slice(1), 10));
+(function loop() {
+  requestAnimationFrame(loop);
+  controls.update();
+  tick();
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>

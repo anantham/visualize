@@ -13,7 +13,7 @@ there are **six view engines**, plus a ladder demoted to an index/map:
 | View | For | What it does |
 |---|---|---|
 | **Race** | rates (speed) | seven lanes cross a 100 m track at true speed; the crossing counters *are* the ratios |
-| **Zoom** | extents (length) | continuous travel from a proton to the observable universe; concentric circles, true-scale area rectangles, captioned physical voids; **something at every zoom level** |
+| **Zoom** | extents (length) | a log ruler of bodily/lived lengths — hair, doorway, you, Kerala north-to-south — not a cosmic ladder |
 | **Count** | amounts (population, money, power, time, pressure, area, energy) | how many of a unit fit, degrading honestly: countable icons → dot field → "a smear, counting has died", with a nested-tens rescue |
 | **Ring** | cycles | the 24h↔12h train clock and the Malayalam↔English week, one rotating hand |
 | **Pour** | volume | real amounts in real containers — *a good cry = 0.4 teaspoons*, *a car = 9 scooty tanks*, *daily water = 2.7 bottles* |
@@ -22,8 +22,9 @@ there are **six view engines**, plus a ladder demoted to an index/map:
 
 The guiding philosophy (a mid-project pivot): **practical / bodily / lived anchors
 beat abstract ones.** A quantity only means something as a thing you've handled.
-Pour and Rain are the purest expression; the cosmic Zoom is the holdout still to
-be re-anchored.
+Pour and Rain are the purest expression; Zoom was re-anchored to human-scale lengths.
+Race lanes show crossing counts plus **total distance** (m or km).
+Rain includes an **annual rainfall ladder** (rainy day → Kerala monsoon → Mawsynram/year).
 
 ## Structure — 10 stages
 

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "how-we-learn",
+    "name": "How do we learn?",
+    "color": "#38bdf8",
+    "summary": "The spine of education — from recollection to the blank slate to learning by doing.",
+    "steps": [
+      { "id": "Plato", "note": "Learning is recollection — the soul already knows; teaching draws it out." },
+      { "id": "Aristotle", "note": "Knowledge begins in the senses, fixed by habit and inquiry." },
+      { "id": "John Locke", "note": "The mind is a blank slate (tabula rasa) — all from experience." },
+      { "id": "Jean-Jacques Rousseau", "note": "Let it unfold naturally — Émile learns from things, not lectures." },
+      { "id": "Maria Montessori", "note": "Prepare the environment; the child teaches itself." },
+      { "id": "John Dewey", "note": "Learning by doing — education is experience, not transmission." },
+      { "id": "Lev Vygotsky", "note": "We learn socially, in the zone of proximal development." },
+      { "id": "Paulo Freire", "note": "Problem-posing dialogue, not 'banking' facts into students." },
+      { "id": "bell hooks", "note": "Engaged, liberatory teaching — education as the practice of freedom." }
+    ]
+  },
+  {
+    "id": "examined-life",
+    "name": "The examined life",
+    "color": "#5eead4",
+    "summary": "Turning the question on yourself — the root of philosophy and of learning.",
+    "steps": [
+      { "id": "Heraclitus", "note": "\"I searched into myself\" — the logos is found within." },
+      { "id": "Socrates", "note": "The unexamined life is not worth living; truth comes by questioning." },
+      { "id": "Plato", "note": "Dialectic; learning is recollection of what the soul knows." },
+      { "id": "Aristotle", "note": "But knowledge begins in the senses, perfected by inquiry." },
+      { "id": "Zeno of Citium", "note": "Turn the examination inward — guard the inner citadel." },
+      { "id": "Plotinus", "note": "Look further in: ascend from the self to the One." },
+      { "id": "Augustine of Hippo", "note": "Confessions — search the inner self to find truth (and God)." },
+      { "id": "Rene Descartes", "note": "Doubt everything; the one certainty is the thinking self — cogito." },
+      { "id": "David Hume", "note": "Examine the mind itself — and find only a stream of perceptions." },
+      { "id": "Immanuel Kant", "note": "Sapere aude — dare to know; reason examines its own limits." }
+    ]
+  },
+  {
+    "id": "compassion",
+    "name": "Compassion & benevolence",
+    "color": "#fb923c",
+    "summary": "Caring for others as the heart of being human — and of teaching.",
+    "steps": [
+      { "id": "Buddha", "note": "Karuṇā — boundless compassion for every sentient being." },
+      { "id": "Confucius", "note": "Ren 仁 — humaneness, the root from which all virtue grows." },
+      { "id": "Mozi", "note": "Jiān'ài — love everyone impartially, not only your own." },
+      { "id": "Mencius", "note": "The heart that cannot bear another's suffering — compassion is innate." },
+      { "id": "Nagarjuna", "note": "Compassion wedded to emptiness — the bodhisattva's vow." },
+      { "id": "Rumi", "note": "Love as the very path to the divine." },
+      { "id": "Paulo Freire", "note": "Education as an act of love and solidarity with the oppressed." },
+      { "id": "bell hooks", "note": "A pedagogy of care — love as the ground of teaching." }
+    ]
+  },
+  {
+    "id": "the-self",
+    "name": "Is there a self?",
+    "color": "#e879f9",
+    "summary": "The most radical question — argued across India and Europe for 2,500 years.",
+    "steps": [
+      { "id": "Mahavira", "note": "Yes — an eternal soul, the jīva, bound by karma." },
+      { "id": "Buddha", "note": "No — anatta; clinging to a 'self' is the source of suffering." },
+      { "id": "Patanjali", "note": "A pure witness (puruṣa), distinct from the restless mind." },
+      { "id": "Nagarjuna", "note": "Empty — neither self nor non-self; all is śūnyatā." },
+      { "id": "Adi Shankara", "note": "The self IS the absolute — ātman is Brahman." },
+      { "id": "David Hume", "note": "No self — only a 'bundle of perceptions' (echoing the Buddha)." },
+      { "id": "Friedrich Nietzsche", "note": "The 'self' is a fiction — a habit of grammar." }
+    ]
+  },
+  {
+    "id": "human-nature",
+    "name": "Is human nature good?",
+    "color": "#f87171",
+    "summary": "Are we drawn out, reshaped, or redeemed? Education's founding question.",
+    "steps": [
+      { "id": "Confucius", "note": "Perfectible — cultivate it with ritual and learning." },
+      { "id": "Mencius", "note": "Innately good — education draws out the 'four sprouts'." },
+      { "id": "Xunzi", "note": "Innately crooked — education must reshape it by effort." },
+      { "id": "Han Feizi", "note": "Self-interested — only law and incentive can restrain it." },
+      { "id": "Augustine of Hippo", "note": "Fallen — marked by original sin, in need of grace." },
+      { "id": "John Locke", "note": "A blank slate — neither good nor bad, shaped by experience." },
+      { "id": "Jean-Jacques Rousseau", "note": "Naturally good — corrupted by society." },
+      { "id": "Paulo Freire", "note": "Dehumanized by oppression; education re-humanizes." }
+    ]
+  },
+  {
+    "id": "the-way",
+    "name": "Follow the Way / live by nature",
+    "color": "#c084fc",
+    "summary": "Across China, Japan, and Greece — align with nature, don't force it.",
+    "steps": [
+      { "id": "Laozi", "note": "The Dao — act without forcing (wú wéi)." },
+      { "id": "Zhuangzi", "note": "Flow with nature; drop the contrived self." },
+      { "id": "Epicurus", "note": "Live by nature's true, modest pleasures." },
+      { "id": "Zeno of Citium", "note": "Live according to nature and reason — the Stoic Way." },
+      { "id": "Dogen", "note": "Zazen — just sitting; practice IS enlightenment, being-time." }
+    ]
+  },
+  {
+    "id": "reason-revelation",
+    "name": "Reason vs. revelation",
+    "color": "#a3e635",
+    "summary": "The great medieval debate, across Islam, Judaism, and Christendom.",
+    "steps": [
+      { "id": "Al-Farabi", "note": "The 'Second Teacher' — Aristotle's reason, harmonized with faith." },
+      { "id": "Avicenna", "note": "Reason reaches the Necessary Being; philosophy as the road to God." },
+      { "id": "Al-Ghazali", "note": "The incoherence of the philosophers — revelation above reason." },
+      { "id": "Averroes", "note": "Defends philosophy — truth in both reason and scripture." },
+      { "id": "Maimonides", "note": "Reconcile the Torah with Aristotle — the Guide for the Perplexed." },
+      { "id": "Thomas Aquinas", "note": "Faith and reason in harmony — both lead to the one truth." }
+    ]
+  },
+  {
+    "id": "liberation",
+    "name": "Liberation / the highest good",
+    "color": "#fbbf24",
+    "summary": "What is freedom, and how do we reach it? From nirvāṇa to revolution.",
+    "steps": [
+      { "id": "Mahavira", "note": "Kevala — free the soul from all karma." },
+      { "id": "Buddha", "note": "Nirvāṇa — extinguish craving, end suffering." },
+      { "id": "Epicurus", "note": "Ataraxia — serene freedom from fear and pain." },
+      { "id": "Zeno of Citium", "note": "Virtue alone is the good; freedom is inner." },
+      { "id": "Plotinus", "note": "Union with the One." },
+      { "id": "Adi Shankara", "note": "Mokṣa — realize ātman is Brahman, and the world's spell breaks." },
+      { "id": "Al-Ghazali", "note": "Deliverance from error — the heart's union with God." },
+      { "id": "Rumi", "note": "Fanāʾ — annihilation of the self in the Beloved." },
+      { "id": "Karl Marx", "note": "Liberation from material alienation — freedom made worldly." }
+    ]
+  }
+]

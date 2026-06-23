@@ -16,7 +16,8 @@ problem because the only way into a cell is through the two cells above it:
    appear and stay (you memoize the triangle by exploring it).
 4. **Two doors in** — clicked cells split their route-bundles by parent (amber =
    via upper-left, blue = via upper-right) with the `15 = 5 + 10` identity drawn
-   at the cell.
+   at the cell. Toggle **enumerate routes** vs **DP fill** on the same triangle —
+   counts appear level by level with a step counter vs route-walking cost.
 5. **Re-walking vs remembering** — a race: the left triangle walks all routes
    (shared prefixes glow hotter — overlapping subproblems made visible); the
    right fills each cell once. Step counters end ~560 vs 45.
@@ -40,6 +41,7 @@ Pure `<canvas>` 2D, zero dependencies, single file. Works offline.
 | `state()` | `{ stage, taskDone, N, walk:{depth,rights}, sel:{r,i,count,viaL,viaR}, race:{done,enumSteps,dpCells}, galton:{landed,pending}, visible[] }` |
 | `cellPos(r, i)` | screen `{x,y}` of cell (row r, index i) for synthetic clicks |
 | `selectCell(r, i)` | select/split a cell directly |
+| `setMode('enum' \| 'dp')` | enumerate routes or level-by-level DP fill |
 | `go(i)` | jump to stage `i` |
 
 Invariants: clicking cell (6,2) → `count 15`, `viaL 5`, `viaR 10`; the race ends

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euler's Formula — spiral & shadows</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0f17;
+    font-family: ui-sans-serif, system-ui, sans-serif; color: #dbe4f0; }
+  canvas { position: fixed; inset: 0; display: block; }
+  #panel { position: fixed; top: 16px; left: 16px; width: 330px; z-index: 10;
+    background: rgba(13,19,30,.86); border: 1px solid rgba(122,150,200,.18);
+    border-radius: 14px; padding: 14px 18px 12px; backdrop-filter: blur(12px); }
+  .brand { font-size: 10px; color: #516180; display: flex; justify-content: space-between; }
+  #panel h1 { font-size: 16px; margin: 6px 0; }
+  #stage-copy { font-size: 12px; color: #9fb2cf; line-height: 1.55; margin-bottom: 10px; }
+  #task { font-size: 12px; padding: 8px 10px; border-radius: 9px; margin-bottom: 10px;
+    background: rgba(96,165,250,.07); border: 1px solid rgba(96,165,250,.22); }
+  #task.done { border-color: rgba(52,211,153,.45); }
+  .ctl[hidden] { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 6px 0; }
+  .row label { width: 56px; color: #9fb2cf; }
+  .row input { flex: 1; accent-color: #60a5fa; }
+  .btn { background: #1c2a40; border: 1px solid rgba(122,150,200,.25); color: #dbe4f0;
+    border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .nav { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+  .spacer { flex: 1; }
+  #next.glow { box-shadow: 0 0 12px rgba(52,211,153,.35); border-color: rgba(52,211,153,.7); }
+  #skip { font-size: 10.5px; color: #64789a; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="panel">
+  <div class="brand"><span>visualize · euler</span><span id="stage-num"></span></div>
+  <h1 id="stage-title"></h1>
+  <p id="stage-copy"></p>
+  <div id="task"><span id="task-tick">○</span> <span id="task-text"></span></div>
+  <div class="ctl" id="ctl-theta"><div class="row"><label>θ</label><input type="range" id="theta" min="0" max="6.28" step="0.01" value="1.2"><span id="theta-val">1.2</span></div></div>
+  <div class="ctl" id="ctl-terms" hidden><button class="btn" id="step-term">+1 term</button><span id="term-val" style="font-size:12px;margin-left:8px"></span></div>
+  <div class="ctl" id="ctl-zoom" hidden><div class="row"><label>zoom</label><input type="range" id="zoom" min="0.4" max="3" step="0.02" value="1"></div></div>
+  <div class="ctl" id="ctl-view" hidden>
+    <button class="btn on" id="v-circle">circle</button>
+    <button class="btn" id="v-sine">sine</button>
+    <button class="btn" id="v-cos">cosine</button>
+  </div>
+  <div class="nav">
+    <button class="btn" id="back">← Back</button>
+    <button class="btn" id="next">Next →</button>
+    <span class="spacer"></span><a id="skip" href="#6">skip to playground</a>
+  </div>
+</div>
+<script>
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const PANEL_X = 380, TAU = Math.PI * 2;
+const I = { re: 0, im: 1 };
+
+function cadd(a, b) { return { re: a.re + b.re, im: a.im + b.im }; }
+function cmul(a, b) { return { re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re }; }
+function cscale(a, s) { return { re: a.re * s, im: a.im * s }; }
+function fact(n) { let f = 1; for (let i = 2; i <= n; i++) f *= i; return f; }
+
+function taylorTerm(theta, n) {
+  let pw = { re: 1, im: 0 };
+  for (let k = 0; k < n; k++) pw = cmul(pw, { re: 0, im: theta });
+  return cscale(pw, 1 / fact(n));
+}
+function partial(theta, n) {
+  let s = { re: 0, im: 0 };
+  for (let k = 0; k <= n; k++) s = cadd(s, taylorTerm(theta, k));
+  return s;
+}
+
+const S = { theta: 1.2, terms: 1, zoom: 1, view: 'circle', helixT: 0 };
+
+const STAGES = [
+  { title: 'The unit circle', copy: 'Euler lives on the circle |z| = 1. Angle <b>θ</b> is arc length from 1.',
+    task: 'Drag θ partway around the circle.', show: ['circle'], reveals: ['theta'],
+    enter() { S.terms = 1; }, done: () => S.theta > 0.8 },
+  { title: 'First step: 1 + iθ', copy: 'Taylor starts at 1, then adds <b>iθ</b> — a right turn in the complex plane.',
+    task: 'Add one more term with the button.', show: ['spiral'], reveals: ['theta', 'terms'],
+    enter() { S.terms = 1; }, done: () => S.terms >= 2 },
+  { title: 'The Manhattan spiral', copy: 'Each term rotates 90° from the last (powers of i). The partial sums walk a ' +
+    '<b>right-angled spiral</b> toward e<sup>iθ</sup>.',
+    task: 'Step until at least 6 terms — watch the path curl inward.', show: ['spiral', 'target'],
+    reveals: ['theta', 'terms'], enter() { S.terms = 2; }, done: () => S.terms >= 6 },
+  { title: 'Walked vs reached', copy: 'Path <b>length</b> grows like e<sup>θ</sup>; straight-line distance to the limit is 1. ' +
+    'Zoom into the eye to see convergence.',
+    task: 'Zoom in past 2× while θ is fixed.', show: ['spiral', 'target', 'stats'], reveals: ['theta', 'terms', 'zoom'],
+    enter() { S.terms = 8; S.zoom = 1; }, done: () => S.zoom >= 1.9 },
+  { title: 'Helix — the circle view', copy: 'The same motion, seen as a helix: cos θ on x, sin θ on z, θ along time. ' +
+    'This is what <a href="../spinning-phasors/">spinning phasors</a> flattens to 2D.',
+    task: 'Switch to circle view and scrub θ.', show: ['helix', 'proj'], reveals: ['theta', 'view'],
+    enter() { S.view = 'circle'; }, done: () => S.theta > 2 },
+  { title: 'Three shadows', copy: 'End-on → unit circle. Side view → sine. Top view → cosine. One object, three shadows.',
+    task: 'Visit all three projection buttons.', show: ['helix', 'proj'], reveals: ['theta', 'view'],
+    enter() { S.flags = { seen: new Set(['circle']) }; S.view = 'circle'; },
+    done: () => S.flags.seen?.size >= 3 },
+  { title: 'Playground', copy: 'Spiral Taylor sums, helix projections, zoom — tie it together.',
+    task: null, show: ['spiral', 'helix', 'target', 'stats', 'proj'], reveals: ['theta', 'terms', 'zoom', 'view'],
+    enter() { S.terms = 10; }, done: null },
+];
+let stage = 0, taskDone = false;
+const shown = new Set();
+
+function layout() {
+  const d = Math.min(devicePixelRatio, 2);
+  cv.width = innerWidth * d; cv.height = innerHeight * d;
+  cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', layout); layout();
+
+function draw() {
+  const cx = PANEL_X + (innerWidth - PANEL_X) / 2, cy = innerHeight / 2;
+  const R = Math.min((innerWidth - PANEL_X) / 2 - 40, innerHeight / 2 - 50) * 0.42 * S.zoom;
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+
+  const target = { re: Math.cos(S.theta), im: Math.sin(S.theta) };
+
+  if (shown.has('circle') || shown.has('spiral') || shown.has('target')) {
+    ctx.strokeStyle = '#2a3a55'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = '#64789a';
+    ctx.beginPath(); ctx.moveTo(cx - R - 10, cy); ctx.lineTo(cx + R + 10, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - R - 10); ctx.lineTo(cx, cy + R + 10); ctx.stroke();
+  }
+
+  if (shown.has('spiral') || shown.has('target')) {
+    let prev = { re: 0, im: 0 }, pathLen = 0;
+    ctx.beginPath();
+    for (let k = 0; k <= S.terms; k++) {
+      const p = partial(S.theta, k);
+      const px = cx + p.re * R, py = cy - p.im * R;
+      if (k === 0) ctx.moveTo(px, py); else {
+        ctx.lineTo(px, py);
+        pathLen += Math.hypot(p.re - prev.re, p.im - prev.im);
+      }
+      prev = p;
+    }
+    ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2; ctx.stroke();
+    const tip = partial(S.theta, S.terms);
+    ctx.fillStyle = '#60a5fa'; ctx.beginPath(); ctx.arc(cx + tip.re * R, cy - tip.im * R, 5, 0, TAU); ctx.fill();
+    if (shown.has('target')) {
+      ctx.fillStyle = '#34d399';
+      ctx.beginPath(); ctx.arc(cx + target.re * R, cy - target.im * R, 6, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#9fb2cf'; ctx.font = '12px system-ui';
+      ctx.fillText('e^(iθ)', cx + target.re * R + 10, cy - target.im * R - 8);
+    }
+    if (shown.has('stats')) {
+      const dist = Math.hypot(target.re - tip.re, target.im - tip.im);
+      ctx.fillStyle = '#7fc8a9'; ctx.font = '12px system-ui';
+      ctx.fillText(`path ≈ ${pathLen.toFixed(2)} · gap to target ≈ ${dist.toFixed(3)}`, cx - 100, cy + R + 36);
+    }
+  }
+
+  if (shown.has('helix') || shown.has('proj')) {
+    const hx = PANEL_X + 60, hw = innerWidth - PANEL_X - 80, hy = innerHeight - 160, hh = 120;
+    ctx.strokeStyle = '#2a3a55'; ctx.strokeRect(hx, hy, hw, hh);
+    const samples = 120;
+    ctx.beginPath();
+    for (let i = 0; i <= samples; i++) {
+      const t = (i / samples) * TAU;
+      let x, y;
+      if (S.view === 'circle') { x = Math.cos(t); y = Math.sin(t); }
+      else if (S.view === 'sine') { x = t / TAU; y = Math.sin(t); }
+      else { x = Math.cos(t); y = t / TAU; }
+      const px = hx + (x + (S.view === 'sine' ? 0 : 0)) * hw * (S.view === 'circle' ? 0.35 : 0.45) + hw * 0.5;
+      const py = hy + hh / 2 - y * (S.view === 'circle' ? hw * 0.35 : hh * 0.38);
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    ctx.strokeStyle = S.view === 'circle' ? '#34d399' : S.view === 'sine' ? '#f472b6' : '#fbbf24';
+    ctx.lineWidth = 2; ctx.stroke();
+    const th = S.theta;
+    let mx, my;
+    if (S.view === 'circle') { mx = Math.cos(th); my = Math.sin(th); }
+    else if (S.view === 'sine') { mx = th / TAU; my = Math.sin(th); }
+    else { mx = Math.cos(th); my = th / TAU; }
+    const dotx = hx + hw * 0.5 + mx * hw * (S.view === 'circle' ? 0.35 : 0.45);
+    const doty = hy + hh / 2 - my * (S.view === 'circle' ? hw * 0.35 : hh * 0.38);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(dotx, doty, 5, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#8fa3c0'; ctx.font = '11px system-ui';
+    ctx.fillText(S.view + ' projection', hx + 8, hy - 6);
+  }
+}
+
+function setStage(i) {
+  stage = Math.max(0, Math.min(STAGES.length - 1, i));
+  const st = STAGES[stage];
+  taskDone = !st.done;
+  if (st.enter) st.enter();
+  shown.clear(); st.show.forEach((k) => shown.add(k));
+  ['theta', 'terms', 'zoom', 'view'].forEach((k) => { $(`ctl-${k}`).hidden = !st.reveals.includes(k); });
+  $('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
+  $('stage-title').textContent = st.title;
+  $('stage-copy').innerHTML = st.copy;
+  $('task').style.display = st.task ? '' : 'none';
+  if (st.task) $('task-text').textContent = st.task;
+  $('term-val').textContent = `${S.terms} terms`;
+  $('theta-val').textContent = S.theta.toFixed(2);
+  $('back').disabled = !stage;
+  $('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  $('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
+  tick();
+}
+
+function tick() {
+  const st = STAGES[stage];
+  if (!taskDone && st.done && st.done()) taskDone = true;
+  $('task').classList.toggle('done', taskDone);
+  $('task-tick').textContent = taskDone ? '✓' : '○';
+  $('next').classList.toggle('glow', taskDone);
+  $('term-val').textContent = `${S.terms} terms`;
+  draw();
+}
+
+$('theta').oninput = (e) => { S.theta = +e.target.value; $('theta-val').textContent = S.theta.toFixed(2); tick(); };
+$('zoom').oninput = (e) => { S.zoom = +e.target.value; tick(); };
+$('step-term').onclick = () => { S.terms++; tick(); };
+['circle', 'sine', 'cos'].forEach((v) => {
+  $(`v-${v}`).onclick = () => {
+    S.view = v;
+    ['circle', 'sine', 'cos'].forEach((w) => $(`v-${w}`).classList.toggle('on', w === v));
+    if (!S.flags) S.flags = { seen: new Set() };
+    S.flags.seen.add(v);
+    tick();
+  };
+});
+$('back').onclick = () => setStage(stage - 1);
+$('next').onclick = () => setStage(stage + 1);
+addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n !== stage) setStage(n);
+});
+
+window.__viz = {
+  state() { return { stage, taskDone, theta: S.theta, terms: S.terms, zoom: S.zoom, view: S.view }; },
+  setTheta(t) { S.theta = t; $('theta').value = t; tick(); },
+  stepTerm() { S.terms++; tick(); },
+  go(i) { setStage(i); },
+};
+
+setStage(Number.isNaN(parseInt(location.hash.slice(1), 10)) ? 0 : parseInt(location.hash.slice(1), 10));
+</script>
+</body>
+</html>

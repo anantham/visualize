@@ -11,7 +11,7 @@ backlog.
 
 ## The explorables
 
-Four are built. Each is a **single self-contained `index.html`** — no build step,
+Seven are built. Each is a **single self-contained `index.html`** — no build step,
 no install. Three use pure `<canvas>` 2D; one uses Three.js from a CDN. Open any
 of them directly in a browser, or serve the repo (below) and visit the path.
 
@@ -21,6 +21,9 @@ of them directly in a browser, or serve the repo (below) and visit the path.
 | [`projects/spinning-phasors/`](projects/spinning-phasors/) | frequency as **radians/sample** — a tone is a spinning phasor, sine & cosine are its shadows, aliasing is the wagon-wheel effect | canvas 2D |
 | [`projects/pascals-paths/`](projects/pascals-paths/) | nCk as path-counting in Pascal's triangle, and why it's a dynamic-programming problem | canvas 2D |
 | [`projects/sense-of-scale/`](projects/sense-of-scale/) | scope insensitivity — big/small numbers made felt via race, zoom, crowds, rings, pour & rain views | canvas 2D |
+| [`projects/composite-periods/`](projects/composite-periods/) | periods & LCM/GCD of composite functions — waves lining up again | canvas 2D |
+| [`projects/eulers-formula/`](projects/eulers-formula/) | e^iθ via Manhattan spiral + helix shadows | canvas 2D |
+| [`projects/earth-seasons/`](projects/earth-seasons/) | sunlight, axial tilt, seasons on a 3D globe | Three.js (CDN) |
 
 Each project folder has its own `README.md` with the concept, controls, stage
 list, and testing-hook API.
@@ -110,7 +113,6 @@ projects/
 
 ## Status & next
 
-Built: projects 1–4. Backlog highlights in `ideas.md`: Euler's formula (two
-perspectives), periods/LCM of composite functions, sunlight on a rotating Earth,
-and re-anchoring the abstract sense-of-scale categories (energy, pressure) in the
-practical/bodily style of the volume & rain views.
+Built: projects 1–7 (see table). Backlog highlights in `ideas.md`: sense-of-scale
+v2 (custom anchors, mileage, annual rainfall strip), phasors DFT bank extension,
+and re-anchoring abstract sense-of-scale categories in the bodily style of pour & rain.

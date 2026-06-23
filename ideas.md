@@ -21,7 +21,7 @@ the triangle inequality.
 - **The aha:** the inequality is never violated, and equality happens exactly
   when the detour vanishes — "the straight line is shortest" made tactile.
 
-## 2. Euler's formula e^iθ — two perspectives
+## 2. Euler's formula e^iθ — two perspectives — **PROJECT 6** ✅ built: [projects/eulers-formula/](projects/eulers-formula/index.html)
 
 **Perspective 1 — reached via Manhattan distance, with zoom.**
 
@@ -70,7 +70,7 @@ the DP recurrence, and the triangle *is* the memo table.
   visibly wasteful) and "DP fill" (each cell computed once) to feel why
   overlapping subproblems matter.
 
-## 4. Periods and fundamental periods of composite functions
+## 4. Periods and fundamental periods of composite functions — **PROJECT 5** ✅ built: [projects/composite-periods/](projects/composite-periods/index.html)
 
 > Visualise how to find periods and fundamental periods of composite functions.
 > Note how phase shift creates a new wrapped-up function with the same phase
@@ -106,7 +106,8 @@ the DP recurrence, and the triangle *is* the memo table.
   sample rate down until aliasing appears as the phasor seeming to spin the
   wrong way.
 - **Extension:** a row of phasors, one per DFT bin, each spinning at its bin
-  frequency — the DFT as a bank of spinning detectors.
+  frequency — the DFT as a bank of spinning detectors. ✅ added in stage 8
+  (`#7`) and playground.
 
 ## 6. Sense of Scale — a personal scope-insensitivity trainer — **PROJECT 4** ✅ built: [projects/sense-of-scale/](projects/sense-of-scale/index.html)
 
@@ -152,7 +153,7 @@ resting human" — pinned onto explorable scales. Seed data:
 - Anchors are a user-editable JSON document (add your own, localStorage +
   export) — the document/engine pattern again.
 
-## 7. Sunlight on a rotating Earth
+## 7. Sunlight on a rotating Earth — **PROJECT 7** ✅ built: [projects/earth-seasons/](projects/earth-seasons/index.html)
 
 A 3D globe with a day/night terminator, axial tilt, and a scrubbable
 time-of-year — showing *why* seasons happen. (Inspiration:

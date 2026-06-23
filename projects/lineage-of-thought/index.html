@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineage of Thought — a timeline of who shaped whom</title>
+<style>
+  :root {
+    --bg: #0b0f17; --ink: #dbe4f0; --muted: #9fb2cf; --dim: #64789a;
+    --panel: rgba(13, 19, 30, 0.86); --line: rgba(122, 150, 200, 0.18);
+    --infl: #5eead4; --deriv: #60a5fa; --disag: #f87171; --reviv: #fbbf24;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); }
+  canvas { display: block; position: fixed; inset: 0; cursor: grab; }
+  canvas.drag { cursor: grabbing; }
+
+  /* top bar */
+  #bar { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 46px;
+    display: flex; align-items: center; gap: 12px; padding: 0 14px;
+    background: linear-gradient(180deg, rgba(11,15,23,.95), rgba(11,15,23,.65) 70%, rgba(11,15,23,0));
+    pointer-events: none; }
+  #bar > * { pointer-events: auto; }
+  .brand { font-size: 10px; color: var(--dim); letter-spacing: .4px; line-height: 1.2; }
+  .brand b { color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: .2px; }
+  .spacer { flex: 1; }
+  .btn { background: #1c2a40; border: 1px solid var(--line); color: var(--ink);
+    border-radius: 8px; padding: 6px 11px; font-size: 12px; cursor: pointer; }
+  .btn:hover { background: #25364f; }
+  .btn.primary { background: #1d3b5e; border-color: rgba(96,165,250,.5); color: #cfe3ff; }
+  #search { background: rgba(13,19,30,.9); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 8px; padding: 6px 10px; font-size: 12px; width: 168px; }
+  #search::placeholder { color: var(--dim); }
+
+  /* legend (bottom-left) */
+  #legend { position: fixed; left: 14px; bottom: 14px; z-index: 10; width: 234px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.45); font-size: 11.5px; }
+  #legend h4 { margin: 0 0 6px; font-size: 10px; letter-spacing: .5px; text-transform: uppercase;
+    color: var(--dim); font-weight: 600; }
+  #legend h4:not(:first-child) { margin-top: 10px; }
+  .lg-row { display: flex; align-items: center; gap: 7px; padding: 2px 0; cursor: pointer;
+    user-select: none; }
+  .lg-row.edge { opacity: 1; }
+  .lg-row.edge.off { opacity: .34; }
+  .sw { width: 22px; height: 4px; border-radius: 2px; flex: none; }
+  .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .lg-row span { color: var(--muted); }
+  .lg-row .hint { color: var(--dim); margin-left: auto; font-size: 10px; }
+
+  /* side panel */
+  #side { position: fixed; top: 0; right: 0; bottom: 0; width: 320px; z-index: 11;
+    background: var(--panel); border-left: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: -8px 0 30px rgba(0,0,0,.4); overflow-y: auto; transform: translateX(100%);
+    transition: transform .18s ease; padding: 16px 18px 28px; }
+  #side.open { transform: translateX(0); }
+  #side .close { position: absolute; top: 12px; right: 14px; color: var(--dim);
+    cursor: pointer; font-size: 18px; line-height: 1; }
+  #side .close:hover { color: var(--ink); }
+  #side h2 { margin: 2px 0 4px; font-size: 19px; letter-spacing: .2px; }
+  #side .meta { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+  #side .chip { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 999px;
+    margin: 2px 4px 2px 0; border: 1px solid var(--line); color: var(--muted); }
+  #side .desc { font-size: 12.5px; color: #c5d2e8; line-height: 1.55; margin: 10px 0 6px; }
+  #side .desc em { color: #e6d6a8; font-style: italic; }
+  .rel { margin-top: 12px; }
+  .rel h5 { margin: 0 0 4px; font-size: 10px; letter-spacing: .5px; text-transform: uppercase;
+    color: var(--dim); display: flex; align-items: center; gap: 6px; }
+  .rel h5 .bar { width: 14px; height: 3px; border-radius: 2px; }
+  .rel a { display: block; font-size: 12.5px; color: #cfe0f7; text-decoration: none;
+    padding: 2px 0; cursor: pointer; }
+  .rel a:hover { color: #fff; }
+  .rel a .yr { color: var(--dim); font-size: 10.5px; }
+  .rel a .sub { color: var(--muted); font-size: 11px; }
+  .stance { color: #8fb8a6; }
+
+  /* tooltip */
+  #tip { position: fixed; z-index: 20; pointer-events: none; display: none;
+    background: rgba(8,12,20,.96); border: 1px solid var(--line); border-radius: 9px;
+    padding: 7px 10px; font-size: 11.5px; max-width: 230px; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+  #tip b { font-size: 13px; }
+  #tip .t-meta { color: var(--muted); font-size: 10.5px; margin-top: 2px; }
+  #tip .t-con { color: #7fc8a9; font-size: 10.5px; margin-top: 3px; }
+
+  /* hint / empty overlay */
+  #hint { position: fixed; left: 50%; top: 54px; transform: translateX(-50%); z-index: 9;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 14px; font-size: 11.5px; color: var(--muted); display: flex; gap: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4); transition: opacity .4s; }
+  #hint b { color: var(--ink); }
+  #hint.gone { opacity: 0; pointer-events: none; }
+  #err { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 9;
+    max-width: 420px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6;
+    display: none; }
+  #err.show { display: block; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="bar">
+  <div class="brand"><b>Lineage of Thought</b><br><span id="src-label">visualize · seed vault</span></div>
+  <div class="spacer"></div>
+  <input id="search" placeholder="find a thinker…" autocomplete="off">
+  <button class="btn" id="fit" title="Fit all to view">Fit</button>
+  <button class="btn" id="zout" title="Zoom out">–</button>
+  <button class="btn" id="zin" title="Zoom in">+</button>
+  <button class="btn primary" id="open" title="Point at an Obsidian vault folder">Open vault…</button>
+</div>
+
+<div id="legend">
+  <h4>Regions</h4>
+  <div id="lg-regions"></div>
+  <h4>Edges — click to filter</h4>
+  <div class="lg-row edge" data-type="influence"><span class="sw" style="background:var(--infl)"></span><span>influence</span></div>
+  <div class="lg-row edge" data-type="derivation"><span class="sw" style="background:var(--deriv)"></span><span>develops</span></div>
+  <div class="lg-row edge" data-type="disagreement"><span class="sw" style="background:var(--disag)"></span><span>disagrees</span></div>
+  <div class="lg-row edge" data-type="revival"><span class="sw" style="background:var(--reviv)"></span><span>revives</span><span class="hint">arc ∝ years</span></div>
+</div>
+
+<aside id="side">
+  <div class="close" id="side-close">×</div>
+  <div id="side-body"></div>
+</aside>
+
+<div id="tip"></div>
+<div id="hint"><span><b>drag</b> pan</span><span><b>scroll</b> zoom time</span><span><b>hover</b> reveal contemporaries</span><span><b>click</b> open</span></div>
+<div id="err"></div>
+
+<script>
+"use strict";
+// ----------------------------------------------------------------------------
+// Lineage of Thought — point at a vault of thinker notes, see who shaped whom.
+// One self-contained file, canvas-2D, no build. The SAME parser runs on the
+// bundled seed (vault-sample/) and on a real Obsidian vault (File System Access).
+// ----------------------------------------------------------------------------
+
+// ---- relationship vocabulary: note section header -> edge type + direction --
+// dir 'in'  : linked thinker -> note owner   (owner was influenced/derives/revived)
+// dir 'out' : note owner -> linked thinker
+// dir 'sym' : mutual (disagreement)
+const SECTION_MAP = {
+  "influenced by": ["influence", "in"], "teacher": ["influence", "in"],
+  "teachers": ["influence", "in"], "studied under": ["influence", "in"],
+  "learned from": ["influence", "in"],
+  "influence on": ["influence", "out"], "students": ["influence", "out"],
+  "taught": ["influence", "out"],
+  "develops": ["derivation", "in"], "derives from": ["derivation", "in"],
+  "builds on": ["derivation", "in"], "systematizes": ["derivation", "in"],
+  "extends": ["derivation", "in"], "continues": ["derivation", "in"],
+  "disagreed with": ["disagreement", "sym"], "critiques": ["disagreement", "sym"],
+  "rejects": ["disagreement", "sym"], "opposes": ["disagreement", "sym"],
+  "against": ["disagreement", "sym"], "debated": ["disagreement", "sym"],
+  "revives": ["revival", "in"], "revival of": ["revival", "in"],
+  "retrieves": ["revival", "in"], "reinterprets": ["revival", "in"],
+  "returns to": ["revival", "in"],
+};
+const EDGE_COLOR = { influence: "#5eead4", derivation: "#60a5fa",
+  disagreement: "#f87171", revival: "#fbbf24" };
+const REGION_TINT = { Greece: [96,165,250], India: [245,158,11],
+  China: [239,68,68], Europe: [148,163,184] };
+const TRADITION_COLOR = {
+  "Platonism": "#60a5fa", "Aristotelianism": "#38bdf8", "Classical Greek": "#818cf8",
+  "Ionian (Pre-Socratic)": "#22d3ee", "Eleatic": "#2dd4bf", "Stoicism": "#34d399",
+  "Epicureanism": "#a3e635", "Buddhism": "#f59e0b", "Madhyamaka Buddhism": "#fbbf24",
+  "Navayana Buddhism": "#fb923c", "Jainism": "#f472b6", "Advaita Vedanta": "#e879f9",
+  "Confucianism": "#ef4444", "Neo-Confucianism": "#f87171", "Mohism": "#fb7185",
+  "Daoism": "#c084fc", "Empiricism": "#94a3b8", "Existentialism": "#cbd5e1",
+};
+function tradColor(t) {
+  if (TRADITION_COLOR[t]) return TRADITION_COLOR[t];
+  let h = 0; for (const c of (t||"")) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  return "hsl(" + (h % 360) + ",55%,62%)";
+}
+
+// ---------------------------- parsing ---------------------------------------
+function coerceYear(v) {
+  if (typeof v === "number") return v;
+  if (typeof v !== "string") return null;
+  let m = v.match(/(-?\d+)\s*(bce|bc)\b/i); if (m) return -Math.abs(+m[1]);
+  m = v.match(/(\d+)\s*(ce|ad)\b/i); if (m) return +m[1];
+  m = v.match(/^-?\d+$/); if (m) return +v;
+  return null;
+}
+function parseFrontmatter(text) {
+  const fm = {}; let body = text;
+  if (/^﻿?---\s*\n/.test(text)) {
+    const end = text.indexOf("\n---", text.indexOf("\n") );
+    const close = text.indexOf("---", 3);
+    const m = text.match(/^﻿?---\s*\n([\s\S]*?)\n---\s*\n?/);
+    if (m) {
+      body = text.slice(m[0].length);
+      for (const line of m[1].split("\n")) {
+        const i = line.indexOf(":"); if (i < 0) continue;
+        const k = line.slice(0, i).trim();
+        let v = line.slice(i + 1).trim();
+        if (v === "true") v = true; else if (v === "false") v = false;
+        else if (/^-?\d+$/.test(v)) v = +v;
+        fm[k] = v;
+      }
+    }
+  }
+  return { fm, body };
+}
+function parseLinkLine(line) {
+  const lm = line.match(/\[\[([^\]]+)\]\]/);
+  if (!lm) return null;
+  const target = lm[1].split("|")[0].trim();
+  let crux = null, note = null;
+  const rest = line.slice(line.indexOf("]]") + 2);
+  const dashSplit = rest.split(/\s[—–-]\s/);  // em/en/hyphen as note separator
+  let head = dashSplit[0];
+  if (dashSplit.length > 1) note = dashSplit.slice(1).join(" - ").trim();
+  const ci = head.indexOf("::");
+  if (ci >= 0) crux = head.slice(ci + 2).trim();
+  const conjecture = /\(\?\)/.test(line);
+  return { target, crux, note, conjecture };
+}
+// id -> {id, name, born, died, floruit, region, tradition, uncertain, importance, desc, cruxes[]}
+function parseVault(files) {
+  const thinkers = {}, rawEdges = [];
+  for (const f of files) {
+    const id = f.name.replace(/\.md$/i, "");
+    const { fm, body } = parseFrontmatter(f.text);
+    const lines = body.split("\n");
+    let desc = "";
+    for (const ln of lines) { const t = ln.trim();
+      if (t && !t.startsWith("#") && !t.startsWith("-")) { desc = t; break; } }
+    const th = {
+      id, name: fm.name || id,
+      born: coerceYear(fm.born), died: coerceYear(fm.died), floruit: coerceYear(fm.floruit),
+      region: fm.region || "—", tradition: fm.tradition || "—",
+      uncertain: !!fm.uncertain, importance: (typeof fm.importance === "number" ? fm.importance : null),
+      desc, cruxes: [],
+    };
+    thinkers[id] = th;
+    // sections
+    let sec = null;
+    for (const ln of lines) {
+      const h = ln.match(/^#{1,6}\s+(.*)$/);
+      if (h) { sec = h[1].trim().toLowerCase(); continue; }
+      const li = ln.match(/^\s*[-*]\s+(.*)$/);
+      if (!li || !sec) continue;
+      const parsed = parseLinkLine(li[1]);
+      if (!parsed) continue;
+      if (sec === "cruxes" || sec === "crux") {
+        th.cruxes.push({ crux: parsed.target, stance: parsed.note || "" });
+        continue;
+      }
+      const map = SECTION_MAP[sec];
+      if (!map) continue;
+      const [type, dir] = map;
+      rawEdges.push({ owner: id, linked: parsed.target, type, dir,
+        crux: parsed.crux, note: parsed.note, conjecture: parsed.conjecture });
+    }
+  }
+  // resolve link text -> thinker id (case-insensitive)
+  const byLower = {}; for (const id in thinkers) byLower[id.toLowerCase()] = id;
+  const resolve = (name) => byLower[(name||"").toLowerCase()] || null;
+  const edges = []; const seen = new Set();
+  for (const e of rawEdges) {
+    const linkedId = resolve(e.linked);
+    if (!linkedId || !thinkers[e.owner]) continue;
+    let source, target;
+    if (e.dir === "out") { source = e.owner; target = linkedId; }
+    else { source = linkedId; target = e.owner; }   // 'in' and 'sym' anchor source=other
+    const key = source + "→" + target + "·" + e.type;
+    if (seen.has(key)) continue; seen.add(key);
+    edges.push({ source, target, type: e.type, crux: e.crux || null,
+      note: e.note || null, conjecture: !!e.conjecture, mutual: e.dir === "sym" });
+  }
+  // importance = manual, else 1 + incident-edge degree
+  const deg = {}; for (const id in thinkers) deg[id] = 0;
+  for (const e of edges) { deg[e.source]++; deg[e.target]++; }
+  for (const id in thinkers)
+    if (thinkers[id].importance == null) thinkers[id].importance = 1 + deg[id];
+  return { thinkers, edges };
+}
+
+// span helpers (some ancients have only a floruit)
+function startOf(t) { return t.born != null ? t.born : (t.floruit != null ? t.floruit - 15 : t.died); }
+function endOf(t)   { return t.died != null ? t.died : (t.floruit != null ? t.floruit + 15 : t.born); }
+function midOf(t)   { const s = startOf(t), e = endOf(t); return (s != null && e != null) ? (s+e)/2 : (s ?? e); }
+function fmtYear(y) { y = Math.round(y); if (y < 0) return (-y) + " BCE"; if (y === 0) return "1 BCE"; return y + " CE"; }
+function fmtSpan(t) {
+  const s = t.born ?? t.floruit, e = t.died;
+  if (t.born != null && t.died != null) return fmtYear(t.born) + " – " + fmtYear(t.died) + (t.uncertain ? " (approx.)" : "");
+  if (t.floruit != null) return "fl. " + fmtYear(t.floruit);
+  return s != null ? fmtYear(s) : "date unknown";
+}
+
+// ----------------------------- state ----------------------------------------
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+let MODEL = { thinkers: {}, edges: [], regions: [] };
+let layout = { lanes: [], pos: {}, totalH: 0 }; // pos[id] = {row, laneIndex, yCenter}
+let view = { centerYear: 0, pxPerYear: 1 };
+let scrollY = 0;
+let selectedId = null, hoveredId = null;
+let filters = { influence: true, derivation: true, disagreement: true, revival: true };
+let loaded = false, source = "seed";
+const RULER_H = 36, RIBBON_H = 16, ROW_PITCH = 26, LANE_HEAD = 22, LANE_GAP = 16;
+
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + "px"; cv.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  render();
+}
+window.addEventListener("resize", resize);
+
+// ----------------------------- layout ---------------------------------------
+function buildLayout() {
+  const ths = Object.values(MODEL.thinkers);
+  // regions ordered by earliest start (oldest tradition root on top)
+  const byRegion = {};
+  for (const t of ths) (byRegion[t.region] = byRegion[t.region] || []).push(t);
+  const regions = Object.keys(byRegion).sort((a, b) =>
+    Math.min(...byRegion[a].map(startOf)) - Math.min(...byRegion[b].map(startOf)));
+  MODEL.regions = regions;
+  const lanes = []; const pos = {}; let y = RULER_H + 8;
+  for (const r of regions) {
+    const members = byRegion[r].slice().sort((a, b) => startOf(a) - startOf(b));
+    const rowEnds = []; // last end-year per row (time-space => stable across zoom)
+    for (const t of members) {
+      const s = startOf(t), e = endOf(t);
+      let row = rowEnds.findIndex(end => end + 6 <= s);
+      if (row < 0) { row = rowEnds.length; rowEnds.push(e); }
+      else rowEnds[row] = e;
+      pos[t.id] = { row, region: r };
+    }
+    const nRows = Math.max(1, rowEnds.length);
+    const laneTop = y, contentTop = y + LANE_HEAD;
+    for (const t of members) pos[t.id].yCenter = contentTop + pos[t.id].row * ROW_PITCH + RIBBON_H / 2;
+    const laneH = LANE_HEAD + nRows * ROW_PITCH + 6;
+    lanes.push({ region: r, top: laneTop, height: laneH, rows: nRows });
+    y += laneH + LANE_GAP;
+  }
+  layout = { lanes, pos, totalH: y };
+}
+
+function fit() {
+  const ths = Object.values(MODEL.thinkers); if (!ths.length) return;
+  let lo = Infinity, hi = -Infinity;
+  for (const t of ths) { lo = Math.min(lo, startOf(t)); hi = Math.max(hi, endOf(t)); }
+  const pad = (hi - lo) * 0.06 + 30;
+  lo -= pad; hi += pad;
+  view.pxPerYear = W / (hi - lo);
+  view.centerYear = (lo + hi) / 2;
+  scrollY = 0;
+  render();
+}
+
+// ----------------------------- transform ------------------------------------
+const xOf = (yr) => W / 2 + (yr - view.centerYear) * view.pxPerYear;
+const yearOf = (px) => view.centerYear + (px - W / 2) / view.pxPerYear;
+
+// LOD: minimum importance to show a label at the current zoom
+function labelThreshold() {
+  const p = view.pxPerYear;
+  if (p < 0.10) return 5; if (p < 0.22) return 4; if (p < 0.5) return 3; if (p < 1.1) return 2;
+  return 0;
+}
+
+// ----------------------------- rendering ------------------------------------
+function egoSet(id) {
+  if (!id) return null;
+  const set = new Set([id]), contemp = new Set();
+  for (const e of MODEL.edges) {
+    if (!filters[e.type]) continue;
+    if (e.source === id) set.add(e.target);
+    if (e.target === id) set.add(e.source);
+  }
+  const t = MODEL.thinkers[id], s = startOf(t), e2 = endOf(t);
+  for (const o of Object.values(MODEL.thinkers)) {
+    if (o.id === id) continue;
+    if (startOf(o) <= e2 && endOf(o) >= s) contemp.add(o.id);
+  }
+  return { set, contemp };
+}
+
+function render() {
+  if (!loaded) return;
+  ctx.clearRect(0, 0, W, H);
+  const ego = egoSet(hoveredId || selectedId);
+  // maximum vertical scroll
+  const maxScroll = Math.max(0, layout.totalH - H + 20);
+  scrollY = Math.min(maxScroll, Math.max(0, scrollY));
+
+  drawLanes(ego);
+  drawGridAndRuler();
+  drawEdges(ego, false);          // base (dim) edges
+  drawRibbons(ego);
+  if (ego) drawEdges(ego, true);  // highlighted edges on top
+}
+
+function drawLanes(ego) {
+  for (const lane of layout.lanes) {
+    const top = lane.top - scrollY;
+    if (top + lane.height < RULER_H || top > H) continue;
+    const tint = REGION_TINT[lane.region] || [255,255,255];
+    ctx.fillStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},0.045)`;
+    ctx.fillRect(0, top, W, lane.height);
+    ctx.fillStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},0.8)`;
+    ctx.font = "600 11px ui-sans-serif, system-ui";
+    ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.globalAlpha = 0.85;
+    ctx.fillText(lane.region.toUpperCase(), 14, top + 12);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function chooseStep() {
+  const steps = [1,2,5,10,20,25,50,100,200,250,500,1000,2000,5000];
+  for (const s of steps) if (s * view.pxPerYear >= 80) return s;
+  return 5000;
+}
+function drawGridAndRuler() {
+  const step = chooseStep();
+  const y0 = Math.ceil(yearOf(0) / step) * step;
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "center";
+  ctx.font = "11px ui-sans-serif, system-ui";
+  for (let yr = y0; xOf(yr) < W; yr += step) {
+    const x = xOf(yr);
+    ctx.strokeStyle = "rgba(122,150,200,0.08)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, RULER_H); ctx.lineTo(x, H); ctx.stroke();
+  }
+  // ruler bg
+  ctx.fillStyle = "rgba(11,15,23,0.92)"; ctx.fillRect(0, 0, W, RULER_H);
+  ctx.strokeStyle = "rgba(122,150,200,0.18)"; ctx.beginPath();
+  ctx.moveTo(0, RULER_H); ctx.lineTo(W, RULER_H); ctx.stroke();
+  for (let yr = y0; xOf(yr) < W; yr += step) {
+    const x = xOf(yr); if (x < 30) continue;
+    ctx.strokeStyle = "rgba(122,150,200,0.35)";
+    ctx.beginPath(); ctx.moveTo(x, RULER_H - 6); ctx.lineTo(x, RULER_H); ctx.stroke();
+    ctx.fillStyle = "#8aa0c4"; ctx.fillText(fmtYear(yr), x, RULER_H - 11);
+  }
+}
+
+function ribbonRect(t) {
+  const p = layout.pos[t.id]; const y = p.yCenter - scrollY;
+  const x0 = xOf(startOf(t)), x1 = xOf(endOf(t));
+  return { x: x0, y: y - RIBBON_H/2, w: Math.max(4, x1 - x0), h: RIBBON_H, cy: y, x0, x1 };
+}
+function roundRect(x, y, w, h, r) {
+  r = Math.min(r, h/2, w/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+function drawRibbons(ego) {
+  const thr = labelThreshold();
+  ctx.textBaseline = "middle";
+  for (const t of Object.values(MODEL.thinkers)) {
+    const r = ribbonRect(t);
+    if (r.y + r.h < RULER_H || r.y > H || r.x1 < -40 || r.x0 > W + 40) continue;
+    const inEgo = !ego || ego.set.has(t.id);
+    const isContemp = ego && ego.contemp.has(t.id) && !ego.set.has(t.id);
+    const focused = (t.id === hoveredId || t.id === selectedId);
+    let alpha = ego ? (inEgo ? 1 : (isContemp ? 0.55 : 0.12)) : (t.importance >= thr || thr === 0 ? 1 : 0.5);
+    const col = tradColor(t.tradition);
+    ctx.globalAlpha = alpha;
+    // floruit-only -> diamond marker
+    if (t.born == null && t.died == null && t.floruit != null) {
+      ctx.fillStyle = col; const cx = xOf(t.floruit);
+      ctx.beginPath(); ctx.moveTo(cx, r.cy-8); ctx.lineTo(cx+8, r.cy); ctx.lineTo(cx, r.cy+8); ctx.lineTo(cx-8, r.cy); ctx.closePath(); ctx.fill();
+    } else {
+      roundRect(r.x, r.y, r.w, r.h, 5);
+      if (t.uncertain) {
+        const g = ctx.createLinearGradient(r.x, 0, r.x + r.w, 0);
+        g.addColorStop(0, col + "55"); g.addColorStop(0.18, col);
+        g.addColorStop(0.82, col); g.addColorStop(1, col + "55");
+        ctx.fillStyle = g;
+      } else ctx.fillStyle = col;
+      ctx.fill();
+    }
+    if (focused || isContemp) {
+      ctx.lineWidth = focused ? 2 : 1;
+      ctx.strokeStyle = focused ? "#ffffff" : "rgba(255,255,255,.5)";
+      if (t.born == null && t.died == null && t.floruit != null) {} else { roundRect(r.x, r.y, r.w, r.h, 5); ctx.stroke(); }
+    }
+    // label
+    const showLabel = focused || inEgo && ego || t.importance >= thr || thr === 0;
+    if (showLabel && alpha > 0.2) {
+      ctx.globalAlpha = Math.min(1, alpha + 0.15);
+      ctx.fillStyle = focused ? "#ffffff" : "#dbe4f0";
+      ctx.font = (focused ? "600 " : "") + "12px ui-sans-serif, system-ui";
+      ctx.textAlign = "left";
+      if (r.w > ctx.measureText(t.name).width + 12 && r.x > -20) {
+        ctx.fillStyle = "#0a0e16";            // dark text inside the bright ribbon
+        ctx.fillText(t.name, r.x + 6, r.cy + 0.5);
+      } else {
+        ctx.fillStyle = focused ? "#fff" : "#c8d6ec";  // label above a too-narrow ribbon
+        ctx.fillText(t.name, Math.max(6, r.x + 2), r.y - 4);
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function edgeAnchors(e) {
+  const a = MODEL.thinkers[e.source], b = MODEL.thinkers[e.target];
+  const pa = layout.pos[a.id], pb = layout.pos[b.id];
+  let ax, bx;
+  if (e.mutual) { // disagreement: connect at overlap (or nearest) midpoints
+    const oa = [startOf(a), endOf(a)], ob = [startOf(b), endOf(b)];
+    const lo = Math.max(oa[0], ob[0]), hi = Math.min(oa[1], ob[1]);
+    if (lo <= hi) { ax = bx = xOf((lo+hi)/2); ax = xOf(midOf(a)); bx = xOf(midOf(b)); }
+    else { ax = xOf(midOf(a)); bx = xOf(midOf(b)); }
+  } else { // forward: from source's late life to target's start
+    ax = xOf(Math.min(endOf(a), startOf(b)));
+    bx = xOf(startOf(b));
+    if (!isFinite(ax)) ax = xOf(midOf(a));
+  }
+  return { ax, ay: pa.yCenter - scrollY, bx, by: pb.yCenter - scrollY, a, b };
+}
+function drawEdges(ego, highlight) {
+  for (const e of MODEL.edges) {
+    if (!filters[e.type]) continue;
+    const involved = ego && (ego.set.has(e.source) && ego.set.has(e.target) &&
+                     (e.source === (hoveredId||selectedId) || e.target === (hoveredId||selectedId)));
+    if (highlight && !involved) continue;
+    if (!highlight && ego && involved) continue; // drawn in highlight pass
+    const { ax, ay, bx, by, a, b } = edgeAnchors(e);
+    if ((ax < -50 && bx < -50) || (ax > W+50 && bx > W+50)) continue;
+    const yrsGap = Math.abs(midOf(b) - midOf(a));
+    const lift = Math.min(240, Math.max(16, yrsGap * view.pxPerYear * 0.16));
+    const mx = (ax + bx) / 2, my = Math.min(ay, by) - lift;
+    const col = EDGE_COLOR[e.type];
+    let alpha = highlight ? 0.95 : (ego ? 0.05 : 0.4);
+    if (!highlight && !ego) alpha = (e.type === "revival" ? 0.55 : 0.4);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = highlight ? (e.type === "revival" ? 2.6 : 2) : (e.type === "revival" ? 1.6 : 1.1);
+    ctx.setLineDash(e.conjecture ? [4,4] : (e.mutual ? [2,3] : []));
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by); ctx.stroke();
+    ctx.setLineDash([]);
+    if (!e.mutual) { // arrowhead at target
+      const t = 0.92, omt = 1 - t;
+      const px = omt*omt*ax + 2*omt*t*mx + t*t*bx;
+      const py = omt*omt*ay + 2*omt*t*my + t*t*by;
+      const ang = Math.atan2(by - py, bx - px);
+      const sz = highlight ? 8 : 6;
+      ctx.fillStyle = col; ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx - sz*Math.cos(ang - 0.5), by - sz*Math.sin(ang - 0.5));
+      ctx.lineTo(bx - sz*Math.cos(ang + 0.5), by - sz*Math.sin(ang + 0.5));
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ----------------------------- hit testing ----------------------------------
+function hitTest(mx, my) {
+  let best = null;
+  for (const t of Object.values(MODEL.thinkers)) {
+    const r = ribbonRect(t);
+    const pad = 3;
+    if (mx >= r.x - pad && mx <= r.x + r.w + pad && my >= r.y - pad && my <= r.y + r.h + pad) {
+      // prefer the narrowest (most specific) ribbon under cursor
+      if (!best || r.w < best.w) best = { id: t.id, w: r.w };
+    }
+  }
+  return best ? best.id : null;
+}
+
+// ----------------------------- interaction ----------------------------------
+let dragging = false, dragMoved = false, lastX = 0, lastY = 0;
+cv.addEventListener("pointerdown", (e) => {
+  dragging = true; dragMoved = false; lastX = e.clientX; lastY = e.clientY;
+  cv.classList.add("drag"); cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove", (e) => {
+  if (dragging) {
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    if (Math.abs(dx) + Math.abs(dy) > 2) dragMoved = true;
+    view.centerYear -= dx / view.pxPerYear;
+    scrollY -= dy;
+    lastX = e.clientX; lastY = e.clientY;
+    render();
+  } else {
+    const id = hitTest(e.clientX, e.clientY);
+    if (id !== hoveredId) { hoveredId = id; render(); }
+    updateTip(e, id);
+  }
+});
+function endDrag(e) { dragging = false; cv.classList.remove("drag"); }
+cv.addEventListener("pointerup", (e) => {
+  endDrag(e);
+  if (!dragMoved) {
+    const id = hitTest(e.clientX, e.clientY);
+    if (id) selectThinker(id); else closeSide();
+  }
+  dismissHint();
+});
+cv.addEventListener("pointerleave", () => { hoveredId = null; hideTip(); render(); });
+cv.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const yrAt = yearOf(e.clientX);
+  const factor = Math.exp(-e.deltaY * 0.0015);
+  view.pxPerYear = Math.min(40, Math.max(0.02, view.pxPerYear * factor));
+  view.centerYear = yrAt - (e.clientX - W/2) / view.pxPerYear;
+  dismissHint(); render();
+}, { passive: false });
+
+const tip = document.getElementById("tip");
+function updateTip(e, id) {
+  if (!id) { hideTip(); return; }
+  const t = MODEL.thinkers[id];
+  const con = (egoSet(id).contemp.size);
+  tip.innerHTML = `<b>${t.name}</b><div class="t-meta">${fmtSpan(t)} · ${t.region} · ${t.tradition}</div>`
+    + `<div class="t-con">${con} contemporaries · click to open</div>`;
+  tip.style.display = "block";
+  let x = e.clientX + 14, y = e.clientY + 14;
+  const r = tip.getBoundingClientRect();
+  if (x + r.width > W - 8) x = e.clientX - r.width - 14;
+  if (y + r.height > H - 8) y = e.clientY - r.height - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+// ----------------------------- side panel -----------------------------------
+const side = document.getElementById("side"), sideBody = document.getElementById("side-body");
+function mdInline(s) {
+  return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/\[\[([^\]|]+)(\|[^\]]+)?\]\]/g, (m,a)=>`<em>${a}</em>`);
+}
+function relRow(id, sub) {
+  const t = MODEL.thinkers[id]; if (!t) return "";
+  return `<a data-go="${id}">${t.name} <span class="yr">${fmtSpan(t)}</span>`
+    + (sub ? `<br><span class="sub">${mdInline(sub)}</span>` : "") + `</a>`;
+}
+function relations(id) {
+  const E = MODEL.edges;
+  const inflBy = E.filter(e=>e.target===id&&e.type==="influence");
+  const inflOn = E.filter(e=>e.source===id&&e.type==="influence");
+  const devOf  = E.filter(e=>e.target===id&&e.type==="derivation");
+  const devBy  = E.filter(e=>e.source===id&&e.type==="derivation");
+  const revOf  = E.filter(e=>e.target===id&&e.type==="revival");
+  const revBy  = E.filter(e=>e.source===id&&e.type==="revival");
+  const disag  = E.filter(e=>e.type==="disagreement"&&(e.source===id||e.target===id));
+  return { inflBy, inflOn, devOf, devBy, revOf, revBy, disag };
+}
+function block(title, color, rows) {
+  if (!rows.length) return "";
+  return `<div class="rel"><h5><span class="bar" style="background:${color}"></span>${title}</h5>${rows.join("")}</div>`;
+}
+function selectThinker(id, recenter) {
+  const t = MODEL.thinkers[id]; if (!t) return;
+  selectedId = id;
+  if (recenter) { view.centerYear = midOf(t); }
+  const R = relations(id);
+  const C = EDGE_COLOR;
+  const other = (e) => e.source === id ? e.target : e.source;
+  const contemp = [...egoSet(id).contemp];
+  let html = `<h2>${t.name}</h2>`
+    + `<div class="meta">${fmtSpan(t)}</div>`
+    + `<span class="chip">${t.region}</span><span class="chip" style="border-color:${tradColor(t.tradition)}55;color:${tradColor(t.tradition)}">${t.tradition}</span>`
+    + `<div class="desc">${mdInline(t.desc)}</div>`;
+  html += block("Influenced by", C.influence, R.inflBy.map(e=>relRow(e.source, e.note)));
+  html += block("Influence on", C.influence, R.inflOn.map(e=>relRow(e.target, e.note)));
+  html += block("Develops", C.derivation, R.devOf.map(e=>relRow(e.source, e.note)));
+  html += block("Developed by", C.derivation, R.devBy.map(e=>relRow(e.target, e.note)));
+  html += block("Revives", C.revival, R.revOf.map(e=>relRow(e.source, e.note)));
+  html += block("Revived by", C.revival, R.revBy.map(e=>relRow(e.target, e.note)));
+  html += block("Disagrees with", C.disagreement, R.disag.map(e=>relRow(other(e), (e.crux?("on <em>"+e.crux+"</em>: "):"")+(e.note||""))));
+  if (t.cruxes.length)
+    html += `<div class="rel"><h5>Cruxes — positions held</h5>` +
+      t.cruxes.map(c=>`<a class="crux"><strong>${c.crux}</strong>${c.stance?`<br><span class="sub stance">${mdInline(c.stance)}</span>`:""}</a>`).join("") + `</div>`;
+  if (contemp.length)
+    html += block("Contemporaries", "#64789a", contemp.sort((a,b)=>midOf(MODEL.thinkers[a])-midOf(MODEL.thinkers[b])).map(cid=>relRow(cid)));
+  sideBody.innerHTML = html;
+  side.classList.add("open");
+  sideBody.querySelectorAll("[data-go]").forEach(a =>
+    a.addEventListener("click", () => selectThinker(a.getAttribute("data-go"), true)));
+  render();
+}
+function closeSide() { selectedId = null; side.classList.remove("open"); render(); }
+document.getElementById("side-close").addEventListener("click", closeSide);
+
+// ----------------------------- chrome / controls ----------------------------
+function buildRegionLegend() {
+  const el = document.getElementById("lg-regions");
+  el.innerHTML = MODEL.regions.map(r => {
+    const tint = REGION_TINT[r] || [200,200,200];
+    return `<div class="lg-row"><span class="dot" style="background:rgba(${tint[0]},${tint[1]},${tint[2]},.9)"></span><span>${r}</span></div>`;
+  }).join("");
+}
+document.querySelectorAll(".lg-row.edge").forEach(row => {
+  row.addEventListener("click", () => {
+    const ty = row.dataset.type; filters[ty] = !filters[ty];
+    row.classList.toggle("off", !filters[ty]); render();
+  });
+});
+document.getElementById("fit").addEventListener("click", () => { dismissHint(); fit(); });
+document.getElementById("zin").addEventListener("click", () => { view.pxPerYear = Math.min(40, view.pxPerYear*1.4); render(); });
+document.getElementById("zout").addEventListener("click", () => { view.pxPerYear = Math.max(0.02, view.pxPerYear/1.4); render(); });
+const search = document.getElementById("search");
+search.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const q = search.value.trim().toLowerCase(); if (!q) return;
+  const hit = Object.values(MODEL.thinkers).find(t => t.name.toLowerCase().includes(q));
+  if (hit) { selectThinker(hit.id, true); }
+});
+let hintTimer = setTimeout(dismissHint, 9000);
+function dismissHint() { document.getElementById("hint").classList.add("gone"); clearTimeout(hintTimer); }
+
+// ----------------------------- loading --------------------------------------
+function ingest(files) {
+  if (!files.length) { showErr("No <code>.md</code> notes found in that folder."); return; }
+  MODEL = parseVault(files);
+  buildLayout(); buildRegionLegend();
+  loaded = true; document.getElementById("err").classList.remove("show");
+  fit();
+}
+function showErr(msg) {
+  const el = document.getElementById("err");
+  el.innerHTML = msg; el.classList.add("show");
+}
+async function loadSeed() {
+  try {
+    const man = await fetch("vault-sample/manifest.json").then(r => { if (!r.ok) throw 0; return r.json(); });
+    const files = await Promise.all(man.map(async name => ({
+      name, text: await fetch("vault-sample/" + encodeURIComponent(name)).then(r => r.text())
+    })));
+    source = "seed"; document.getElementById("src-label").textContent = "visualize · seed vault (" + files.length + ")";
+    ingest(files);
+  } catch (err) {
+    showErr("Couldn't load the seed vault.<br>Serve this folder over HTTP "
+      + "(<code>python3 -m http.server 4173</code>) or click <b>Open vault…</b> to pick your own.");
+  }
+}
+async function readDirRecursive(dir, out, prefix) {
+  for await (const [name, handle] of dir.entries()) {
+    if (handle.kind === "file" && /\.md$/i.test(name)) {
+      const f = await handle.getFile(); out.push({ name, text: await f.text() });
+    } else if (handle.kind === "directory") {
+      await readDirRecursive(handle, out, prefix + name + "/");
+    }
+  }
+}
+document.getElementById("open").addEventListener("click", async () => {
+  if (!window.showDirectoryPicker) {
+    showErr("Your browser doesn't support the File System Access API.<br>Use Chrome, Edge, or Brave — or drag a vault folder onto the page.");
+    return;
+  }
+  try {
+    const dir = await window.showDirectoryPicker();
+    const out = []; await readDirRecursive(dir, out, "");
+    source = "vault"; document.getElementById("src-label").textContent = "vault: " + dir.name + " (" + out.length + ")";
+    closeSide(); ingest(out);
+  } catch (err) { if (err && err.name !== "AbortError") showErr("Could not read that folder: " + err.message); }
+});
+// drag-drop fallback
+window.addEventListener("dragover", e => e.preventDefault());
+window.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  const out = [];
+  const items = [...(e.dataTransfer.items || [])];
+  async function walk(entry, prefix) {
+    if (entry.isFile) {
+      if (!/\.md$/i.test(entry.name)) return;
+      await new Promise(res => entry.file(async f => { out.push({ name: entry.name, text: await f.text() }); res(); }));
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      await new Promise(res => reader.readEntries(async ents => { for (const en of ents) await walk(en, prefix); res(); }));
+    }
+  }
+  for (const it of items) { const en = it.webkitGetAsEntry && it.webkitGetAsEntry(); if (en) await walk(en, ""); }
+  if (out.length) { source = "vault"; document.getElementById("src-label").textContent = "vault (dropped) · " + out.length; closeSide(); ingest(out); }
+});
+
+// ----------------------------- __viz hook -----------------------------------
+window.__viz = {
+  state: () => ({
+    loaded, source,
+    thinkers: Object.keys(MODEL.thinkers).length,
+    edges: MODEL.edges.length,
+    regions: MODEL.regions.slice(),
+    selected: selectedId, hovered: hoveredId,
+    filters: { ...filters },
+    view: { centerYear: view.centerYear, pxPerYear: view.pxPerYear,
+      year0: yearOf(0), year1: yearOf(W) },
+  }),
+  data: () => ({
+    thinkers: Object.values(MODEL.thinkers).map(t => ({
+      id: t.id, born: t.born, died: t.died, floruit: t.floruit,
+      region: t.region, tradition: t.tradition, importance: t.importance })),
+    edges: MODEL.edges.map(e => ({ source: e.source, target: e.target, type: e.type,
+      crux: e.crux, gap: Math.abs(midOf(MODEL.thinkers[e.target]) - midOf(MODEL.thinkers[e.source])) })),
+  }),
+  get: (id) => MODEL.thinkers[id] || null,
+  select: (id) => selectThinker(id),
+  go: (id) => selectThinker(id, true),
+  hover: (id) => { hoveredId = id; render(); },
+  fit: () => fit(),
+  setZoom: (px) => { view.pxPerYear = px; render(); },
+  centerYear: (y) => { view.centerYear = y; render(); },
+  setFilter: (type, on) => { filters[type] = on;
+    const row = document.querySelector(`.lg-row.edge[data-type="${type}"]`);
+    if (row) row.classList.toggle("off", !on); render(); },
+  contemporariesOf: (id) => MODEL.thinkers[id] ? [...egoSet(id).contemp] : [],
+  openVault: () => document.getElementById("open").click(),
+};
+
+resize();
+loadSeed();
+</script>
+</body>
+</html>

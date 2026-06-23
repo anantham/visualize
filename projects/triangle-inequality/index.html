@@ -11,13 +11,35 @@
   #scene { position: fixed; inset: 0; }
   #scene canvas { display: block; }
 
-  #panel { position: fixed; top: 16px; left: 16px; width: 320px; z-index: 10;
-    background: rgba(13, 19, 30, 0.84); border: 1px solid rgba(122, 150, 200, 0.18);
-    border-radius: 14px; padding: 16px 18px 12px;
+  #panel { position: fixed; top: 16px; left: 16px; width: 330px; z-index: 10;
+    background: rgba(13, 19, 30, 0.86); border: 1px solid rgba(122, 150, 200, 0.18);
+    border-radius: 14px; padding: 14px 18px 12px;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45); }
+  .brand { font-size: 10px; color: #516180; letter-spacing: 0.4px;
+    display: flex; justify-content: space-between; margin-bottom: 6px; }
   #panel h1 { font-size: 16px; margin: 0 0 6px; letter-spacing: 0.3px; }
-  #panel .sub { font-size: 12px; color: #8fa3c0; margin: 0 0 10px; line-height: 1.5; }
+  #stage-copy { font-size: 12px; color: #9fb2cf; margin: 0 0 10px; line-height: 1.55; }
+  #stage-copy b { color: #c9d6ea; }
+
+  #task { display: flex; gap: 8px; align-items: baseline; font-size: 12px;
+    color: #cfdcf2; background: rgba(96, 165, 250, 0.07);
+    border: 1px solid rgba(96, 165, 250, 0.22); border-radius: 9px;
+    padding: 8px 10px; margin: 0 0 10px; line-height: 1.45; }
+  #task .tick { flex: none; color: #64789a; font-weight: 700; }
+  #task.done { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); }
+  #task.done .tick { color: #34d399; }
+
+  .block[hidden] { display: none; }
+  .ctx { font-size: 11px; color: #7fc8a9; font-style: italic; margin: 0 0 8px;
+    min-height: 14px; line-height: 1.4; }
+
+  .nav { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .nav .spacer { flex: 1; }
+  #next.glow { border-color: rgba(52, 211, 153, 0.7);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.35); }
+  #skip { font-size: 10.5px; color: #64789a; text-decoration: none; }
+  #skip:hover { color: #9fb2cf; text-decoration: underline; }
 
   .nums { font-size: 19px; font-variant-numeric: tabular-nums; margin: 6px 0 10px;
     font-weight: 600; letter-spacing: 0.2px; }
@@ -46,15 +68,11 @@
   body.equal #status { display: block; }
   body.equal .seg-ao, body.equal .seg-ob { background: #34d399; }
 
-  .hint { font-size: 11.5px; color: #7388a8; line-height: 1.55; margin: 10px 0 10px;
-    padding-left: 16px; }
-  .hint li { margin: 2px 0; }
-
   .btn { background: #1c2a40; border: 1px solid rgba(122, 150, 200, 0.25);
     color: #dbe4f0; border-radius: 8px; padding: 6px 12px; font-size: 12px;
     cursor: pointer; margin-right: 6px; }
   .btn:hover { background: #25364f; }
-  .foot { font-size: 10px; color: #516180; margin-top: 12px; }
+  .btn[disabled] { opacity: 0.35; cursor: default; }
 
   #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
   .side-label { position: absolute; left: 0; top: 0; font-size: 12px; font-weight: 600;
@@ -83,40 +101,44 @@
 <div id="labels"></div>
 
 <div id="panel">
-  <h1>Triangle Inequality, in 3D</h1>
-  <p class="sub">The straight path between two points is never longer than a detour
-    through a third. Drag <b style="color:#60a5fa">A</b> and <b style="color:#f472b6">B</b>
-    anywhere in space and try to break it.</p>
+  <div class="brand"><span>visualize · project 1</span><span id="stage-num"></span></div>
+  <h1 id="stage-title"></h1>
+  <p id="stage-copy"></p>
+  <div id="task"><span class="tick" id="task-tick">○</span><span id="task-text"></span></div>
+  <div class="ctx" id="anchor"></div>
 
-  <div class="nums">
-    <span class="c-ab" id="num-ab">–</span><span class="rel"> ≤ </span><span class="c-ao" id="num-ao">–</span><span class="rel"> + </span><span class="c-ob" id="num-ob">–</span><span class="rel"> = </span><span class="c-sum" id="num-sum">–</span>
+  <div class="block" id="block-measure" hidden>
+    <div class="nums">
+      <span class="c-ab" id="num-ab">–</span><span class="rel"> ≤ </span><span class="c-ao" id="num-ao">–</span><span class="rel"> + </span><span class="c-ob" id="num-ob">–</span><span class="rel"> = </span><span class="c-sum" id="num-sum">–</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">via O</span>
+      <div class="bar-track"><div class="seg seg-ao" id="seg-ao"></div><div class="seg seg-ob" id="seg-ob"></div></div>
+      <span class="bar-val" id="val-detour">–</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">direct</span>
+      <div class="bar-track"><div class="seg seg-ab" id="seg-ab"></div></div>
+      <span class="bar-val" id="val-direct">–</span>
+    </div>
   </div>
 
-  <div class="bar-row">
-    <span class="bar-label">via O</span>
-    <div class="bar-track"><div class="seg seg-ao" id="seg-ao"></div><div class="seg seg-ob" id="seg-ob"></div></div>
-    <span class="bar-val" id="val-detour">–</span>
-  </div>
-  <div class="bar-row">
-    <span class="bar-label">direct</span>
-    <div class="bar-track"><div class="seg seg-ab" id="seg-ab"></div></div>
-    <span class="bar-val" id="val-direct">–</span>
+  <div class="block" id="block-slack" hidden>
+    <div id="slack-text">–</div>
+    <div id="status">Equality — O lies on segment AB. The detour has vanished.</div>
   </div>
 
-  <div id="slack-text">–</div>
-  <div id="status">Equality — O lies exactly on the segment AB. The detour has vanished.</div>
+  <div class="block" id="block-actions" hidden>
+    <button class="btn" id="align">Snap to equality</button>
+    <button class="btn" id="reset">Reset</button>
+  </div>
 
-  <ul class="hint">
-    <li>Drag a point to move it (in the plane facing you).</li>
-    <li>Drag the background to orbit, scroll to zoom.</li>
-    <li>Can the <span class="c-ao">orange detour</span> ever beat the
-        <span class="c-ab">green path</span>?</li>
-  </ul>
-
-  <button class="btn" id="align">Show equality</button>
-  <button class="btn" id="reset">Reset</button>
-
-  <div class="foot">visualize · project 1 — |AB| ≤ |AO| + |OB|</div>
+  <div class="nav">
+    <button class="btn" id="back">← Back</button>
+    <button class="btn" id="next">Next →</button>
+    <span class="spacer"></span>
+    <a id="skip" href="#5">skip to playground</a>
+  </div>
 </div>
 
 <script type="module">
@@ -347,6 +369,7 @@ window.addEventListener('pointermove', (e) => {
   }
 });
 window.addEventListener('pointerup', () => {
+  if (dragging) flags.dragged = true;
   dragging = null;
   controls.enabled = true;
 });
@@ -379,6 +402,104 @@ document.getElementById('reset').addEventListener('click', () => {
   animateTo(ptB, new THREE.Vector3(...INITIAL.B));
 });
 
+// --- stages -----------------------------------------------------------------------
+const flags = { dragged: false };
+const ANCHORS = [
+  'a direct flight vs one connection through Atlanta',
+  'walking to the corner instead of cutting across the grass',
+  'a rope looped around a fence post — the loop is longer',
+  'hub airport — every route must touch O',
+  'collinearity — the detour collapses onto the straight line',
+  '',
+];
+const STAGES = [
+  {
+    title: 'The direct path',
+    copy: 'Two places in space. The <b style="color:#34d399">green segment</b> is the straight route |AB|.',
+    task: 'Drag A or B and watch the direct distance change.',
+    show: ['ab'],
+    enter() { flags.dragged = false; },
+    done: () => flags.dragged,
+  },
+  {
+    title: 'A forced detour through O',
+    copy: 'Here every trip must pass through <b>O</b> at the origin — a hub. ' +
+      'The orange path is A → O → B.',
+    task: 'Drag until the detour is clearly longer than the direct path.',
+    show: ['ab', 'o', 'detour'],
+    enter() { ptO.scale.setScalar(1.6); setTimeout(() => ptO.scale.setScalar(1), 600); },
+    done: () => measure.slack > 0.35,
+  },
+  {
+    title: 'Measure it',
+    copy: 'The triangle inequality: |AB| ≤ |AO| + |OB|. The detour can never beat the direct path.',
+    task: 'Try to make the orange bar shorter than the green — it won\'t happen.',
+    show: ['ab', 'o', 'detour', 'measure'],
+    done: () => flags.dragged,
+  },
+  {
+    title: 'The extra cost',
+    copy: 'Slack = (|AO| + |OB|) − |AB| is the <b>extra</b> distance the detour costs.',
+    task: 'Drag until slack is at least 0.5 — feel how much the hub costs.',
+    show: ['ab', 'o', 'detour', 'measure', 'slack'],
+    done: () => measure.slack >= 0.45,
+  },
+  {
+    title: 'When the detour vanishes',
+    copy: 'Equality happens exactly when <b>O lies on segment AB</b> — the detour collapses onto the straight line.',
+    task: 'Drag until slack drops below 0.2, as close to equality as you can.',
+    show: ['ab', 'o', 'detour', 'measure', 'slack'],
+    done: () => measure.slack < 0.2,
+  },
+  {
+    title: 'Playground',
+    copy: 'Everything unlocked. Orbit, drag, reset — or <b>Snap to equality</b> to see collinearity.',
+    task: null,
+    show: ['ab', 'o', 'detour', 'measure', 'slack', 'actions'],
+    done: null,
+  },
+];
+let stage = 0;
+let taskDone = false;
+const shown = new Set();
+
+function applyVisuals() {
+  ptO.visible = shown.has('o');
+  sideAO.visible = sideOB.visible = shown.has('detour');
+  sideAB.visible = shown.has('ab');
+  tri.visible = shown.has('detour');
+  document.getElementById('block-measure').hidden = !shown.has('measure');
+  document.getElementById('block-slack').hidden = !shown.has('slack');
+  document.getElementById('block-actions').hidden = !shown.has('actions');
+}
+
+function setStage(i) {
+  stage = Math.max(0, Math.min(STAGES.length - 1, i));
+  const st = STAGES[stage];
+  taskDone = false;
+  flags.dragged = false;
+  st.enter?.();
+  shown.clear();
+  st.show.forEach((k) => shown.add(k));
+  applyVisuals();
+  document.getElementById('stage-num').textContent = `${stage + 1} / ${STAGES.length}`;
+  document.getElementById('stage-title').textContent = st.title;
+  document.getElementById('stage-copy').innerHTML = st.copy;
+  document.getElementById('task').style.display = st.task ? '' : 'none';
+  if (st.task) document.getElementById('task-text').textContent = st.task;
+  document.getElementById('anchor').textContent = ANCHORS[stage] || '';
+  document.getElementById('back').disabled = stage === 0;
+  document.getElementById('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  document.getElementById('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
+}
+document.getElementById('back').addEventListener('click', () => setStage(stage - 1));
+document.getElementById('next').addEventListener('click', () => setStage(stage + 1));
+window.addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n !== stage) setStage(n);
+});
+
 // --- debug/testing hooks --------------------------------------------------------
 window.__viz = {
   screenPos(name) {
@@ -389,12 +510,15 @@ window.__viz = {
   state() {
     const f = (v) => +v.toFixed(4);
     return {
+      stage, taskDone,
       A: ptA.position.toArray().map(f), B: ptB.position.toArray().map(f),
       AO: f(measure.AO), OB: f(measure.OB), AB: f(measure.AB), slack: f(measure.slack),
       equal: document.body.classList.contains('equal'),
+      visible: [...shown],
     };
   },
   setPoint(name, xyz) { POINTS[name].position.set(...xyz); },
+  go(i) { setStage(i); },
 };
 
 // --- main loop --------------------------------------------------------------------
@@ -417,18 +541,31 @@ function tick(now) {
   tp.needsUpdate = true;
 
   updateMeasure();
+
+  const st = STAGES[stage];
+  if (!taskDone && st.done && st.done()) taskDone = true;
+  document.getElementById('task').classList.toggle('done', taskDone);
+  document.getElementById('task-tick').textContent = taskDone ? '✓' : '○';
+  document.getElementById('next').classList.toggle('glow', taskDone);
+
   labAB.textContent = measure.AB.toFixed(2);
   labAO.textContent = measure.AO.toFixed(2);
   labOB.textContent = measure.OB.toFixed(2);
-  placeLabel(labAB, mid.lerpVectors(ptA.position, ptB.position, 0.5), -14);
-  placeLabel(labAO, mid.lerpVectors(ptA.position, ptO.position, 0.5), -14);
-  placeLabel(labOB, mid.lerpVectors(ptO.position, ptB.position, 0.5), -14);
+  if (shown.has('ab')) placeLabel(labAB, mid.lerpVectors(ptA.position, ptB.position, 0.5), -14);
+  else labAB.style.display = 'none';
+  if (shown.has('detour')) {
+    placeLabel(labAO, mid.lerpVectors(ptA.position, ptO.position, 0.5), -14);
+    placeLabel(labOB, mid.lerpVectors(ptO.position, ptB.position, 0.5), -14);
+  } else { labAO.style.display = 'none'; labOB.style.display = 'none'; }
   placeLabel(labA, ptA.position, -16);
   placeLabel(labB, ptB.position, -16);
-  placeLabel(labO, ptO.position, -14);
+  if (shown.has('o')) placeLabel(labO, ptO.position, -14);
+  else labO.style.display = 'none';
 
   renderer.render(scene, camera);
 }
+const initial = parseInt(location.hash.slice(1), 10);
+setStage(Number.isNaN(initial) ? 0 : initial);
 requestAnimationFrame(tick);
 
 window.addEventListener('resize', () => {

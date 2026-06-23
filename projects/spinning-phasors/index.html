@@ -182,6 +182,16 @@ function wrappedRps() {
 }
 function isAliased() { return Math.abs(S.F) > S.Fs / 2 + 1e-9; }
 
+const DFT_N = 8;
+function activeDftBin() {
+  if (!S.sampling || S.Fs <= 0) return -1;
+  const f = isAliased() ? apparentF() : S.F;
+  let k = Math.round(f * DFT_N / S.Fs);
+  while (k < 0) k += DFT_N;
+  return k % DFT_N;
+}
+function binPhase(k) { return TAU * k * S.Fs * S.t / DFT_N; }
+
 // --- wide-range (logarithmic) slider mapping ----------------------------------------
 const FMAX = 20000, FS_MIN = 2, FS_MAX = 48000;
 const KF = Math.log10(FMAX + 1);
@@ -235,10 +245,10 @@ const STAGES = [
     copy: 'The tip’s <b>horizontal</b> position is a wave too: the cosine. ' +
       'One spinning point, two shadows. Engineers write the point as ' +
       '<b>e<sup>jωt</sup></b>, where ω = 2πF is the spin rate in radians per second.',
-    task: 'Pause anywhere: the cosine peaks exactly where the sine crosses zero.',
+    task: 'Pause when cosine peaks — sine should be crossing zero.',
     preset: { F: 1, sampling: false }, freqMin: -8,
     reveals: ['freq', 'pause'], show: ['sine', 'cos', 'labels'],
-    done: () => S.paused,
+    done: () => S.paused && Math.abs(Math.cos(S.phase)) > 0.88 && Math.abs(Math.sin(S.phase)) < 0.15,
   },
   {
     title: 'Strobe it',
@@ -271,25 +281,25 @@ const STAGES = [
     done: () => isAliased(),
   },
   {
-    title: 'Up the octaves',
-    copy: 'Hearts and wheels fit inside ±8 Hz. The real world keeps going — ' +
-      'engines, wings, mains hum, music — to the edge of hearing. The slider is ' +
-      '<b>logarithmic</b> now, and time <b>auto-slows</b> so fast spins stay watchable.',
-    task: 'Find concert pitch — A440, the note an orchestra tunes to. Watch how far time must slow.',
-    preset: { F: 50, Fs: 240, sampling: true }, freqMin: -FMAX, wideRange: true,
-    reveals: ['freq', 'pause', 'fs', 'rps'],
-    show: ['sine', 'cos', 'labels', 'samples', 'alias'],
-    done: () => Math.abs(S.F - 440) <= 15,
+    title: 'A bank of detectors',
+    copy: 'A DFT is a row of phasors — one per frequency <b>bin</b> — each spinning at ' +
+      'its bin rate. When your tone lands on bin <b>k</b>, that detector glows: that\'s ' +
+      '"energy in bin k".',
+    task: 'Sample at 8/s and set F to 2 Hz — bin 2 should light up.',
+    preset: { F: 2, Fs: 8, sampling: true }, freqMin: -8,
+    reveals: ['freq', 'pause', 'fs', 'rps', 'sampleit'],
+    show: ['sine', 'samples', 'dft'],
+    done: () => S.sampling && Math.abs(S.F - 2) < 0.15 && Math.abs(S.Fs - 8) < 0.5,
   },
   {
     title: 'Playground',
-    copy: 'Everything unlocked. <b>Strobe view</b> shows only what a camera sees. ' +
-      'Try a hummingbird (50/s) filmed by a phone at 60 fps — or A440 sampled at ' +
-      'CD rate (44.1k): Δθ becomes a whisker. That’s how finely music is sliced.',
+    copy: 'Everything unlocked — including a <b>logarithmic</b> frequency slider to A440 ' +
+      'and beyond. <b>Strobe view</b> shows only what a camera sees. Toggle the DFT ' +
+      'bank to see which bin your tone lights up.',
     task: null,
     preset: {}, freqMin: -FMAX, wideRange: true,
     reveals: ['freq', 'pause', 'fs', 'rps', 'sampleit', 'strobe', 'speed'],
-    show: ['sine', 'cos', 'labels', 'samples', 'alias'],
+    show: ['sine', 'cos', 'labels', 'samples', 'alias', 'dft'],
     done: null,
   },
 ];
@@ -593,6 +603,29 @@ function render() {
     if (shown.has('cos')) dot(tx, cy0, 4, COL.cos);
   }
   dot(cx, cy, 3, COL.faint);
+
+  if (shown.has('dft') && S.sampling) {
+    const rowY = H - 56;
+    const x0 = 396, x1 = W - 24, gap = (x1 - x0) / (DFT_N - 1 || 1);
+    const rBin = Math.min(22, gap * 0.34);
+    const active = activeDftBin();
+    label('DFT bins — each spins at k·Fₛ/N', x0, rowY - rBin - 22, COL.text, 11);
+    for (let k = 0; k < DFT_N; k++) {
+      const bx = x0 + k * gap, by = rowY;
+      const ph = binPhase(k);
+      const on = k === active;
+      ctx.save();
+      ctx.strokeStyle = on ? '#34d399' : COL.faint;
+      ctx.lineWidth = on ? 2.5 : 1.2;
+      ctx.beginPath(); ctx.arc(bx, by, rBin, 0, TAU); ctx.stroke();
+      ctx.restore();
+      if (k > 0) arrow(bx, by, bx + rBin * 0.72 * Math.cos(ph), by - rBin * 0.72 * Math.sin(ph),
+        on ? '#34d399' : COL.phasor, on ? 2.2 : 1.5, on ? 1 : 0.55);
+      else dot(bx, by, 3, on ? '#34d399' : COL.faint);
+      label(`k=${k}`, bx, by + rBin + 12, on ? '#6ee7b7' : COL.faint, 10, 'center');
+      if (on) label(`${fmtHz(k * S.Fs / DFT_N)}`, bx, by + rBin + 26, '#7fd1f9', 9.5, 'center');
+    }
+  }
 }
 
 // --- panel ---------------------------------------------------------------------------
@@ -734,7 +767,7 @@ window.__viz = {
       paused: S.paused, t: f(S.t), phase: f(S.phase),
       radPerSample: f(radPerSample()), wrapped: f(wrappedRps()),
       apparentF: f(apparentF()), aliased: isAliased(), samples: S.samples.length,
-      history: S.history.length,
+      history: S.history.length, dftBin: activeDftBin(),
       visible: ['freq', 'sampleit', 'fs', 'rps', 'strobe', 'speed', 'pause']
         .filter((k) => !$(`ctl-${k}`).hidden),
     };

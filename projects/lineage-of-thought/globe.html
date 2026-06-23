@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineage of Thought — the globe</title>
+<style>
+  :root { --bg:#070b12; --ink:#dbe4f0; --muted:#9fb2cf; --dim:#64789a;
+    --panel:rgba(13,19,30,.86); --line:rgba(122,150,200,.18);
+    --infl:#5eead4; --deriv:#60a5fa; --disag:#f87171; --reviv:#fbbf24; }
+  html,body { margin:0; height:100%; overflow:hidden; background:var(--bg);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); }
+  #scene { position:fixed; inset:0; }
+  #bar { position:fixed; top:0; left:0; right:0; height:46px; z-index:10; display:flex; align-items:center; gap:12px;
+    padding:0 14px; background:linear-gradient(180deg,rgba(7,11,18,.95),rgba(7,11,18,0)); pointer-events:none; }
+  #bar > * { pointer-events:auto; }
+  .brand { font-size:10px; color:var(--dim); letter-spacing:.4px; line-height:1.2; }
+  .brand b { color:var(--ink); font-size:13px; font-weight:600; }
+  .spacer { flex:1; }
+  .btn { background:#1c2a40; border:1px solid var(--line); color:var(--ink); border-radius:8px;
+    padding:6px 11px; font-size:12px; cursor:pointer; text-decoration:none; }
+  .btn:hover { background:#25364f; }
+  .btn.primary { background:#1d3b5e; border-color:rgba(96,165,250,.5); color:#cfe3ff; }
+  /* time bar */
+  #timebar { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:10; width:min(720px,92vw);
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 16px;
+    backdrop-filter:blur(12px); box-shadow:0 8px 30px rgba(0,0,0,.5); display:flex; align-items:center; gap:12px; }
+  #play { width:34px; height:34px; flex:none; border-radius:50%; font-size:14px; }
+  #year { flex:1; accent-color:#60a5fa; }
+  #yearlab { width:96px; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; font-size:14px; }
+  #cog { font-size:11px; color:var(--dim); width:150px; }
+  /* legend */
+  #legend { position:fixed; left:14px; bottom:84px; z-index:10; width:210px; background:var(--panel);
+    border:1px solid var(--line); border-radius:12px; padding:10px 12px; backdrop-filter:blur(12px); font-size:11.5px; }
+  #legend h4 { margin:0 0 6px; font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--dim); }
+  #legend h4:not(:first-child){ margin-top:9px; }
+  .lg { display:flex; align-items:center; gap:7px; padding:2px 0; cursor:pointer; user-select:none; }
+  .lg.off { opacity:.34; }
+  .sw { width:20px; height:4px; border-radius:2px; } .dot { width:9px; height:9px; border-radius:3px; }
+  .lg span { color:var(--muted); }
+  /* card */
+  #card { position:fixed; top:0; right:0; bottom:0; width:330px; z-index:11; background:var(--panel);
+    border-left:1px solid var(--line); backdrop-filter:blur(14px); box-shadow:-8px 0 30px rgba(0,0,0,.45);
+    overflow-y:auto; transform:translateX(100%); transition:transform .18s ease; padding:0 0 28px; }
+  #card.open { transform:translateX(0); }
+  #card .close { position:absolute; top:10px; right:14px; color:var(--dim); cursor:pointer; font-size:20px; z-index:2; }
+  #card .close:hover { color:#fff; }
+  #card .portrait { width:100%; height:190px; object-fit:cover; object-position:center 20%;
+    border-bottom:1px solid var(--line); background:#0e1622; display:block; }
+  #card .body { padding:14px 18px; }
+  #card h2 { margin:0 0 3px; font-size:20px; } #card .meta { font-size:11.5px; color:var(--muted); }
+  #card .chip { display:inline-block; font-size:10.5px; padding:2px 7px; border-radius:999px; margin:6px 5px 2px 0; border:1px solid var(--line); color:var(--muted); }
+  #card .thesis { font-size:13px; color:#e6d6a8; font-style:italic; line-height:1.5; margin:10px 0; }
+  #card .desc { font-size:12.5px; color:#c5d2e8; line-height:1.55; }
+  .rel { margin-top:12px; } .rel h5 { margin:0 0 4px; font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--dim); display:flex; gap:6px; align-items:center; }
+  .rel h5 .b { width:14px; height:3px; border-radius:2px; }
+  .rel a { display:block; font-size:12.5px; color:#cfe0f7; cursor:pointer; padding:2px 0; text-decoration:none; }
+  .rel a:hover { color:#fff; } .rel a .yr { color:var(--dim); font-size:10.5px; } .rel a .sub { color:var(--muted); font-size:11px; }
+  #tip { position:fixed; z-index:20; pointer-events:none; display:none; background:rgba(6,10,18,.96);
+    border:1px solid var(--line); border-radius:9px; padding:7px 10px; font-size:11.5px; max-width:230px; }
+  #tip b { font-size:13px; } #tip .m { color:var(--muted); font-size:10.5px; margin-top:2px; }
+  #err { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:9; max-width:440px; text-align:center;
+    color:var(--muted); font-size:13px; line-height:1.6; display:none; } #err.show { display:block; }
+  #err code { color:#cfe3ff; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="bar">
+  <div class="brand"><b>Lineage of Thought</b><br><span id="src">globe · loading…</span></div>
+  <div class="spacer"></div>
+  <a class="btn" href="index.html" title="Timeline view">◷ Timeline</a>
+  <button class="btn primary" id="open">Open vault…</button>
+</div>
+<div id="legend">
+  <h4>Regions</h4><div id="lg-reg"></div>
+  <h4>Edges — click to filter</h4>
+  <div class="lg" data-t="influence"><span class="sw" style="background:var(--infl)"></span><span>influence</span></div>
+  <div class="lg" data-t="derivation"><span class="sw" style="background:var(--deriv)"></span><span>develops</span></div>
+  <div class="lg" data-t="disagreement"><span class="sw" style="background:var(--disag)"></span><span>disagrees</span></div>
+  <div class="lg" data-t="revival"><span class="sw" style="background:var(--reviv)"></span><span>revives</span></div>
+</div>
+<div id="timebar">
+  <button class="btn" id="play">▶</button>
+  <input type="range" id="year" min="-600" max="2000" step="1" value="2000">
+  <div id="yearlab">—</div>
+  <div id="cog"></div>
+</div>
+<aside id="card"><div class="close" id="card-close">×</div><div id="card-inner"></div></aside>
+<div id="tip"></div>
+<div id="err"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ---------- colors (shared with the timeline) ----------
+const EDGE_COLOR = { influence:0x5eead4, derivation:0x60a5fa, disagreement:0xf87171, revival:0xfbbf24 };
+const REGION_TINT = { Greece:[96,165,250], Rome:[129,140,248], India:[245,158,11], China:[239,68,68],
+  "East Asia":[251,113,133], "Islamic world":[52,211,153], Jewish:[45,212,191], Europe:[148,163,184], Americas:[167,139,250] };
+const TRADITION_COLOR = { "Platonism":"#60a5fa","Aristotelianism":"#38bdf8","Classical Greek":"#818cf8",
+  "Ionian (Pre-Socratic)":"#22d3ee","Eleatic":"#2dd4bf","Stoicism":"#34d399","Epicureanism":"#a3e635",
+  "Buddhism":"#f59e0b","Madhyamaka Buddhism":"#fbbf24","Jainism":"#f472b6","Daoism":"#c084fc",
+  "Confucianism":"#ef4444","Mohism":"#fb7185","Legalism":"#fda4af" };
+function tradColor(t){ if(TRADITION_COLOR[t]) return TRADITION_COLOR[t];
+  let h=0; for(const c of (t||"")) h=(h*31+c.charCodeAt(0))>>>0; return `hsl(${h%360},55%,62%)`; }
+
+// ---------- parsing (frontmatter + geo + typed links + idea-travel) ----------
+const SECTION_MAP = { "influenced by":["influence","in"],"teacher":["influence","in"],"teachers":["influence","in"],
+  "studied under":["influence","in"],"influence on":["influence","out"],"students":["influence","out"],
+  "develops":["derivation","in"],"derives from":["derivation","in"],"builds on":["derivation","in"],"systematizes":["derivation","in"],
+  "disagreed with":["disagreement","sym"],"critiques":["disagreement","sym"],"rejects":["disagreement","sym"],"opposes":["disagreement","sym"],
+  "revives":["revival","in"],"revival of":["revival","in"],"reinterprets":["revival","in"] };
+function coerceYear(v){ if(typeof v==="number")return v; if(typeof v!=="string")return null;
+  let m=v.match(/(-?\d+)\s*(bce|bc)\b/i); if(m)return -Math.abs(+m[1]);
+  m=v.match(/(\d+)\s*(ce|ad)\b/i); if(m)return +m[1]; m=v.match(/^-?\d+(\.\d+)?$/); return m?parseFloat(v):null; }
+function parseFrontmatter(text){ const fm={}; let body=text;
+  const m=text.match(/^﻿?---\s*\n([\s\S]*?)\n---\s*\n?/);
+  if(m){ body=text.slice(m[0].length);
+    for(const line of m[1].split("\n")){ const i=line.indexOf(":"); if(i<0)continue;
+      const k=line.slice(0,i).trim(); let v=line.slice(i+1).trim();
+      if(v==="true")v=true; else if(v==="false")v=false; else if(/^-?\d+(\.\d+)?$/.test(v))v=parseFloat(v);
+      fm[k]=v; } }
+  return { fm, body }; }
+function parseLinkLine(line){ const lm=line.match(/\[\[([^\]]+)\]\]/); if(!lm)return null;
+  const target=lm[1].split("|")[0].trim(); const rest=line.slice(line.indexOf("]]")+2);
+  let crux=null,note=null; const parts=rest.split(/\s[—–-]\s/); const head=parts[0];
+  if(parts.length>1)note=parts.slice(1).join(" - ").trim(); if(head.includes("::"))crux=head.split("::")[1].trim();
+  return { target, crux, note }; }
+function parseVault(files){ const thinkers={}, raw=[];
+  for(const f of files){ const id=f.name.replace(/\.md$/i,""); const {fm,body}=parseFrontmatter(f.text);
+    const lines=body.split("\n"); let desc="";
+    for(const ln of lines){ const t=ln.trim(); if(t&&!t.startsWith("#")&&!t.startsWith("-")){desc=t;break;} }
+    const aLat=coerceYear(fm.active_lat), aLon=coerceYear(fm.active_lon), bLat=coerceYear(fm.birth_lat), bLon=coerceYear(fm.birth_lon);
+    thinkers[id]={ id, name:fm.name||id, born:coerceYear(fm.born), died:coerceYear(fm.died), floruit:coerceYear(fm.floruit),
+      region:fm.region||"—", tradition:fm.tradition||"—", uncertain:!!fm.uncertain,
+      importance:(typeof fm.importance==="number"?fm.importance:null), portrait:fm.portrait||"", thesis:fm.thesis||"",
+      lat:(aLat!=null?aLat:bLat), lon:(aLon!=null?aLon:bLon), birthLat:bLat, birthLon:bLon,
+      desc, cruxes:[], travel:[] };
+    let sec=null;
+    for(const ln of lines){ const h=ln.match(/^#{1,6}\s+(.*)$/); if(h){sec=h[1].trim().toLowerCase();continue;}
+      const li=ln.match(/^\s*[-*]\s+(.*)$/); if(!li||!sec)continue;
+      if(sec==="cruxes"||sec==="crux"){ const p=parseLinkLine(li[1]); if(p)thinkers[id].cruxes.push({crux:p.target,stance:p.note||""}); continue; }
+      if(sec==="idea travel"){ const tm=li[1].match(/^\s*(-?\d{1,4})\s*[—–-]\s*(.*)$/); if(tm)thinkers[id].travel.push({year:+tm[1],text:tm[2].trim()}); continue; }
+      const map=SECTION_MAP[sec]; if(!map)continue; const p=parseLinkLine(li[1]); if(!p)continue;
+      raw.push({ owner:id, linked:p.target, type:map[0], dir:map[1], crux:p.crux, note:p.note }); } }
+  const byLower={}; for(const id in thinkers) byLower[id.toLowerCase()]=id;
+  const edges=[]; const seen=new Set();
+  for(const e of raw){ const lid=byLower[(e.linked||"").toLowerCase()]; if(!lid||!thinkers[e.owner])continue;
+    let s,t; if(e.dir==="out"){s=e.owner;t=lid;} else {s=lid;t=e.owner;}
+    const k=s+"→"+t+"·"+e.type; if(seen.has(k))continue; seen.add(k);
+    edges.push({ source:s, target:t, type:e.type, crux:e.crux||null, note:e.note||null, mutual:e.dir==="sym" }); }
+  const deg={}; for(const id in thinkers)deg[id]=0; for(const e of edges){deg[e.source]++;deg[e.target]++;}
+  for(const id in thinkers) if(thinkers[id].importance==null) thinkers[id].importance=1+deg[id];
+  return { thinkers, edges }; }
+
+// ---------- three.js scene ----------
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x070b12);
+const camera=new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.05, 100); camera.position.set(0,0.8,3.2);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight); document.getElementById("scene").appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+controls.minDistance=1.4; controls.maxDistance=8; controls.rotateSpeed=0.6;
+scene.add(new THREE.AmbientLight(0x4a5a78,0.9));
+const key=new THREE.DirectionalLight(0xcfe0ff,0.9); key.position.set(3,2,4); scene.add(key);
+
+// starfield
+{ const g=new THREE.BufferGeometry(); const n=900, p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){ const r=30+Math.random()*30, u=Math.random()*2-1, a=Math.random()*Math.PI*2, s=Math.sqrt(1-u*u);
+    p[i*3]=r*s*Math.cos(a); p[i*3+1]=r*u; p[i*3+2]=r*s*Math.sin(a); }
+  g.setAttribute("position",new THREE.BufferAttribute(p,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0x4a5a78,size:0.06}))); }
+
+const globe=new THREE.Group(); scene.add(globe);     // holds earth + markers + arcs; rotates together
+const R=1;
+const earth=new THREE.Mesh(new THREE.SphereGeometry(R,72,54),
+  new THREE.MeshPhongMaterial({ color:0x16263e, emissive:0x0a1422, shininess:6, specular:0x12243a }));
+globe.add(earth);
+new THREE.TextureLoader().load("https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg",
+  (tex)=>{ tex.colorSpace=THREE.SRGBColorSpace; earth.material.map=tex; earth.material.color.set(0x6b7da0);
+    earth.material.emissive.set(0x0a1422); earth.material.needsUpdate=true; });
+// graticule (equator + prime meridian) for orientation
+{ const mat=new THREE.LineBasicMaterial({color:0x33415e,transparent:true,opacity:0.5});
+  for(const axis of ["eq","pm"]){ const pts=[]; for(let i=0;i<=128;i++){ const a=i/128*Math.PI*2;
+    pts.push(axis==="eq"? new THREE.Vector3(Math.cos(a)*R*1.001,0,Math.sin(a)*R*1.001)
+                        : new THREE.Vector3(0,Math.sin(a)*R*1.001,Math.cos(a)*R*1.001)); }
+    globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat)); } }
+
+const TEX_OFFSET = -Math.PI/2;   // aligns lon=0 with the earth-dark texture; tuned by screenshot
+const D2R=Math.PI/180;
+function llVec(lat,lon,r){ return new THREE.Vector3().setFromSphericalCoords(r, (90-lat)*D2R, lon*D2R + TEX_OFFSET); }
+
+const markersG=new THREE.Group(), arcsG=new THREE.Group(); globe.add(markersG); globe.add(arcsG);
+
+// ---------- model + build ----------
+let MODEL={thinkers:{},edges:[]}, regions=[], markers={}, arcs=[];
+let filters={influence:true,derivation:true,disagreement:true,revival:true};
+let selectedId=null, hoveredId=null, year=2000, yearMin=-600, yearMax=2000, playing=false;
+let cogTargetRotY=0;
+
+function buildScene(){
+  markersG.clear(); arcsG.clear(); markers={}; arcs=[];
+  const ths=Object.values(MODEL.thinkers).filter(t=>t.lat!=null&&t.lon!=null);
+  regions=[...new Set(ths.map(t=>t.region))];
+  // markers
+  for(const t of ths){ const pos=llVec(t.lat,t.lon,R*1.012);
+    const size=0.012+Math.min(0.03,(t.importance||1)*0.006);
+    const m=new THREE.Mesh(new THREE.SphereGeometry(size,16,12),
+      new THREE.MeshBasicMaterial({color:new THREE.Color(tradColor(t.tradition))}));
+    m.position.copy(pos); m.userData.id=t.id; markersG.add(m); markers[t.id]={mesh:m,pos,t}; }
+  // arcs
+  for(const e of MODEL.edges){ const a=markers[e.source], b=markers[e.target]; if(!a||!b)continue;
+    const va=a.pos.clone(), vb=b.pos.clone(); const mid=va.clone().add(vb).multiplyScalar(0.5);
+    const lift=1+0.18+va.distanceTo(vb)*0.12; mid.normalize().multiplyScalar(R*lift);
+    const curve=new THREE.QuadraticBezierCurve3(va,mid,vb);
+    const geo=new THREE.BufferGeometry().setFromPoints(curve.getPoints(48));
+    const line=new THREE.Line(geo,new THREE.LineBasicMaterial({color:EDGE_COLOR[e.type],transparent:true,opacity:0.5}));
+    arcsG.add(line); arcs.push({line,e,a,b}); }
+  // year range from data
+  const yrs=ths.flatMap(t=>[t.born,t.died].filter(v=>v!=null));
+  if(yrs.length){ yearMin=Math.min(...yrs)-20; yearMax=Math.max(...yrs)+20; }
+  const yEl=document.getElementById("year"); yEl.min=yearMin; yEl.max=yearMax; yEl.value=yearMax; year=yearMax;
+  buildLegend(); applyYear(); fit();
+}
+function activeAt(t){ const s=t.born??t.floruit??t.died; return s!=null && s<=year; }
+function applyYear(){
+  document.getElementById("yearlab").textContent = year<0?`${Math.round(-year)} BCE`:`${Math.round(year)} CE`;
+  document.getElementById("year").value=year;
+  let cx=0,cz=0,wsum=0;
+  for(const id in markers){ const {mesh,t,pos}=markers[id]; const on=activeAt(t);
+    mesh.visible=on; const w=t.importance||1;
+    if(on){ const ll=llVec(t.lat,t.lon,1); cx+=ll.x*w; cz+=ll.z*w; wsum+=w; } }
+  for(const a of arcs){ const vis=filters[a.e.type] && activeAt(a.a.t) && activeAt(a.b.t);
+    a.line.visible=vis; }
+  // center of gravity → target rotation (bring centroid longitude to face camera)
+  if(wsum>0){ const lon=Math.atan2(cx,cz); cogTargetRotY=-(lon);
+    const reg = dominantRegion(); document.getElementById("cog").textContent = reg?`centre: ${reg}`:""; }
+  highlight();
+}
+function dominantRegion(){ const c={}; for(const id in markers){ const {t}=markers[id]; if(activeAt(t))c[t.region]=(c[t.region]||0)+(t.importance||1); }
+  let best=null,bv=0; for(const k in c) if(c[k]>bv){bv=c[k];best=k;} return best; }
+
+function buildLegend(){ document.getElementById("lg-reg").innerHTML=regions.map(r=>{
+  const t=REGION_TINT[r]||[200,200,200]; return `<div class="lg"><span class="dot" style="background:rgb(${t[0]},${t[1]},${t[2]})"></span><span>${r}</span></div>`;}).join(""); }
+
+function ego(id){ if(!id)return null; const set=new Set([id]);
+  for(const e of MODEL.edges){ if(!filters[e.type])continue; if(e.source===id)set.add(e.target); if(e.target===id)set.add(e.source); } return set; }
+function highlight(){ const e=ego(hoveredId||selectedId);
+  for(const id in markers){ const {mesh,t}=markers[id]; if(!mesh.visible)continue;
+    const inE=!e||e.has(id); mesh.material.opacity=1; mesh.material.transparent=!inE; mesh.material.opacity=inE?1:0.25;
+    mesh.scale.setScalar((id===hoveredId||id===selectedId)?1.8:1); }
+  const foc=hoveredId||selectedId;
+  for(const a of arcs){ if(!a.line.visible)continue; const involved=foc&&(a.e.source===foc||a.e.target===foc);
+    a.line.material.opacity= foc?(involved?0.95:0.06):0.5; a.line.material.linewidth=involved?2:1; } }
+
+function fit(){ controls.target.set(0,0,0); camera.position.set(0,0.7,3.0); }
+
+// ---------- card ----------
+const card=document.getElementById("card"), cardInner=document.getElementById("card-inner");
+function relRow(id,sub){ const t=MODEL.thinkers[id]; if(!t)return "";
+  const yr=t.born!=null?(t.born<0?`${-t.born} BCE`:`${t.born} CE`):"";
+  return `<a data-go="${id}">${t.name} <span class="yr">${yr}</span>${sub?`<br><span class="sub">${esc(sub)}</span>`:""}</a>`; }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\*/g,""); }
+function openCard(id){ const t=MODEL.thinkers[id]; if(!t)return; selectedId=id;
+  const E=MODEL.edges, other=e=>e.source===id?e.target:e.source;
+  const inflBy=E.filter(e=>e.target===id&&e.type==="influence"), dev=E.filter(e=>e.target===id&&e.type==="derivation"),
+    rev=E.filter(e=>e.target===id&&e.type==="revival"), revBy=E.filter(e=>e.source===id&&e.type==="revival"),
+    dis=E.filter(e=>e.type==="disagreement"&&(e.source===id||e.target===id));
+  const span=t.born!=null?`${t.born<0?-t.born+" BCE":t.born+" CE"}${t.died!=null?" – "+(t.died<0?-t.died+" BCE":t.died+" CE"):""}`:"";
+  let h="";
+  if(t.portrait) h+=`<img class="portrait" src="${t.portrait}" onerror="this.style.display='none'">`;
+  h+=`<div class="body"><h2>${t.name}</h2><div class="meta">${span}${t.uncertain?" (approx.)":""}</div>`+
+     `<span class="chip">${t.region}</span><span class="chip" style="border-color:${tradColor(t.tradition)}55;color:${tradColor(t.tradition)}">${t.tradition}</span>`;
+  if(t.thesis) h+=`<div class="thesis">${esc(t.thesis)}</div>`;
+  if(t.desc) h+=`<div class="desc">${esc(t.desc)}</div>`;
+  const blk=(title,col,rows)=>rows.length?`<div class="rel"><h5><span class="b" style="background:${col}"></span>${title}</h5>${rows.join("")}</div>`:"";
+  h+=blk("Influenced by","#5eead4",inflBy.map(e=>relRow(e.source,e.note)));
+  h+=blk("Develops","#60a5fa",dev.map(e=>relRow(e.source,e.note)));
+  h+=blk("Revives","#fbbf24",rev.map(e=>relRow(e.source,e.note)));
+  h+=blk("Revived by","#fbbf24",revBy.map(e=>relRow(e.target,e.note)));
+  h+=blk("Disagrees with","#f87171",dis.map(e=>relRow(other(e),(e.crux?`on <em>${esc(e.crux)}</em>`:"")+(e.note?": "+esc(e.note):""))));
+  if(t.cruxes.length) h+=`<div class="rel"><h5>Cruxes</h5>${t.cruxes.map(c=>`<a><strong>${esc(c.crux)}</strong>${c.stance?`<br><span class="sub">${esc(c.stance)}</span>`:""}</a>`).join("")}</div>`;
+  if(t.travel.length) h+=`<div class="rel"><h5>Idea travel</h5>${t.travel.map(x=>`<a><span class="yr">${x.year<0?-x.year+" BCE":x.year+" CE"}</span> ${esc(x.text)}</a>`).join("")}</div>`;
+  h+=`</div>`;
+  cardInner.innerHTML=h; card.classList.add("open");
+  cardInner.querySelectorAll("[data-go]").forEach(a=>a.onclick=()=>goTo(a.getAttribute("data-go")));
+  highlight();
+}
+function closeCard(){ selectedId=null; card.classList.remove("open"); highlight(); }
+document.getElementById("card-close").onclick=closeCard;
+function goTo(id){ const t=MODEL.thinkers[id]; if(!t)return; if(t.born!=null&&t.born>year){year=Math.min(yearMax,t.born+30);applyYear();} openCard(id);
+  if(markers[id]){ const lon=Math.atan2(markers[id].pos.x,markers[id].pos.z); cogTargetRotY=-lon; } }
+
+// ---------- interaction ----------
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2(); const tip=document.getElementById("tip");
+function pick(ev){ mouse.x=(ev.clientX/innerWidth)*2-1; mouse.y=-(ev.clientY/innerHeight)*2+1;
+  ray.setFromCamera(mouse,camera); const vis=Object.values(markers).filter(m=>m.mesh.visible).map(m=>m.mesh);
+  const hit=ray.intersectObjects(vis,false); return hit.length?hit[0].object.userData.id:null; }
+renderer.domElement.addEventListener("pointermove",(ev)=>{ const id=pick(ev);
+  if(id!==hoveredId){ hoveredId=id; highlight(); }
+  if(id){ const t=MODEL.thinkers[id]; tip.style.display="block";
+    tip.innerHTML=`<b>${t.name}</b><div class="m">${t.born!=null?(t.born<0?-t.born+" BCE":t.born+" CE"):""} · ${t.region} · ${t.tradition}</div>`;
+    let x=ev.clientX+14,y=ev.clientY+14; const r=tip.getBoundingClientRect();
+    if(x+r.width>innerWidth-8)x=ev.clientX-r.width-14; tip.style.left=x+"px"; tip.style.top=y+"px";
+    renderer.domElement.style.cursor="pointer"; }
+  else { tip.style.display="none"; renderer.domElement.style.cursor="grab"; } });
+renderer.domElement.addEventListener("click",(ev)=>{ const id=pick(ev); if(id)openCard(id); });
+
+document.querySelectorAll(".lg[data-t]").forEach(el=>el.onclick=()=>{ const t=el.dataset.t; filters[t]=!filters[t];
+  el.classList.toggle("off",!filters[t]); applyYear(); });
+const yEl=document.getElementById("year"); yEl.oninput=(e)=>{ year=+e.target.value; playing=false; setPlay(false); applyYear(); };
+function setPlay(p){ playing=p; document.getElementById("play").textContent=p?"❚❚":"▶"; }
+document.getElementById("play").onclick=()=>{ if(year>=yearMax){year=yearMin;} setPlay(!playing); };
+document.getElementById("open").onclick=openVault;
+addEventListener("resize",()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+// ---------- loading ----------
+function showErr(m){ const e=document.getElementById("err"); e.innerHTML=m; e.classList.add("show"); }
+async function loadSeed(){ try{
+    const man=await fetch("vault-research/manifest.json").then(r=>{if(!r.ok)throw 0;return r.json();});
+    const files=await Promise.all(man.map(async n=>({name:n,text:await fetch("vault-research/"+encodeURIComponent(n)).then(r=>r.text())})));
+    MODEL=parseVault(files); document.getElementById("src").textContent=`globe · research vault (${files.length})`;
+    document.getElementById("err").classList.remove("show"); buildScene();
+  }catch(err){ showErr("Couldn't load <code>vault-research/</code>. Serve over HTTP "+
+    "(<code>python3 -m http.server 4173</code>) or click <b>Open vault…</b>. "+
+    "Notes need <code>birth_lat/lon</code> or <code>active_lat/lon</code> to appear on the globe."); } }
+async function readDir(dir,out){ for await(const [name,h] of dir.entries()){
+  if(h.kind==="file"&&/\.md$/i.test(name)){ out.push({name,text:await (await h.getFile()).text()}); }
+  else if(h.kind==="directory"){ await readDir(h,out); } } }
+async function openVault(){ if(!window.showDirectoryPicker){ showErr("Use Chrome/Edge/Brave for Open vault, or drag a folder."); return; }
+  try{ const dir=await window.showDirectoryPicker(); const out=[]; await readDir(dir,out);
+    MODEL=parseVault(out); document.getElementById("src").textContent=`globe · ${dir.name} (${out.length})`;
+    closeCard(); buildScene(); }catch(e){ if(e&&e.name!=="AbortError")showErr("Could not read folder: "+e.message); } }
+
+// ---------- __viz ----------
+window.__viz={ state:()=>({ loaded:Object.keys(MODEL.thinkers).length>0, thinkers:Object.keys(MODEL.thinkers).length,
+    edges:MODEL.edges.length, withCoords:Object.values(markers).length, regions:[...regions], year, yearMin, yearMax,
+    selected:selectedId, hovered:hoveredId, playing, filters:{...filters},
+    activeNow:Object.values(markers).filter(m=>activeAt(m.t)).length, dominantRegion:dominantRegion() }),
+  data:()=>({ thinkers:Object.values(MODEL.thinkers).map(t=>({id:t.id,born:t.born,died:t.died,lat:t.lat,lon:t.lon,region:t.region,tradition:t.tradition})),
+    edges:MODEL.edges.map(e=>({source:e.source,target:e.target,type:e.type})) }),
+  get:(id)=>MODEL.thinkers[id]||null, select:(id)=>openCard(id), go:(id)=>goTo(id),
+  setYear:(y)=>{ year=Math.max(yearMin,Math.min(yearMax,y)); applyYear(); }, play:()=>setPlay(true), pause:()=>setPlay(false),
+  setFilter:(t,on)=>{ filters[t]=on; const el=document.querySelector(`.lg[data-t="${t}"]`); if(el)el.classList.toggle("off",!on); applyYear(); },
+  markerPos:(id)=>markers[id]?markers[id].mesh.getWorldPosition(new THREE.Vector3()).toArray():null,
+  openVault };
+
+let last=performance.now();
+(function loop(now){ requestAnimationFrame(loop); const dt=(now-last)/1000; last=now;
+  if(playing){ year+=dt*((yearMax-yearMin)/22); if(year>=yearMax){year=yearMax;setPlay(false);} applyYear(); }
+  globe.rotation.y += (cogTargetRotY - globe.rotation.y)*0.04;   // drift toward centre of gravity
+  controls.update(); renderer.render(scene,camera);
+})(performance.now());
+
+loadSeed();
+</script>
+</body>
+</html>

@@ -52,6 +52,16 @@
     box-shadow: 0 0 12px rgba(52, 211, 153, 0.35); }
   #skip { font-size: 10.5px; color: #64789a; text-decoration: none; }
   #skip:hover { color: #9fb2cf; text-decoration: underline; }
+  @media (max-width: 720px) {
+    #panel { width: calc(100vw - 32px); max-width: 330px; }
+    .row label { width: 64px; }
+  }
+  @media (max-height: 640px) {
+    #panel { top: 8px; padding: 10px 14px 8px; }
+    #panel h1 { font-size: 14px; }
+    #stage-copy { font-size: 11px; margin-bottom: 6px; }
+    .ctl { margin: 5px 0; }
+  }
 </style>
 </head>
 <body>
@@ -76,7 +86,7 @@
   <div class="ctl" id="ctl-zoom" hidden>
     <div class="row">
       <label for="zoom">view width</label>
-      <input type="range" id="zoom" min="-16" max="27.5" step="0.02" value="1">
+      <input type="range" id="zoom" min="-12" max="8" step="0.02" value="0.2">
       <span class="val" id="zoom-val"></span>
     </div>
     <div class="status">scroll on the canvas also zooms</div>
@@ -140,7 +150,8 @@
     <button class="btn" id="back">← Back</button>
     <button class="btn" id="next">Next →</button>
     <span class="spacer"></span>
-    <a id="skip" href="#9">skip to the index</a>
+    <a id="tour" href="#0" hidden>guided tour</a>
+    <a id="skip" href="#9">skip to index</a>
   </div>
 </div>
 
@@ -164,115 +175,29 @@ const RACERS = [
 ];
 const TRACK_M = 100;
 
-// a continuous ladder of real objects/distances (metres), so something is always
-// on screen except in the genuine voids below. Filled to ≤ ~1 decade spacing in the
-// populated regimes; reconciled against the zoom-ladder verification workflow.
-const SIZES = [
-  { v: 1.68e-15, label: 'a proton' },
-  // [void: proton → atom]
+// human-scale length anchors (metres) — bodily / lived, not a cosmic ladder
+const HUMAN_SIZES = [
   { v: 1.06e-10, label: 'an atom' },
-  { v: 2.75e-10, label: 'a water molecule' },
-  { v: 2e-9, label: 'DNA, across' },
-  { v: 1e-8, label: 'an antibody' },
   { v: 1e-7, label: 'a virus' },
-  { v: 5.5e-7, label: 'a wavelength of green light' },
-  { v: 1e-6, label: 'a mitochondrion' },
-  { v: 2e-6, label: 'an E. coli bacterium' },
-  { v: 7.5e-6, label: 'a red blood cell' },
-  { v: 1.5e-5, label: 'an animal cell' },
-  { v: 3e-5, label: 'a pollen grain' },
-  { v: 7e-5, label: 'a human hair (width)' },
-  { v: 3e-4, label: 'a grain of sand' },
+  { v: 7e-5, label: 'a human hair' },
   { v: 3e-3, label: 'a sesame seed' },
-  { v: 6e-3, label: 'a mosquito' },
-  { v: 0.024, label: 'a coin' },
-  { v: 0.0427, label: 'a golf ball' },
-  { v: 0.067, label: 'a tennis ball' },
   { v: 0.1, label: 'your fist' },
   { v: 0.15, label: 'a smartphone' },
-  { v: 0.3, label: 'a sheet of paper' },
-  { v: 0.48, label: 'a house cat' },
   { v: 1.0, label: 'a doorway' },
   { v: 1.7, label: 'you' },
   { v: 4.5, label: 'a car' },
   { v: 10, label: 'a house' },
   { v: 25, label: 'a large tree' },
-  { v: 30, label: 'a blue whale' },
-  { v: 93, label: 'the Statue of Liberty' },
-  { v: 330, label: 'the Eiffel Tower' },
   { v: 828, label: 'the Burj Khalifa' },
-  { v: 2737, label: 'the Golden Gate Bridge' },
   { v: 8849, label: 'Mount Everest' },
   { v: 4.22e4, label: 'a marathon' },
-  { v: 1.4e5, label: 'Greater Tokyo' },
   { v: 5.6e5, label: 'Kerala, north to south' },
   { v: 3.21e6, label: 'India, Kashmir → Kanyakumari' },
-  { v: 3.47e6, label: 'the Moon (across)' },
-  { v: 1.276e7, label: 'Earth' },
-  { v: 4.9e7, label: 'Neptune (across)' },
-  { v: 1.43e8, label: 'Jupiter (across)' },
-  { v: 3.84e8, label: 'Earth → Moon' },
-  { v: 1.392e9, label: 'the Sun (across)' },
-  { v: 5.8e10, label: 'the Sun → Mercury' },
-  { v: 1.496e11, label: 'Earth → Sun (1 AU)' },
-  { v: 1.06e12, label: 'Betelgeuse, a red supergiant' },
-  { v: 1.079e12, label: 'one light-hour' },
-  { v: 4.5e12, label: 'Neptune’s orbit' },
-  { v: 1.8e13, label: 'the Solar System (heliosphere)' },
-  // [void: Solar System → nearest star]
-  { v: 9.461e15, label: 'one light-year' },
-  { v: 4.014e16, label: 'to Proxima Centauri' },
-  { v: 2.27e17, label: 'the Orion Nebula' },
-  { v: 1.4e18, label: 'Omega Centauri (a star cluster)' },
-  { v: 9.5e18, label: 'the Milky Way’s disc thickness' },
-  { v: 9.46e19, label: 'a spiral arm' },
-  { v: 2.5e20, label: 'us → the galactic centre' },
-  { v: 9.5e20, label: 'the Milky Way (across)' },
-  // [void: between galaxies]
-  { v: 2.4e22, label: 'to Andromeda' },
-  { v: 9.3e22, label: 'the Local Group of galaxies' },
-  // [void: cosmic-web voids]
-  { v: 4.9e24, label: 'the Laniakea Supercluster' },
-  // [void: thinning to the horizon]
-  { v: 8.8e26, label: 'the observable universe' },
+  { v: 1.276e7, label: 'Earth (across)' },
 ];
 
-// curated handful for the index strip (the full ladder is too dense to plot)
-const LENGTH_INDEX = [
-  { v: 1.06e-10, label: 'an atom' }, { v: 1e-7, label: 'a virus' },
-  { v: 7e-5, label: 'a human hair' }, { v: 1.7, label: 'you' },
-  { v: 828, label: 'the Burj Khalifa' }, { v: 8849, label: 'Mount Everest' },
-  { v: 1.276e7, label: 'Earth' }, { v: 1.392e9, label: 'the Sun' },
-  { v: 9.461e15, label: 'one light-year' }, { v: 9.5e20, label: 'the Milky Way' },
-  { v: 8.8e26, label: 'the observable universe' },
-];
-
-// the genuine voids — where there really is nothing of that size to draw, and the
-// emptiness itself is the point (workflow-verified). Each is a log10(view-width) range.
-const VOIDS = [
-  { zLo: -13.5, zHi: -10.6,
-    l1: 'empty space inside the atom.',
-    l2: 'the nucleus is ~60,000× smaller than the electron cloud — nothing lies between.' },
-  { zLo: 13.6, zHi: 15.7,
-    l1: 'from the edge of the Solar System to the nearest star.',
-    l2: 'past the heliosphere, near-empty space until Proxima — over 4 light-years off.' },
-  { zLo: 21.2, zHi: 22.3,
-    l1: 'the gulf between galaxies.',
-    l2: 'beyond the Milky Way, ~2 million light-years of thin nothing before Andromeda.' },
-  { zLo: 23.2, zHi: 24.4,
-    l1: 'cosmic-web voids between galaxy clusters.',
-    l2: 'between the Local Group and Laniakea stretch vast under-dense voids.' },
-  { zLo: 25.2, zHi: 26.6,
-    l1: 'beyond the superclusters, the web thins to the horizon —',
-    l2: 'mostly void, all the way to the edge of the observable universe.' },
-];
-
-const AREAS = [ // practical area units, drawn at true scale in the zoom view
-  { w: 10, h: 10, label: '1 are — 10 × 10 m = 100 m²' },
-  { w: 63.6, h: 63.6, label: '1 acre — a 63.6 m square = 4,047 m²' },
-  { w: 100, h: 100, label: '1 hectare — 100 × 100 m = 10,000 m² = 2.47 acres' },
-  { w: 105, h: 68, label: 'a FIFA pitch — 105 × 68 m = 7,140 m² ≈ 1.76 acres' },
-];
+const LENGTH_INDEX = HUMAN_SIZES.filter((_, i) =>
+  [0, 2, 6, 7, 11, 12, 14, 15, 16].includes(i));
 
 const POP = {
   total: { v: 1.4e9, label: 'India' },
@@ -333,8 +258,8 @@ const POUR = {
   ],
 };
 
-// rainfall as a depth on your own body + runoff off your roof (placeholder values,
-// reconciled against the rainfall-anchors verification workflow)
+// rainfall as a depth on your own body + runoff off your roof
+// (fact-checked — see data/personal-anchors.md)
 const HUMAN_MM = 1700;     // standing height, mm
 const RAIN_COMPRESS = 4;   // storm-hours per real second while "raining"
 const RAIN = {
@@ -371,8 +296,9 @@ const RAIN = {
 const GAME_ROUNDS = [
   { q: 'A kettle (2 kW) is how many resting humans (80 W each)?', truth: 25 },
   { q: 'India is how many Keralas?', truth: 42 },
-  { q: 'While the snail crosses the track once, how many crossings does sound make?', truth: 26385 },
+  { q: 'Daily drinking water (~2.7 L) is how many 1-litre bottles?', truth: 2.7 },
 ];
+const TOUR_POUR_THINGS = [1, 6, 9]; // good cry, daily water, filling a scooty
 
 const WEEK = [
   ['Thingal', 'Mon'], ['Chovva', 'Tue'], ['Budhan', 'Wed'], ['Vyazham', 'Thu'],
@@ -425,7 +351,7 @@ const S = {
   // race
   camLog: 0, simT: 0,
   // zoom
-  z: 1, sawAtom: false, sawGalaxy: false,
+  z: 0.2, sawAtom: false, sawKerala: false,
   // count
   count: null, // {total, units, idx, caption?}
   flags: {},
@@ -501,14 +427,14 @@ const STAGES = [
     done: () => S.simT * 0.013 >= TRACK_M,
   },
   {
-    title: 'Length wants to be a zoom',
-    copy: 'You can’t draw an atom and the galaxy on one page — but you can ' +
-      '<b>travel</b> between them. Every circle is real and concentric; the readout ' +
-      'tells you how wide your current view is.',
-    task: 'Zoom all the way in to the nucleus, and all the way out past the Milky Way.',
+    title: 'Length wants to be compared',
+    copy: 'Past about 10⁴ repeats, a number stops being a count and becomes a mood — ' +
+      'that’s <b>scope insensitivity</b>. For length, the cure is a log ruler of things ' +
+      'you’ve actually handled: hair, doorway, you, Kerala north-to-south.',
+    task: 'Zoom in until an atom is on the ruler, then out until Kerala north-to-south appears.',
     view: 'zoom', reveals: ['zoom'],
-    enter() { S.z = 1; S.sawAtom = false; S.sawGalaxy = false; $('zoom').value = 1; },
-    done: () => S.sawAtom && S.sawGalaxy,
+    enter() { S.z = 0.2; S.sawAtom = false; S.sawKerala = false; $('zoom').value = 0.2; },
+    done: () => S.sawAtom && S.sawKerala,
   },
   {
     title: 'Counts want to be crowds — until counting dies',
@@ -535,10 +461,10 @@ const STAGES = [
     copy: 'Some numbers don’t grow — they <b>wrap</b>. The train clock is the 24-hour ' +
       'and 12-hour names pinned to one wheel; the week wears Malayalam outside and ' +
       'English inside.',
-    task: 'Drag the hand to 19:00 and read it in 12-hour time.',
+    task: 'Clock: drag to 19:00 (7 pm). Weekdays: switch rings and land on Velli (Friday).',
     view: 'ring', reveals: ['ring'],
-    enter() { S.ring = 'clock'; S.hand = 13.5; },
-    done: () => S.ring === 'clock' && Math.abs(S.hand - 19) < 0.4,
+    enter() { S.ring = 'clock'; S.hand = 13.5; S.flags = { clockDone: false, weekDone: false }; },
+    done: () => S.flags.clockDone && S.flags.weekDone,
   },
   {
     title: 'Appliances, in humans',
@@ -560,7 +486,7 @@ const STAGES = [
       '<b>real containers you’ve held</b>. Pick an amount; measure it in things you know.',
     task: 'Pour at least two amounts — feel how many teaspoons a cry is vs how many scooty-tanks a car holds.',
     view: 'pour', reveals: ['pour'],
-    enter() { S.pour = { thing: 1, unit: null }; S.flags = { poured: new Set([1]) }; buildPourButtons(); },
+    enter() { S.pour = { thing: 1, unit: null }; S.flags = { poured: new Set() }; buildPourButtons(); },
     done: () => (S.flags.poured?.size || 0) >= 2,
   },
   {
@@ -569,12 +495,12 @@ const STAGES = [
       '1 litre on every m² = how deep the water would stand if it didn’t drain. So ' +
       'rainfall is a <b>depth on your own body</b>, and your roof turns it into <b>tankers</b>. ' +
       'Mawsynram, in Meghalaya, gets almost <b>four storeys</b> of rain — every year.',
-    task: 'Set a cloudburst and let it rain past Mumbai’s one-day total (944 mm). Watch the storm clock.',
+    task: 'Set a cloudburst (~60 mm/hr) and let it rain past Mumbai’s one-day total (944 mm). Watch the storm clock.',
     view: 'rain', reveals: ['rain'],
     enter() {
-      S.rain.depth = 25; S.rain.rate = 16; S.rain.raining = false;
+      S.rain.depth = 25; S.rain.rate = 60; S.rain.raining = false;
       S.rain.stormH = 0; S.rain.drops = []; S.rain.roof = 100;
-      $('rain-rate').value = Math.log10(16); updateRainLabels();
+      $('rain-rate').value = Math.log10(60); updateRainLabels();
       $('rain-go').classList.remove('on'); $('rain-go').textContent = 'let it rain';
       $('roof-house').classList.add('on'); $('roof-pitch').classList.remove('on');
     },
@@ -591,9 +517,8 @@ const STAGES = [
   },
   {
     title: 'The index',
-    copy: 'Every quantity from the collection, one strip per ladder. The strips are ' +
-      'just the <b>map</b> — click any dot and it opens in its natural view: a race, ' +
-      'a zoom, a crowd, a ring.',
+    copy: 'Your anchor collection — one strip per quantity. Click any dot to open it ' +
+      'in its natural view. New here? Try the <b>guided tour</b> (link below).',
     task: null,
     view: 'pg', reveals: ['pg'],
     enter() { S.pg = { view: 'index', cfg: null }; updatePgButtons(); },
@@ -651,84 +576,64 @@ function drawRace() {
       text(r.icon, x0 + frac * trackPx, y - 2, '#fff', 22, 'center');
     }
     text(`${r.label} — ${fmt(r.v)} m/s`, x0, y - laneH * 0.33, '#9fb2cf', 12);
-    text(crossings > 0 ? `crossed ×${fmtCount(crossings)}` : '—',
+    const distLabel = dist >= 1000 ? `${fmt(dist / 1000)} km` : `${fmt(dist)} m`;
+    text(crossings > 0 ? `×${fmtCount(crossings)} · ${distLabel} total` : '—',
       x1, y - laneH * 0.33, crossings > 0 ? '#34d399' : '#516180', 12, 'right');
   }
 }
 
-// === view: ZOOM =======================================================================
-function drawZoom() {
-  const cx = PANEL_X + (W - PANEL_X) / 2, cy = H / 2;
-  const viewW = 10 ** S.z;            // metres across the visible area
-  const mPerPx = viewW / (W - PANEL_X);
-  if (S.z <= -13.6) S.sawAtom = true;
-  if (S.z >= 21) S.sawGalaxy = true;
-  const labels = [];
-  for (const a of SIZES) {
-    const px = a.v / mPerPx;
-    if (px < 1.2 || px > (W - PANEL_X) * 12) continue;
-    ctx.save();
-    ctx.strokeStyle = '#60a5fa';
-    ctx.globalAlpha = Math.min(0.9, Math.max(0.15, 1.6 - px / (W - PANEL_X)));
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(cx, cy, px / 2, 0, TAU); ctx.stroke();
-    ctx.restore();
-    if (px > 22) labels.push({ s: `${a.label} — ${fmtMetres(a.v)}`, top: cy - px / 2 });
-  }
-  // labels just above each circle, de-colliding downward, on dark chips
-  labels.sort((a, b) => a.top - b.top);
-  const usedY = [];
-  for (const L of labels) {
-    let ly = Math.max(26, Math.min(H - 16, L.top - 11));
-    while (usedY.some((u) => Math.abs(u - ly) < 15)) ly += 16;
-    if (ly > H - 16) continue;
-    usedY.push(ly);
-    ctx.save();
-    ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
-    const tw = ctx.measureText(L.s).width;
-    ctx.fillStyle = 'rgba(11,15,23,0.8)';
-    ctx.fillRect(cx - tw / 2 - 6, ly - 9, tw + 12, 18);
-    ctx.restore();
-    text(L.s, cx, ly, '#9fb2cf', 12, 'center');
-  }
-  // genuine voids — a caption near the foot of the screen (the rings stay on screen,
-  // but the *matter* between them is what's absent)
-  for (const vd of VOIDS) {
-    if (S.z > vd.zLo && S.z < vd.zHi) {
-      text(vd.l1, cx, H - 116, '#7388a8', 13, 'center');
-      text(vd.l2, cx, H - 96, '#7388a8', 13, 'center');
+function updateZoomFlags() {
+  const span = 5, viewLo = S.z - span / 2, viewHi = S.z + span / 2;
+  for (const a of HUMAN_SIZES) {
+    const logv = Math.log10(a.v);
+    if (logv >= viewLo && logv <= viewHi) {
+      if (a.label === 'an atom') S.sawAtom = true;
+      if (a.label.startsWith('Kerala')) S.sawKerala = true;
     }
+  }
+}
+
+// === view: ZOOM (human-scale log ruler) ===============================================
+function drawZoom() {
+  const x0 = PANEL_X + 70, x1 = W - 50;
+  const y = H / 2 + 10;
+  const span = 5;
+  const viewLo = S.z - span / 2, viewHi = S.z + span / 2;
+  const logToX = (logv) => x0 + ((logv - viewLo) / (viewHi - viewLo)) * (x1 - x0);
+
+  updateZoomFlags();
+
+  text('a log ruler of lengths you’ve actually handled', (x0 + x1) / 2, 52, '#8fa3c0', 13, 'center');
+  line(x0, y, x1, y, '#2a3a55', 2.5);
+  for (let d = Math.floor(viewLo); d <= Math.ceil(viewHi); d++) {
+    const x = logToX(d);
+    if (x < x0 - 4 || x > x1 + 4) continue;
+    line(x, y - 5, x, y + 5, '#46618f', 1);
+    text(`10${sup(d)} m`, x, y + 20, '#64789a', 10, 'center');
   }
 
-  // practical area units as true-scale rectangles (rects first, labels on top)
-  const areaLabels = [];
-  const usedLabelY = [];
-  for (const a of AREAS) {
-    const pw = a.w / mPerPx, ph = a.h / mPerPx;
-    if (Math.max(pw, ph) < 10 || Math.min(pw, ph) > (W - PANEL_X) * 4) continue;
+  const viewW = 10 ** S.z;
+  const mPerPx = viewW / (x1 - x0);
+  for (const a of HUMAN_SIZES) {
+    const logv = Math.log10(a.v);
+    if (logv < viewLo || logv > viewHi) continue;
+    const x = logToX(logv);
+    const barW = Math.max(4, Math.min((a.v / viewW) * (x1 - x0) * 0.85, 120));
+    const isYou = a.label === 'you';
     ctx.save();
-    ctx.strokeStyle = '#fbbf24';
-    ctx.globalAlpha = Math.min(0.9, Math.max(0.18, 1.6 - pw / (W - PANEL_X)));
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(cx - pw / 2, cy - ph / 2, pw, ph);
+    ctx.fillStyle = isYou ? 'rgba(52,211,153,0.55)' : 'rgba(96,165,250,0.45)';
+    ctx.fillRect(x - barW / 2, y - 38, barW, 14);
+    ctx.strokeStyle = isYou ? '#34d399' : '#60a5fa';
+    ctx.lineWidth = isYou ? 2 : 1.5;
+    ctx.strokeRect(x - barW / 2, y - 38, barW, 14);
     ctx.restore();
-    if (pw > 70) {
-      let ly = Math.min(H - 52, cy + ph / 2 + 13);
-      while (usedLabelY.some((u) => Math.abs(u - ly) < 16)) ly += 17;
-      if (ly < H - 36) { areaLabels.push({ label: a.label, ly }); usedLabelY.push(ly); }
-    }
+    line(x, y - 10, x, y + 10, isYou ? '#34d399' : '#60a5fa', isYou ? 2.5 : 2);
+    text(a.label, x, y - 52, isYou ? '#6ee7b7' : '#9fb2cf', 11.5, 'center');
+    text(fmtMetres(a.v), x, y - 66, '#64789a', 10, 'center');
   }
-  for (const { label: s, ly } of areaLabels) {
-    ctx.save();
-    ctx.font = '600 11.5px ui-sans-serif, system-ui, sans-serif';
-    const tw = ctx.measureText(s).width;
-    ctx.fillStyle = 'rgba(11, 15, 23, 0.85)';
-    ctx.fillRect(cx - tw / 2 - 6, ly - 9, tw + 12, 18);
-    ctx.restore();
-    text(s, cx, ly, '#fbbf24', 11.5, 'center');
-  }
-  text(`your view is ${fmtMetres(viewW)} wide`, cx, H - 36, '#dbe4f0', 15, 'center', 700);
-  $('zoom-val').textContent = `10${sup(Math.round(S.z))} m`;
+
+  text(`window width: ${fmtMetres(viewW)}`, (x0 + x1) / 2, H - 40, '#dbe4f0', 15, 'center', 700);
+  $('zoom-val').textContent = `10${sup(Math.round(S.z * 10) / 10)} m`;
 }
 
 // === view: COUNT ======================================================================
@@ -791,7 +696,10 @@ function drawCount() {
   const capParts = total.v >= 1e10 && units[0].v >= 1000
     ? `${indianMoney(total.v)}  =  ${westernMoney(total.v)} rupees`
     : null;
-  text(total.label, ax + aw / 2, 40, '#dbe4f0', 15, 'center', 700);
+  if (S.count.appliance !== undefined) {
+    text('1 you = 80 W at rest', ax + aw / 2, 22, '#7fd1f9', 13, 'center', 700);
+  }
+  text(total.label, ax + aw / 2, S.count.appliance !== undefined ? 44 : 40, '#dbe4f0', 15, 'center', 700);
   if (capParts) text(capParts, ax + aw / 2, 62, '#fbbf24', 12.5, 'center');
   text(`= ${fmtCount(n)} × ${u.label}`, ax + aw / 2, capParts ? 82 : 64, '#34d399', 14, 'center', 700);
 
@@ -921,8 +829,13 @@ function ringPointer(e, downOnly) {
   if (downOnly && (d < R * 0.2 || d > R * 1.3)) return false;
   const ang = Math.atan2(dy, dx) + Math.PI / 2;
   const frac = ((ang / TAU) % 1 + 1) % 1;
-  if (S.ring === 'clock') S.hand = Math.round(frac * 24 * 2) / 2 || 24;
-  else S.day = Math.round(frac * 7) % 7;
+  if (S.ring === 'clock') {
+    S.hand = Math.round(frac * 24 * 2) / 2 || 24;
+    if (S.flags && Math.abs(S.hand - 19) < 0.4) S.flags.clockDone = true;
+  } else {
+    S.day = Math.round(frac * 7) % 7;
+    if (S.flags && S.day === 4) S.flags.weekDone = true;
+  }
   return true;
 }
 
@@ -948,18 +861,33 @@ function setPourThing(i) {
   buildPourButtons();
 }
 function setPourUnit(i) { S.pour.unit = i; buildPourButtons(); }
+function pourThingsVisible() {
+  if (isPlayground() || stage !== 6) return POUR.things.map((_, i) => i);
+  return TOUR_POUR_THINGS;
+}
 function buildPourButtons() {
   const tb = $('pour-things'); tb.innerHTML = '';
-  POUR.things.forEach((t, i) => {
+  pourThingsVisible().forEach((i) => {
+    const t = POUR.things[i];
     const b = document.createElement('button');
     b.className = `btn${S.pour.thing === i ? ' on' : ''}`;
     b.textContent = t.label; b.id = `thing-${i}`;
     b.addEventListener('click', () => setPourThing(i));
     tb.appendChild(b);
   });
+  if (stage === 6 && !isPlayground()) {
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:11px;color:#64789a;margin-top:6px';
+    hint.textContent = 'More amounts live in the index.';
+    tb.appendChild(hint);
+  }
   const vb = $('pour-vessels'); vb.innerHTML = '';
   const cur = pourUnitIdx();
-  POUR.vessels.forEach((v, i) => {
+  const vessels = (stage === 6 && !isPlayground())
+    ? [cur]
+    : POUR.vessels.map((_, i) => i);
+  vessels.forEach((i) => {
+    const v = POUR.vessels[i];
     const b = document.createElement('button');
     b.className = `btn${cur === i ? ' on' : ''}`;
     b.textContent = v.label; b.id = `vessel-${i}`;
@@ -1173,6 +1101,31 @@ function drawRain(now) {
   text(`= ${fmtCount(tankers)} water tankers`, rcx, g.gy0 + 112, '#dbe4f0', 13, 'center');
   $('rain-status').textContent =
     `${r.raining ? 'raining — ' : ''}storm clock: ${fmtStormTime(r.stormH)}`;
+  drawAnnualStrip(g, depth);
+}
+const ANNUAL_MARKS = [
+  { mm: 10, label: '1 rainy day' },
+  { mm: 2347, label: 'Kerala monsoon' },
+  { mm: 11871, label: 'Mawsynram / year' },
+];
+function drawAnnualStrip(g, depth) {
+  const annual = ANNUAL_MARKS[ANNUAL_MARKS.length - 1].mm;
+  const y = H - 22, x0 = g.left, x1 = g.right, w = x1 - x0;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,42,62,0.85)';
+  ctx.fillRect(x0, y - 6, w, 12);
+  const frac = Math.min(1, depth / annual);
+  ctx.fillStyle = 'rgba(96,165,250,0.45)';
+  ctx.fillRect(x0, y - 5, w * frac, 10);
+  ctx.strokeStyle = '#46618f'; ctx.lineWidth = 1;
+  ctx.strokeRect(x0, y - 5, w, 10);
+  ctx.restore();
+  text('annual rainfall ladder', g.gxc, y - 18, '#64789a', 10, 'center');
+  for (const m of ANNUAL_MARKS) {
+    const fx = x0 + (m.mm / annual) * w;
+    line(fx, y - 8, fx, y + 8, '#fbbf24', 1.5);
+    text(m.label, fx, y + 20, depth >= m.mm ? '#7fd1f9' : '#64789a', 9, 'center');
+  }
 }
 
 // === view: GAME =======================================================================
@@ -1270,6 +1223,8 @@ function drawIndex() {
       const x = x0 + f * (x1 - x0);
       ctx.save(); ctx.fillStyle = '#60a5fa';
       ctx.beginPath(); ctx.arc(x, y, 5.5, 0, TAU); ctx.fill(); ctx.restore();
+      const short = a.label.length > 22 ? a.label.slice(0, 20) + '…' : a.label;
+      text(short, x, y + 14, '#64789a', 9.5, 'center');
       indexHits.push({ x, y, cat, a });
     });
   });
@@ -1356,7 +1311,7 @@ window.addEventListener('pointerup', () => { draggingHand = false; draggingWater
 cv.addEventListener('wheel', (e) => {
   if (currentView() !== 'zoom') return;
   e.preventDefault();
-  S.z = Math.max(-16, Math.min(27.5, S.z + e.deltaY * 0.0025));
+  S.z = Math.max(-12, Math.min(8, S.z + e.deltaY * 0.0025));
   $('zoom').value = S.z;
 }, { passive: false });
 
@@ -1414,7 +1369,9 @@ function setStage(i) {
   if (st.task) $('task-text').textContent = st.task;
   $('back').disabled = stage === 0;
   $('next').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
-  $('skip').style.visibility = stage === STAGES.length - 1 ? 'hidden' : '';
+  const onIndex = stage === STAGES.length - 1;
+  $('skip').style.visibility = onIndex ? 'hidden' : '';
+  $('tour').hidden = !onIndex;
   if (`#${stage}` !== location.hash) history.replaceState(null, '', `#${stage}`);
 }
 $('back').addEventListener('click', () => setStage(stage - 1));
@@ -1431,7 +1388,7 @@ window.__viz = {
       stage, taskDone, view: currentView(),
       simT: +S.simT.toFixed(2), cam: 10 ** S.camLog,
       snailCross: Math.floor(0.013 * S.simT / TRACK_M),
-      z: +S.z.toFixed(2), sawAtom: S.sawAtom, sawGalaxy: S.sawGalaxy,
+      z: +S.z.toFixed(2), sawAtom: S.sawAtom, sawKerala: S.sawKerala,
       count: S.count ? +(S.count.total.v / S.count.units[S.count.idx].v).toFixed(3) : null,
       flags: { smear: !!S.flags.sawSmear, countable: !!S.flags.sawCountable,
         seen: S.flags.seen ? S.flags.seen.size : 0 },
@@ -1452,22 +1409,17 @@ window.__viz = {
     S.camLog = log; $('cam').value = log;
     $('cam-val').textContent = `${fmtCount(10 ** log)}×`;
   },
-  setZ(z) { S.z = z; $('zoom').value = z; },
+  setZ(z) { S.z = z; $('zoom').value = z; updateZoomFlags(); },
   zoomCheck(z) {
     const mPerPx = (10 ** z) / (W - PANEL_X);
     const big = (W - PANEL_X) * 12;
     let present = 0, sized = 0;
-    for (const a of SIZES) {
-      const px = a.v / mPerPx;
-      if (px >= 1.2 && px <= big) present++;
-      if (px >= 6 && px <= (W - PANEL_X) * 6) sized++;
+    const span = 5, viewLo = z - span / 2, viewHi = z + span / 2;
+    for (const a of HUMAN_SIZES) {
+      const logv = Math.log10(a.v);
+      if (logv >= viewLo && logv <= viewHi) { present++; sized++; }
     }
-    for (const a of AREAS) {
-      const pw = a.w / mPerPx, ph = a.h / mPerPx;
-      if (Math.max(pw, ph) >= 10 && Math.min(pw, ph) <= (W - PANEL_X) * 4) { present++; sized++; }
-    }
-    const inVoid = VOIDS.some((v) => z > v.zLo && z < v.zHi);
-    return { present, sized, inVoid };
+    return { present, sized, inVoid: false };
   },
   setUnit(i) {
     if (S.count?.appliance !== undefined) setApplianceCount(i);
@@ -1492,7 +1444,7 @@ window.__viz = {
 // === boot + main loop =================================================================
 layout();
 const initial = parseInt(location.hash.slice(1), 10);
-setStage(Number.isNaN(initial) ? 0 : initial);
+setStage(Number.isNaN(initial) ? 9 : initial);
 
 let lastReal = performance.now();
 function tick(now) {

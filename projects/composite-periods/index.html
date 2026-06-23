@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composite Periods — LCM made visible</title>
+<style>
+  :root {
+    --bg: #10141a; --panel: #171d26; --ink: #dde4ee; --dim: #8b96a8;
+    --acc: #5fb0ff; --ok: #69d58c; --gold: #e8c66b; --warn: #ff7a6e; --vio: #f472b6;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15.5px/1.6 ui-sans-serif, system-ui, sans-serif;
+    padding: 0 16px 80px;
+  }
+  main { max-width: 920px; margin: 0 auto; }
+  main > p { max-width: 720px; }
+  h1 { font-size: 26px; margin: 28px 0 8px; line-height: 1.25; }
+  h2 { font-size: 19px; margin: 48px 0 8px; color: var(--acc); }
+  h2 .num { color: var(--dim); font-weight: 500; font-size: 14px; }
+  .sub { color: var(--dim); font-size: 13px; }
+  .panel {
+    background: var(--panel); border: 1px solid #232b38; border-radius: 10px;
+    padding: 16px 18px; margin: 12px 0 28px;
+  }
+  .panel p { margin: 8px 0; max-width: 720px; }
+  details { color: var(--dim); font-size: 13px; margin: 10px 0; }
+  details summary { cursor: pointer; color: var(--acc); }
+  #journey {
+    position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 10px 0; margin: 0 0 8px; background: linear-gradient(var(--bg) 70%, transparent);
+    border-bottom: 1px solid #232b38;
+  }
+  #journey a {
+    font-size: 11.5px; text-decoration: none; color: var(--dim);
+    padding: 4px 10px; border-radius: 6px; border: 1px solid #2a3342;
+  }
+  #journey a.on { color: var(--ink); border-color: var(--acc); background: rgba(95,176,255,.1); }
+  #journey a.done { border-color: rgba(105,213,140,.45); }
+  #journey a.done::after { content: ' ✓'; color: var(--ok); font-size: 10px; }
+  .wave-wrap { position: relative; margin: 12px 0 8px; }
+  canvas.wave {
+    display: block; width: 100%; height: 220px;
+    background: #0c1118; border-radius: 8px; border: 1px solid #232b38;
+  }
+  .readout {
+    font-size: 13px; color: #7fd1f9; font-variant-numeric: tabular-nums;
+    min-height: 18px; margin: 6px 0;
+  }
+  .readout .T-lock { color: var(--ok); font-weight: 700; }
+  .readout.pulse .T-lock { animation: tpulse .6s ease; }
+  @keyframes tpulse {
+    0%, 100% { text-shadow: none; }
+    50% { text-shadow: 0 0 12px rgba(105,213,140,.9); }
+  }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; font-size: 13px; }
+  .row label { color: var(--dim); min-width: 88px; }
+  .row input[type=range] { flex: 1; min-width: 140px; max-width: 360px; accent-color: var(--acc); }
+  .row .val { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 48px; }
+  .btn {
+    background: #222b3a; border: 1px solid #34405a; color: var(--ink);
+    border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { background: #2a3548; }
+  .btn.on { background: var(--acc); color: #0b0f14; border-color: var(--acc); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .chip { font-size: 12px; }
+  .task {
+    display: flex; gap: 8px; font-size: 12.5px; padding: 8px 10px; border-radius: 8px;
+    background: rgba(95,176,255,.08); border: 1px solid rgba(95,176,255,.25); margin: 10px 0;
+  }
+  .task.done { border-color: rgba(105,213,140,.45); background: rgba(105,213,140,.08); }
+  .task .tick { font-weight: 700; color: var(--dim); }
+  .task.done .tick { color: var(--ok); }
+  .formula {
+    font: 600 20px/1.35 ui-monospace, monospace; color: var(--gold);
+    margin: 4px 0 10px; letter-spacing: 0.02em;
+  }
+  .hint { font-size: 11.5px; color: var(--dim); margin: 4px 0 0; }
+  canvas.wave.drag-time { cursor: ew-resize; }
+  canvas.wave.drag-phase { cursor: grab; }
+  canvas.wave.drag-time:active, canvas.wave.drag-phase:active { cursor: grabbing; }
+  .legend { font-size: 11px; color: var(--dim); display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+  @media (max-width: 600px) {
+    h1 { font-size: 22px; }
+    .row label { min-width: 72px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .readout.pulse .T-lock { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>When does a combined wave repeat?</h1>
+  <p class="sub" style="margin-top:0">
+    Build <code>sin(kx + φ) + cos(mx)</code> and <b>see</b> the fundamental period — not memorize LCM.
+    Scroll: each section adds one idea. Tweak, predict, watch the brackets.
+  </p>
+  <details>
+    <summary>What you'll be able to do after ~10 minutes</summary>
+    <ul style="margin:8px 0 0 18px;line-height:1.55">
+      <li>Point at the green bracket and say what period it measures.</li>
+      <li>Predict: doubling <i>k</i> halves T; sliding φ leaves T unchanged.</li>
+      <li>Explain why <code>sin(2x) + cos(3x)</code> repeats at 2π (LCM of π and 2π/3).</li>
+    </ul>
+  </details>
+
+  <nav id="journey" aria-label="sections"></nav>
+
+  <section id="sec-0" class="sec" data-i="0">
+    <h2><span class="num">1 ·</span> Period</h2>
+    <div class="panel">
+      <p>Start with <b class="live-formula">sin(x)</b>. Treat <b>x as time in seconds</b> (ω = 1 rad/s) — one peak-to-peak wiggle is the <b>period</b> T.</p>
+      <div class="task" data-task="0"><span class="tick">○</span><span>Press play or drag on the wave — watch the gold clock tick past 1s, 2s…</span></div>
+      <div class="formula live-formula">sin(x)</div>
+      <div class="wave-wrap"><canvas class="wave drag-time" data-cv="0"></canvas></div>
+      <div class="readout" data-ro="0"></div>
+      <div class="row">
+        <button type="button" class="btn" data-play>▶ play</button>
+        <label>playhead</label>
+        <input type="range" data-bind="playhead" min="0" max="14" step="0.02" value="0">
+      </div>
+      <div class="legend">
+        <span><i style="background:#60a5fa"></i>combined wave</span>
+        <span><i style="background:#34d399"></i>fundamental period T</span>
+        <span><i style="background:#e8c66b"></i>gold ticks = seconds (one full wiggle ≈ 6.28 s)</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="sec-1" class="sec" data-i="1">
+    <h2><span class="num">2 ·</span> Speed it up inside</h2>
+    <div class="panel">
+      <p>Scaling the inside of sine compresses the wave — <b>sin(kx)</b> fits <i>k</i> cycles where one used to fit. Period becomes 2π/k.</p>
+      <div class="task" data-task="1"><span class="tick">○</span><span>Pick k = 2 (chip or slider) and watch the bracket shrink to π.</span></div>
+      <div class="formula live-formula">sin(x)</div>
+      <div class="wave-wrap"><canvas class="wave" data-cv="1"></canvas></div>
+      <div class="readout" data-ro="1"></div>
+      <div class="chips k-pick"></div>
+      <div class="row">
+        <label>or slide k</label>
+        <input type="range" data-bind="k" min="1" max="6" step="1" value="1">
+        <span class="val" data-val="k">1</span>
+      </div>
+      <details><summary>▸ roots: what moves, what doesn't</summary>
+        <p style="margin:8px 0 0">Only <i>where</i> zeros land changes when you scale k. The count per period is tied to frequency — you're not creating new zeros out of nowhere.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="sec-2" class="sec" data-i="2">
+    <h2><span class="num">3 ·</span> Phase is not period</h2>
+    <div class="panel">
+      <p>Adding <b>φ</b> shifts the wave sideways. The shape still repeats at the same rate — <b>T stays the same</b> (watch the green label pulse unchanged).</p>
+      <div class="task" data-task="2"><span class="tick">○</span><span>Drag the wave sideways (on the canvas) or slide φ — compare with the gray φ=0 ghost.</span></div>
+      <div class="formula live-formula">sin(2x)</div>
+      <div class="wave-wrap"><canvas class="wave drag-phase" data-cv="2"></canvas></div>
+      <p class="hint">↔ drag on the wave to shift phase</p>
+      <div class="readout" data-ro="2"></div>
+      <div class="row">
+        <label>inner k</label>
+        <input type="range" data-bind="k" min="1" max="6" step="1" value="2">
+        <span class="val" data-val="k">2</span>
+      </div>
+      <div class="row">
+        <label>phase φ</label>
+        <input type="range" data-bind="phi" min="0" max="6.28" step="0.02" value="0">
+        <span class="val" data-val="phi">0</span>
+      </div>
+      <div class="row">
+        <button type="button" class="btn on" data-ghost-phi0>show φ=0 ghost</button>
+      </div>
+      <details open><summary>▸ why phase doesn't change period</summary>
+        <p style="margin:8px 0 0">Translation along x is not a new repetition rate. <code>f(x+φ)</code> slides the graph; <code>f(kx)</code> compresses it.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="sec-3" class="sec" data-i="3">
+    <h2><span class="num">4 ·</span> Two waves, one pattern</h2>
+    <div class="panel">
+      <p>Add <b>cos(mx)</b>. The combined wave repeats only when <b>both</b> parts have finished whole cycles — that's LCM of their periods.</p>
+      <div class="task" data-task="3"><span class="tick">○</span><span>Turn on cos(mx) — tap m = 3 — and watch the small brackets on each part.</span></div>
+      <div class="formula live-formula">sin(2x + 1.00)</div>
+      <div class="wave-wrap"><canvas class="wave" data-cv="3"></canvas></div>
+      <div class="readout" data-ro="3"></div>
+      <div class="row">
+        <label>inner k</label>
+        <input type="range" data-bind="k" min="1" max="6" step="1" value="2">
+        <span class="val" data-val="k">2</span>
+        <label>phase φ</label>
+        <input type="range" data-bind="phi" min="0" max="6.28" step="0.02" value="1">
+        <span class="val" data-val="phi">1</span>
+      </div>
+      <div class="row">
+        <button type="button" class="btn" data-second>+ add cos(mx)</button>
+      </div>
+      <div class="chips m-pick"></div>
+      <div class="row">
+        <label>or slide m</label>
+        <input type="range" data-bind="k2" min="1" max="6" step="1" value="3" disabled>
+        <span class="val" data-val="k2">3</span>
+      </div>
+      <div class="legend">
+        <span><i style="background:rgba(96,165,250,.5)"></i>sin(kx+φ)</span>
+        <span><i style="background:rgba(251,191,36,.5)"></i>cos(mx)</span>
+        <span><i style="background:#34d399"></i>each part's period</span>
+      </div>
+      <details><summary>▸ where LCM comes from</summary>
+        <p style="margin:8px 0 0">At x = T, both sin and cos must return to the same phase they had at x = 0. That needs an integer number of cycles for each — first x where both align is LCM(T₁, T₂).</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="sec-4" class="sec" data-i="4">
+    <h2><span class="num">5 ·</span> Metronomes clicking together</h2>
+    <div class="panel">
+      <p>Drag k or m — the big bracket snaps when the pattern closes. The colored dots march at different rates and <b>resync</b> at LCM. Guess T before revealing.</p>
+      <div class="task" data-task="4"><span class="tick">○</span><span>Find a combo with combined T ≥ 2π, or guess T within 0.2π of truth.</span></div>
+      <div class="formula live-formula">sin(2x) + cos(3x)</div>
+      <div class="wave-wrap"><canvas class="wave" data-cv="4"></canvas></div>
+      <div class="readout" data-ro="4"></div>
+      <div class="row">
+        <label>inner k</label>
+        <input type="range" data-bind="k" min="1" max="6" step="1" value="2">
+        <span class="val" data-val="k">2</span>
+        <label>add m</label>
+        <input type="range" data-bind="k2" min="1" max="6" step="1" value="3">
+        <span class="val" data-val="k2">3</span>
+      </div>
+      <div class="row">
+        <label>phase φ</label>
+        <input type="range" data-bind="phi" min="0" max="6.28" step="0.02" value="0">
+        <span class="val" data-val="phi">0</span>
+        <button type="button" class="btn" data-play>▶ metronomes</button>
+      </div>
+      <div class="row">
+        <label>guess T =</label>
+        <input type="range" data-bind="guessPi" min="0.5" max="6" step="0.1" value="2">
+        <span class="val"><span data-val="guessPi">2.0</span>π</span>
+        <button type="button" class="btn" data-reveal-guess>reveal answer</button>
+      </div>
+      <details><summary>▸ GCD and beat frequency</summary>
+        <p style="margin:8px 0 0">Between LCM alignments, the two rates "beat" against each other. Beat spacing relates to GCD(k, m) — when one rate divides the other, syncs are extra tight.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="sec-5" class="sec" data-i="5">
+    <h2><span class="num">6 ·</span> Playground</h2>
+    <div class="panel">
+      <p>Everything unlocked. Presets, ghosts, guess — build intuition for any integer k, m.</p>
+      <div class="formula live-formula">sin(2x) + cos(3x)</div>
+      <div class="chips" id="presets"></div>
+      <div class="wave-wrap"><canvas class="wave" data-cv="5"></canvas></div>
+      <div class="readout" data-ro="5"></div>
+      <div class="row">
+        <label>inner k</label>
+        <input type="range" data-bind="k" min="1" max="6" step="1" value="2">
+        <span class="val" data-val="k">2</span>
+        <label>add m</label>
+        <input type="range" data-bind="k2" min="1" max="6" step="1" value="3">
+        <span class="val" data-val="k2">3</span>
+      </div>
+      <div class="row">
+        <label>phase φ</label>
+        <input type="range" data-bind="phi" min="0" max="6.28" step="0.02" value="0">
+        <span class="val" data-val="phi">0</span>
+        <button type="button" class="btn on" data-ghost-phi0>φ=0 ghost</button>
+        <button type="button" class="btn on" data-second>cos on</button>
+        <button type="button" class="btn" data-play>▶ play</button>
+      </div>
+      <div class="row">
+        <label>guess T =</label>
+        <input type="range" data-bind="guessPi" min="0.5" max="6" step="0.1" value="2">
+        <span class="val"><span data-val="guessPi">2.0</span>π</span>
+        <button type="button" class="btn on" data-reveal-guess>show answer</button>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+'use strict';
+const TAU = Math.PI * 2;
+const SECTIONS = [
+  { short: 'Period', flags: { playhead: true, play: true, timeAxis: true } },
+  { short: 'Scale k', flags: { roots: true, k: true } },
+  { short: 'Phase φ', flags: { roots: true, k: true, phi: true, ghostPhi0: true, pulseT: true, dragPhase: true } },
+  { short: 'Two waves', flags: { roots: true, k: true, phi: true, parts: true, second: true } },
+  { short: 'LCM', flags: { roots: true, k: true, phi: true, parts: true, second: true, metronomes: true, guess: true, play: true } },
+  { short: 'Play', flags: { roots: true, k: true, phi: true, parts: true, second: true, metronomes: true, guess: true, play: true, ghostPhi0: true } },
+];
+
+const S = {
+  k: 1, phi: 0, k2: 3, addSecond: false,
+  ghostPhi0: true, revealGuess: false, guessPi: 2,
+  playhead: 0, playing: false, animT: 0,
+  lastPhi: 0, sawPlayhead: false,
+  done: [false, false, false, false, false, false],
+};
+
+const PRESETS = [
+  { label: 'sin(2x)+cos(3x)', k: 2, phi: 0, k2: 3, second: true },
+  { label: 'sin(x)+cos(x)', k: 1, phi: 0, k2: 1, second: true },
+  { label: 'sin(2x)+cos(4x)', k: 2, phi: 0, k2: 4, second: true },
+  { label: 'sin(3x)+cos(6x)', k: 3, phi: 0, k2: 6, second: true },
+];
+
+function gcd(a, b) { return b < 1e-9 ? a : gcd(b, a % b); }
+function lcm(a, b) { return (a * b) / gcd(a, b); }
+function sinPart(x) { return Math.sin(S.k * x + S.phi); }
+function cosPart(x) { return S.addSecond ? Math.cos(S.k2 * x) : 0; }
+function sinPartPhi0(x) { return Math.sin(S.k * x); }
+function wave(x) { return sinPart(x) + cosPart(x); }
+function fundPeriod() {
+  if (!S.addSecond) return TAU / S.k;
+  return lcm(TAU / S.k, TAU / S.k2);
+}
+function updateXMax() {
+  const T = fundPeriod();
+  return Math.max(TAU * 2.2, T * 1.12, 6.5);
+}
+
+function fmtPi(mult) {
+  const r = Math.round(mult * 100) / 100;
+  return r === 1 ? 'π' : `${r}π`;
+}
+
+function fmtPhi() {
+  if (Math.abs(S.phi) < 0.01) return '';
+  return ` + ${S.phi.toFixed(2)}`;
+}
+
+function sinExpr(k, withPhi) {
+  const inner = k === 1 ? 'x' : `${k}x`;
+  return `sin(${inner}${withPhi ? fmtPhi() : ''})`;
+}
+
+function cosExpr(m) {
+  return m === 1 ? 'cos(x)' : `cos(${m}x)`;
+}
+
+function formulaForSection(i) {
+  const flags = SECTIONS[i].flags;
+  if (i === 0) return 'sin(x)';
+  if (i === 1) return sinExpr(S.k, false);
+  let s = sinExpr(S.k, flags.phi);
+  if (flags.second && S.addSecond) return `${s} + ${cosExpr(S.k2)}`;
+  return s;
+}
+
+function updateFormulas() {
+  document.querySelectorAll('.sec').forEach((sec) => {
+    const i = +sec.dataset.i;
+    const text = formulaForSection(i);
+    sec.querySelectorAll('.live-formula').forEach((el) => { el.textContent = text; });
+  });
+  document.querySelectorAll('.k-pick .chip').forEach((b) => {
+    const k = +b.dataset.k;
+    b.classList.toggle('on', S.k === k);
+  });
+  document.querySelectorAll('.m-pick .chip').forEach((b) => {
+    const m = +b.dataset.m;
+    b.classList.toggle('on', S.addSecond && S.k2 === m);
+  });
+}
+
+function buildPickChips(container, kind) {
+  const isK = kind === 'k';
+  for (let n = 1; n <= 6; n++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn chip';
+    b.textContent = isK ? sinExpr(n, false) : cosExpr(n);
+    if (isK) b.dataset.k = n;
+    else b.dataset.m = n;
+    b.addEventListener('click', () => {
+      if (isK) S.k = n;
+      else { S.k2 = n; S.addSecond = true; }
+      tick(isK ? undefined : 2);
+    });
+    container.appendChild(b);
+  }
+}
+
+function bindAll() {
+  document.querySelectorAll('[data-bind="k"]').forEach((el) => { el.value = S.k; });
+  document.querySelectorAll('[data-bind="phi"]').forEach((el) => { el.value = S.phi; });
+  document.querySelectorAll('[data-bind="k2"]').forEach((el) => {
+    el.value = S.k2;
+    if (el.closest('#sec-3')) el.disabled = !S.addSecond;
+  });
+  document.querySelectorAll('[data-bind="guessPi"]').forEach((el) => { el.value = S.guessPi; });
+  document.querySelectorAll('[data-val="k"]').forEach((el) => { el.textContent = S.k; });
+  document.querySelectorAll('[data-val="phi"]').forEach((el) => { el.textContent = S.phi.toFixed(2); });
+  document.querySelectorAll('[data-val="k2"]').forEach((el) => { el.textContent = S.k2; });
+  document.querySelectorAll('[data-val="guessPi"]').forEach((el) => { el.textContent = S.guessPi.toFixed(1); });
+  document.querySelectorAll('[data-ghost-phi0]').forEach((el) => { el.classList.toggle('on', S.ghostPhi0); });
+  document.querySelectorAll('[data-second]').forEach((el) => {
+    el.classList.toggle('on', S.addSecond);
+    el.textContent = S.addSecond ? (el.closest('#sec-5') ? 'cos on' : 'cos(mx) on') : '+ add cos(mx)';
+  });
+  document.querySelectorAll('[data-reveal-guess]').forEach((el) => { el.classList.toggle('on', S.revealGuess); });
+  document.querySelectorAll('[data-play]').forEach((el) => {
+    el.textContent = S.playing ? '⏸ pause' : (el.closest('#sec-4') ? '▶ metronomes' : '▶ play');
+    el.classList.toggle('on', S.playing);
+  });
+  const phMax = updateXMax();
+  document.querySelectorAll('[data-bind="playhead"]').forEach((el) => {
+    el.max = phMax; el.value = S.playhead;
+  });
+}
+
+function readoutHtml(i) {
+  const flags = SECTIONS[i].flags;
+  const T = fundPeriod();
+  const tPi = (T / Math.PI).toFixed(2);
+  let html = '';
+  if (flags.playhead) {
+    html += `t = <span style="color:var(--gold)">${S.playhead.toFixed(2)} s</span> · `;
+  }
+  html += `Fundamental <span class="T-lock">T = ${tPi}π</span>`;
+  if (flags.timeAxis) {
+    html += ` <span style="color:var(--dim)">(${(T).toFixed(2)} s at ω=1)</span>`;
+  }
+  if (S.addSecond) {
+    const p1 = TAU / S.k, p2 = TAU / S.k2;
+    html += ` · LCM(${(p1 / Math.PI).toFixed(2)}π, ${(p2 / Math.PI).toFixed(2)}π) · beat GCD(${gcd(S.k, S.k2)})`;
+  }
+  if (SECTIONS[i].flags.guess && !S.revealGuess) {
+    html += ` · <span style="color:var(--warn)">your guess: ${S.guessPi.toFixed(1)}π</span>`;
+  }
+  return html;
+}
+
+function drawCanvas(cv, sec_i) {
+  const flags = SECTIONS[sec_i].flags;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== w * dpr || cv.height !== h * dpr) {
+    cv.width = w * dpr; cv.height = h * dpr;
+  }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const pad = { l: 44, r: 16, t: 28, b: 32 };
+  const x0 = pad.l, x1 = w - pad.r;
+  const mid = (pad.t + h - pad.b) / 2;
+  const amp = (h - pad.t - pad.b) / 2.6;
+  const xMax = updateXMax();
+  const xToPx = (x) => x0 + (x / xMax) * (x1 - x0);
+  const yToPx = (y) => mid - y * amp;
+  const T = fundPeriod();
+  const p1 = TAU / S.k, p2 = S.addSecond ? TAU / S.k2 : T;
+
+  cv._layout = { x0, x1, mid, pad, xMax, h, w };
+
+  ctx.strokeStyle = '#2a3a55'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x1, mid); ctx.stroke();
+
+  if (flags.timeAxis) drawTimeAxis(ctx, x0, x1, mid, h, pad, xMax, xToPx);
+
+  function plot(fn, color, lw, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = lw;
+    ctx.beginPath();
+    for (let px = x0; px <= x1; px++) {
+      const x = ((px - x0) / (x1 - x0)) * xMax;
+      const py = yToPx(fn(x));
+      px === x0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
+  if (flags.ghostPhi0 && S.ghostPhi0 && Math.abs(S.phi) > 0.05) {
+    plot(sinPartPhi0, '#64789a', 1.5, 0.35);
+    if (S.addSecond) plot((x) => cosPart(x), '#64789a', 1.5, 0.2);
+  }
+
+  if (flags.parts && S.addSecond) {
+    plot(sinPart, '#60a5fa', 1.5, 0.45);
+    plot(cosPart, '#fbbf24', 1.5, 0.45);
+    const ySin = mid - amp * 0.55, yCos = mid + amp * 0.55;
+    drawMiniBracket(ctx, x0, xToPx(p1), ySin - 12, '#60a5fa', `${(p1 / Math.PI).toFixed(2)}π`);
+    drawMiniBracket(ctx, x0, xToPx(p2), yCos + 4, '#fbbf24', `${(p2 / Math.PI).toFixed(2)}π`);
+  }
+
+  plot(wave, '#60a5fa', 2.5, 1);
+
+  if (flags.roots) {
+    for (let x = 0; x < xMax; x += 0.04) {
+      const a = wave(x), b = wave(x + 0.04);
+      if (a * b <= 0 && Math.abs(a - b) > 0.01) {
+        const xr = x - a * 0.04 / (b - a);
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath(); ctx.arc(xToPx(xr), mid, 3.5, 0, TAU); ctx.fill();
+      }
+    }
+  }
+
+  if (flags.guess) {
+    const gT = S.guessPi * Math.PI;
+    drawBracket(ctx, x0, xToPx(gT), pad.t - 6, h - pad.b - 8, '#ff7a6e', 1.5, [6, 4], `guess ${S.guessPi.toFixed(1)}π`);
+  }
+
+  const showTrue = !flags.guess || S.revealGuess;
+  if (showTrue) {
+    drawBracket(ctx, x0, xToPx(T), pad.t - 6, h - pad.b - 8, '#34d399', 2, null, `T=${(T / Math.PI).toFixed(2)}π`);
+  }
+
+  if (flags.playhead) {
+    const px = xToPx(S.playhead);
+    ctx.strokeStyle = '#e8c66b'; ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, h - pad.b); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#e8c66b';
+    ctx.beginPath(); ctx.arc(px, yToPx(wave(S.playhead)), 5, 0, TAU); ctx.fill();
+  }
+
+  if (flags.metronomes && S.addSecond) {
+    const x1m = (S.animT * p1) % xMax;
+    const x2m = (S.animT * p2) % xMax;
+    dot(ctx, xToPx(x1m), yToPx(sinPart(x1m)), '#60a5fa');
+    dot(ctx, xToPx(x2m), yToPx(cosPart(x2m)), '#fbbf24');
+    if (Math.abs(x1m - x2m) < 0.08 || Math.abs(x1m - x2m - T) < 0.15) {
+      ctx.fillStyle = 'rgba(105,213,140,.25)';
+      ctx.fillRect(x0, pad.t, x1 - x0, h - pad.t - pad.b);
+    }
+  }
+}
+
+function dot(ctx, x, y, c) {
+  ctx.fillStyle = c;
+  ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+}
+
+function drawBracket(ctx, x1, x2, y0, y1, color, lw, dash, label) {
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw;
+  if (dash) ctx.setLineDash(dash);
+  ctx.strokeRect(x1, y0, x2 - x1, y1 - y0);
+  ctx.setLineDash([]);
+  ctx.fillStyle = color; ctx.font = '600 11px system-ui';
+  ctx.fillText(label, (x1 + x2) / 2 - 16, y0 - 4);
+  ctx.restore();
+}
+
+function drawMiniBracket(ctx, x1, x2, y, color, label) {
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.85;
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+  ctx.fillStyle = color; ctx.font = '10px system-ui';
+  ctx.fillText(label, (x1 + x2) / 2 - 10, y - 3);
+  ctx.restore();
+}
+
+function drawTimeAxis(ctx, x0, x1, mid, h, pad, xMax, xToPx) {
+  const maxSec = Math.ceil(xMax);
+  for (let s = 0; s <= maxSec; s++) {
+    const px = xToPx(s);
+    if (px < x0 - 2 || px > x1 + 2) continue;
+    ctx.strokeStyle = s % 2 === 0 ? 'rgba(232,198,107,.65)' : 'rgba(232,198,107,.35)';
+    ctx.lineWidth = s % 2 === 0 ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(px, mid - 5); ctx.lineTo(px, mid + 9); ctx.stroke();
+    if (s % 2 === 0 || s <= 3) {
+      ctx.fillStyle = '#e8c66b';
+      ctx.font = '600 11px system-ui';
+      ctx.fillText(`${s}s`, px - (s >= 10 ? 10 : 6), h - pad.b + 14);
+    }
+  }
+  for (let p = Math.PI / 2; p < xMax; p += Math.PI / 2) {
+    const px = xToPx(p);
+    if (px < x0 || px > x1) continue;
+    ctx.strokeStyle = '#2a3a55';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, mid + 2); ctx.lineTo(px, mid + 7); ctx.stroke();
+  }
+  ctx.fillStyle = '#8b96a8';
+  ctx.font = '10px system-ui';
+  ctx.fillText('x = time (seconds), ω = 1 rad/s', x0, h - 4);
+}
+
+function pxToX(clientX, cv) {
+  const L = cv._layout;
+  if (!L) return 0;
+  const rect = cv.getBoundingClientRect();
+  const px = clientX - rect.left;
+  return Math.max(0, Math.min(L.xMax, ((px - L.x0) / (L.x1 - L.x0)) * L.xMax));
+}
+
+function redrawAll(pulseSec) {
+  document.querySelectorAll('canvas.wave').forEach((cv) => {
+    drawCanvas(cv, +cv.dataset.cv);
+  });
+  document.querySelectorAll('[data-ro]').forEach((el) => {
+    const i = +el.dataset.ro;
+    el.innerHTML = readoutHtml(i);
+    if (pulseSec === i && SECTIONS[i].flags.pulseT) el.classList.add('pulse');
+    else el.classList.remove('pulse');
+  });
+  bindAll();
+  updateFormulas();
+  checkDone();
+  updateJourney();
+}
+
+function checkDone() {
+  const T = fundPeriod();
+  S.done[0] = S.sawPlayhead || S.playhead > 0.5;
+  S.done[1] = S.k === 2;
+  S.done[2] = Math.abs(S.phi) > 0.4;
+  S.done[3] = S.addSecond && S.k2 === 3;
+  const guessOk = Math.abs(S.guessPi * Math.PI - T) < 0.2 * Math.PI;
+  S.done[4] = S.addSecond && (T >= TAU - 0.01 || guessOk);
+  S.done[5] = true;
+  document.querySelectorAll('[data-task]').forEach((el) => {
+    const i = +el.dataset.task;
+    const on = S.done[i];
+    el.classList.toggle('done', on);
+    el.querySelector('.tick').textContent = on ? '✓' : '○';
+  });
+}
+
+function updateJourney() {
+  document.querySelectorAll('#journey a').forEach((a) => {
+    const i = +a.dataset.i;
+    a.classList.toggle('done', S.done[i]);
+    a.classList.toggle('on', i === S_section);
+  });
+}
+
+function applyPreset(p) {
+  S.k = p.k; S.phi = p.phi; S.k2 = p.k2; S.addSecond = p.second;
+  tick(2);
+}
+
+function tick(pulseSec) {
+  if (pulseSec === undefined && Math.abs(S.phi - S.lastPhi) > 0.02) pulseSec = 2;
+  S.lastPhi = S.phi;
+  redrawAll(pulseSec);
+}
+
+// journey nav
+const nav = document.getElementById('journey');
+SECTIONS.forEach((s, i) => {
+  const a = document.createElement('a');
+  a.href = `#${i}`;
+  a.dataset.i = i;
+  a.textContent = `${i + 1}. ${s.short}`;
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById(`sec-${i}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(null, '', `#${i}`);
+  });
+  nav.appendChild(a);
+});
+
+document.querySelectorAll('[data-bind]').forEach((el) => {
+  el.addEventListener('input', () => {
+    const key = el.dataset.bind;
+    if (key === 'k') S.k = +el.value;
+    else if (key === 'phi') S.phi = +el.value;
+    else if (key === 'k2') { S.k2 = +el.value; S.addSecond = true; }
+    else if (key === 'guessPi') { S.guessPi = +el.value; S.revealGuess = false; }
+    else if (key === 'playhead') { S.playhead = +el.value; S.sawPlayhead = true; }
+    tick(key === 'phi' ? 2 : undefined);
+  });
+});
+
+document.querySelectorAll('[data-play]').forEach((btn) => {
+  btn.addEventListener('click', () => { S.playing = !S.playing; bindAll(); });
+});
+
+document.querySelectorAll('[data-ghost-phi0]').forEach((btn) => {
+  btn.addEventListener('click', () => { S.ghostPhi0 = !S.ghostPhi0; tick(); });
+});
+
+document.querySelectorAll('[data-second]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    S.addSecond = !S.addSecond;
+    document.querySelectorAll('[data-bind="k2"]').forEach((el) => { el.disabled = !S.addSecond && el.closest('#sec-3'); });
+    tick();
+  });
+});
+
+document.querySelectorAll('[data-reveal-guess]').forEach((btn) => {
+  btn.addEventListener('click', () => { S.revealGuess = !S.revealGuess; tick(); });
+});
+
+buildPickChips(document.querySelector('.k-pick'), 'k');
+buildPickChips(document.querySelector('.m-pick'), 'm');
+
+const presetBox = document.getElementById('presets');
+PRESETS.forEach((p) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'btn chip'; b.textContent = p.label;
+  b.addEventListener('click', () => applyPreset(p));
+  presetBox.appendChild(b);
+});
+
+// section enter presets
+const ENTERS = [
+  () => { S.k = 1; S.phi = 0; S.addSecond = false; S.playhead = 0; },
+  () => { S.k = 1; S.phi = 0; S.addSecond = false; },
+  () => { S.k = 2; S.phi = 0; S.addSecond = false; S.ghostPhi0 = true; },
+  () => { S.k = 2; S.phi = 1; S.addSecond = false; S.k2 = 3; },
+  () => { S.k = 2; S.k2 = 3; S.addSecond = true; S.phi = 0; S.revealGuess = false; S.guessPi = 2; },
+  () => { S.addSecond = true; S.revealGuess = true; },
+];
+
+let S_section = 0;
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (e.isIntersecting && e.intersectionRatio > 0.35) {
+      const i = +e.target.dataset.i;
+      if (i !== S_section) {
+        S_section = i;
+        ENTERS[i]();
+        tick();
+        history.replaceState(null, '', `#${i}`);
+      }
+    }
+  });
+}, { threshold: [0.35, 0.5] });
+document.querySelectorAll('.sec').forEach((el) => obs.observe(el));
+
+addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (!Number.isNaN(n) && n >= 0 && n < 6) {
+    document.getElementById(`sec-${n}`)?.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+let drag = null;
+document.querySelectorAll('canvas.wave').forEach((cv) => {
+  const sec_i = +cv.dataset.cv;
+  cv.addEventListener('pointerdown', (e) => {
+    const flags = SECTIONS[sec_i].flags;
+    if (!flags.playhead && !flags.dragPhase) return;
+    cv.setPointerCapture(e.pointerId);
+    drag = {
+      cv, sec_i, pid: e.pointerId,
+      mode: flags.playhead ? 'time' : 'phase',
+      startX: e.clientX,
+      startPhi: S.phi,
+      startPlayhead: S.playhead,
+    };
+    if (drag.mode === 'time') {
+      S.playhead = pxToX(e.clientX, cv);
+      S.sawPlayhead = true;
+      tick();
+    }
+  });
+  cv.addEventListener('pointermove', (e) => {
+    if (!drag || drag.cv !== cv || drag.pid !== e.pointerId) return;
+    if (drag.mode === 'time') {
+      S.playhead = pxToX(e.clientX, cv);
+      S.sawPlayhead = true;
+      tick();
+    } else {
+      const dx = e.clientX - drag.startX;
+      S.phi = ((drag.startPhi - dx * 0.018) % TAU + TAU) % TAU;
+      tick(2);
+    }
+  });
+  const endDrag = (e) => {
+    if (!drag || drag.cv !== cv || drag.pid !== e.pointerId) return;
+    cv.releasePointerCapture(e.pointerId);
+    drag = null;
+  };
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+});
+
+let last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  if (S.playing) {
+    const flags = SECTIONS[S_section].flags;
+    if (flags.playhead) {
+      const xMax = updateXMax();
+      S.playhead += dt;
+      if (S.playhead > xMax) S.playhead -= xMax;
+      S.sawPlayhead = true;
+    }
+    if (flags.metronomes && S.addSecond) S.animT += dt;
+    redrawAll();
+  }
+}
+requestAnimationFrame(loop);
+
+window.__viz = {
+  state() {
+    return {
+      section: S_section,
+      stage: S_section,
+      taskDone: S.done[S_section],
+      done: S.done.slice(),
+      k: S.k, phi: S.phi, k2: S.k2, addSecond: S.addSecond,
+      guessPi: S.guessPi, revealGuess: S.revealGuess,
+      period: fundPeriod(), xMax: updateXMax(),
+    };
+  },
+  setK(v) { S.k = v; tick(); },
+  setPhi(v) { S.phi = v; tick(2); },
+  setK2(v) { S.k2 = v; S.addSecond = true; tick(); },
+  setSecond(on) { S.addSecond = on; tick(); },
+  setGuessPi(v) { S.guessPi = v; S.revealGuess = false; tick(); },
+  revealGuess(on) { S.revealGuess = on; tick(); },
+  go(i) {
+    document.getElementById(`sec-${i}`)?.scrollIntoView({ behavior: 'auto' });
+    S_section = i;
+    ENTERS[i]();
+    tick();
+    history.replaceState(null, '', `#${i}`);
+  },
+};
+
+addEventListener('resize', () => redrawAll());
+const initial = parseInt(location.hash.slice(1), 10);
+if (!Number.isNaN(initial) && initial >= 0 && initial < 6) {
+  window.__viz.go(initial);
+} else {
+  ENTERS[0]();
+  tick();
+}
+</script>
+</body>
+</html>
