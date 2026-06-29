@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "description": "Dev-only test harness for the explorables (Playwright). The explorables themselves have no build step and load CDN-only — this is not a bundler.",
+  "scripts": {
+    "test:next-token": "node projects/next-token/test.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}

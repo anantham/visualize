@@ -11,9 +11,12 @@ backlog.
 
 ## The explorables
 
-Seven are built. Each is a **single self-contained `index.html`** — no build step,
-no install. Three use pure `<canvas>` 2D; one uses Three.js from a CDN. Open any
-of them directly in a browser, or serve the repo (below) and visit the path.
+Nine are built. Most are a **single self-contained `index.html`** — no build
+step, no install (canvas 2D or Three.js from a CDN). Two are larger:
+`lineage-of-thought` adds a Vite/React `app/` (the one deliberate build-step
+exception), and `next-token` is a ~7 MB generated page with an optional
+Hugging-Face Space backend for its "Live mode". Open any of the self-contained
+ones directly in a browser, or serve the repo (below) and visit the path.
 
 | Project | Teaches | Tech |
 |---|---|---|
@@ -24,6 +27,8 @@ of them directly in a browser, or serve the repo (below) and visit the path.
 | [`projects/composite-periods/`](projects/composite-periods/) | periods & LCM/GCD of composite functions — waves lining up again | canvas 2D |
 | [`projects/eulers-formula/`](projects/eulers-formula/) | e^iθ via Manhattan spiral + helix shadows | canvas 2D |
 | [`projects/earth-seasons/`](projects/earth-seasons/) | sunlight, axial tilt, seasons on a 3D globe | Three.js (CDN) |
+| [`projects/lineage-of-thought/`](projects/lineage-of-thought/) | who shaped whom — an Obsidian vault of thinkers rendered as a zoomable influence timeline (globe to come) | canvas 2D + Vite/React `app/` |
+| [`projects/next-token/`](projects/next-token/) | how an English sentence is transformed on a transformer's **residual stream** — text → tokens → vectors → a running vector each layer amends → next-token logits; "Live mode" runs your own sentence | self-contained page + HF Space backend |
 
 Each project folder has its own `README.md` with the concept, controls, stage
 list, and testing-hook API.
@@ -44,8 +49,8 @@ No toolchain. Two options:
 ## The shared pattern (read this before extending)
 
 Projects 2–4 (`spinning-phasors`, `pascals-paths`, `sense-of-scale`) converged on
-one architecture — the seed of the eventual "engine". If you build a fifth, copy
-it:
+one architecture — the seed of the eventual "engine". If you build another, copy
+it (the later staged projects already do):
 
 - **A staged declarative document.** The explanation is a `STAGES` array of
   plain objects: `{ title, copy, task, reveals, show, enter(), done() }`. Each
@@ -71,9 +76,10 @@ it:
 Each explorable was developed against a Playwright script that loads the page,
 drives it through `window.__viz`, and asserts on `state()` (e.g. "dragging A
 keeps slack ≥ 0", "F=7, Fs=8 aliases to −1 Hz", "something is on screen at all 171
-zoom levels"). **Those scripts lived in `/tmp` and were lost when the machine
-rebooted.** The hooks they used are still in place and documented per project, so
-the suites can be regenerated. A good home for them would be `projects/*/test.js`.
+zoom levels"). Each project now keeps its script at **`projects/*/test.js`**.
+Serve the repo, then run the script for the project you touched (e.g.
+`node projects/spinning-phasors/test.js`). The `window.__viz` surface each one
+drives is documented in that project's README.
 
 Minimal shape of such a script:
 
@@ -104,15 +110,24 @@ data/
 research/
   examples.md              field study of ~20 exemplar sites + the tooling landscape
   screenshots/             16 reference captures of the inspiration sites
-projects/
+projects/                  each folder: index.html + README.md + test.js
   triangle-inequality/     project 1 (Three.js)
   spinning-phasors/        project 2 (canvas)
   pascals-paths/           project 3 (canvas)
   sense-of-scale/          project 4 (canvas) — six view engines
+  composite-periods/       project 5 (canvas)
+  eulers-formula/          project 6 (canvas)
+  earth-seasons/           project 7 (Three.js)
+  lineage-of-thought/      influence timeline (canvas) + Vite/React app/ + research pipeline
+  next-token/              residual-stream explainer (generated ~7MB page) + HF Space "Live mode"
 ```
 
 ## Status & next
 
-Built: projects 1–7 (see table). Backlog highlights in `ideas.md`: sense-of-scale
-v2 (custom anchors, mileage, annual rainfall strip), phasors DFT bank extension,
-and re-anchoring abstract sense-of-scale categories in the bodily style of pour & rain.
+Built: projects 1–7 plus `lineage-of-thought` and `next-token` (see table).
+Backlog highlights in `ideas.md`: sense-of-scale v2 (custom anchors, mileage,
+annual rainfall strip), phasors DFT bank extension, and re-anchoring abstract
+sense-of-scale categories in the bodily style of pour & rain. For
+`lineage-of-thought`, the globe view (`globe.html` / the Vite/React `app/`) is
+where it's heading — see its `vision.md`. `next-token` is migrated from the
+`pramana` research repo and lives at nexttoken.adityaarpitha.com.
