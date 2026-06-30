@@ -112,7 +112,7 @@ function assert(cond, msg) { if (!cond) throw new Error('ASSERT: ' + msg); }
     function yForSp(t) { let lo = 0, hi = document.body.scrollHeight; for (let k = 0; k < 44; k++) { const m = (lo + hi) / 2; scrollTo(0, m); if (spNow() < t) lo = m; else hi = m; } return (lo + hi) / 2; }
     const sel = ['#mlpStream', '#jStreamRow', '#wkStream', '#vdHero'];
     function streamVisible() { const c = document.getElementById('jContent'); if (!c) return null; for (const s of sel) { const el = document.querySelector('#jContent ' + s); if (el) { const o = +getComputedStyle(el).opacity; if (o > 0.3 && el.getBoundingClientRect().width > 4) return s; } } return null; }
-    const y0 = yForSp(2.85), y1 = yForSp(5.5), STEPS = 120;
+    const y0 = yForSp(2.1), y1 = yForSp(5.5), STEPS = 120;   // start inside stage 3 (sp ~1.96-2.89) — 2.85 sat at its tail where the 3->4 dock masks the label
     const order = []; const srcs = {}; let streamInStage4 = false;
     for (let i = 0; i <= STEPS; i++) {
       scrollTo(0, y0 + (y1 - y0) * i / STEPS); if (typeof jScroll === 'function') jScroll();
