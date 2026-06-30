@@ -53,7 +53,7 @@ function assert(cond, msg) { if (!cond) throw new Error('ASSERT: ' + msg); }
 
   // 2. Structure — the page actually booted into the expected explorable.
   const title = await page.title();
-  assert(/travel through a language model/i.test(title), `unexpected title: "${title}"`);
+  assert(/predict the next token/i.test(title), `unexpected title: "${title}"`);
 
   const heads = await page.evaluate(() =>
     Array.from(document.querySelectorAll('h2')).map((h) => h.textContent.trim()));
