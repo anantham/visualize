@@ -33,10 +33,9 @@ Coverage is **not uniform** — this documents what each model has and the gaps.
   gemma-2-27b bf16`, then copy `walk_gemma-2-27b.json` into this folder. Until then it
   stays in the dropdown as **metadata-only** (the architecture diagrams reflect 27B;
   selecting it does not load a journey).
-- **9b / IT SAE features — addable, not done.** Gemma Scope released SAEs for
-  gemma-2-9b too, and Neuronpedia has 9b labels, so `precompute_sae.py` can be adapted
-  (9b res SAE + `gemma-2-9b` Neuronpedia) to patch features into `walk_gemma-2-9b.json`.
-  The IT model can reuse the 2b SAEs (same architecture; approximate).
+- **9b SAE features — DONE.** `precompute_sae_model.py` ran Gemma Scope 9b res-16k SAEs
+  across all 42 layers (3528 Neuronpedia-labelled features) → patched into
+  `walk_gemma-2-9b.json`. The IT model could still reuse the 2b SAEs (approximate).
 - **pythia-12b — metadata-only**, held with the deeper attention pedagogy.
 
 ## Instruction-tuned model (gemma-2-2b-it)
