@@ -55,11 +55,9 @@ function assert(cond, msg) { if (!cond) throw new Error('ASSERT: ' + msg); }
   const title = await page.title();
   assert(/predict the next token/i.test(title), `unexpected title: "${title}"`);
 
-  const heads = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('h2')).map((h) => h.textContent.trim()));
-  for (const p of ['Part 1', 'Part 2', 'Part 3', 'Part 4']) {
-    assert(heads.some((t) => t.startsWith(p)), `deep-dive heading missing: ${p}`);
-  }
+  const hasGame = await page.evaluate(() =>
+    typeof openMeaningGame === 'function' && typeof mgShowPlay === 'function');
+  assert(hasGame, 'meaning mini-game / sandbox missing');
 
   // Only the journey scaffold is present at load; the per-stage residual-stream
   // elements (#mlpStream/#jStreamRow/#wkStream/#vdHero) are created dynamically
