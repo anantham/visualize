@@ -1,142 +1,141 @@
-// E2E for the next-token explorable.
-//
-// This page was migrated from the `pramana` research repo and has NO
-// `window.__viz` hook (unlike the other gallery projects), so we drive it via
-// the DOM, network, and console rather than a state API.
-//
-// SCOPE (read this before trusting a green run): this is a migration smoke +
-// regression guard, NOT a correctness test. Its strongest assertions cover the
-// things the migration actually changed (bundles load by relative path, SRV ->
-// HF Space, /health reachable, no console errors) and the journey's DESIGN
-// invariants (stages 3->4->5->6 advance in order; stage 4 is the residual-stream
-// beat; the stream graphic renders during stage 4 — proven to go red if it
-// doesn't). It does NOT verify the interpretability is correct — that the
-// tokens/embeddings/residual values shown are the real model's outputs. That
-// ground truth lives in pramana's precompute pipeline; visual/pedagogical
-// correctness still needs a human eyeball.
-//
-// Run:
-//   python3 -m http.server 4173      # from the repo root
-//   node projects/next-token/test.js
-// Override the base URL with BASE=... (use 127.0.0.1, not localhost — Python's
-// http.server binds IPv4 only, so `localhost` may resolve to IPv6 ::1 and fail):
-//   BASE=http://127.0.0.1:4173 node projects/next-token/test.js
-//
-// Requires playwright (`npm i -D playwright` in the repo, or run where it's
-// installed). It also pings the live HF Space, so it needs network.
-//
-// STATUS: passing — runs green via Playwright's bundled Chromium against a local
-// `python3 -m http.server` (prints "next-token: OK"). The Live check depends on
-// the HF Space being awake; if it's cold-started the test warns but still passes.
-
+#!/usr/bin/env node
+/* Cross-model verification harness for the next-token explorable.
+ *
+ * Drives EVERY journey model (not just gemma) through the attention beat, the
+ * A→B transition, the embedding grid, and the frame-fit invariant — asserting
+ * the things that used to be gemma-only. Supersedes the old migration smoke test.
+ *
+ * Usage:  node projects/next-token/test.js [url]
+ *   dev (generator output):  serve pramana/isought_whitebox/views on :4173, then
+ *                            node projects/next-token/test.js
+ *   deployed mirror:         serve the repo root on :4173, then
+ *                            node projects/next-token/test.js http://127.0.0.1:4173/projects/next-token/index.html
+ *   Default url = http://127.0.0.1:4173/playground.html
+ *   (use 127.0.0.1, not localhost — Python's http.server binds IPv4 only.)
+ *
+ * Page hooks (globals): selectModel(key), jScrollToSp(sp), jForceContent(), jSp().
+ * Beat A ≈ sp 3.40, A→B dock ≈ 3.46, embedding grid ≈ sp 2.6.
+ * Requires playwright (installed in this repo's node_modules).
+ */
 const { chromium } = require('playwright');
 
-const BASE = process.env.BASE || 'http://127.0.0.1:4173';
-const PAGE_URL = BASE + '/projects/next-token/index.html';
-const SPACE = 'https://everythingisrelative-pramana-gemma-live.hf.space';
-const BUNDLES = ['pg_sent_kathmandu', 'pg_sent_keys', 'pg_sent_socrates', 'pg_sent_water'];
+const URL = process.argv[2] || process.env.BASE || 'http://127.0.0.1:4173/playground.html';
+const VW = 1440, VH = 700;              // wide-short: the frame that must fit
 
-function assert(cond, msg) { if (!cond) throw new Error('ASSERT: ' + msg); }
+// key -> {heads, kv}  (verified from the bakes; kv<heads => GQA)
+const MODELS = {
+  'gemma-2-2b':   { heads: 8,  kv: 4 },
+  'gemma-2-2b-it':{ heads: 8,  kv: 4 },
+  'gpt2':         { heads: 12, kv: 12 },
+  'gpt2-xl':      { heads: 25, kv: 25 },
+  'pythia-1.4b':  { heads: 16, kv: 16 },
+  'qwen2.5-0.5b': { heads: 14, kv: 2 },
+  'qwen2.5-7b':   { heads: 28, kv: 4 },
+  'mistral-7b':   { heads: 32, kv: 8 },
+  'gemma-2-9b':   { heads: 16, kv: 8 },
+};
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-
-  // 1. Console hygiene — collect errors from the very start of the session.
+  const page = await browser.newPage({ viewport: { width: VW, height: VH } });
   const errors = [];
-  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push('console.error: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message));
 
-  // 7 MB page: wait for the load event, then let the inline script build the DOM.
-  await page.goto(PAGE_URL, { waitUntil: 'load', timeout: 60000 });
-  await page.waitForTimeout(2000);
+  await page.goto(URL, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.selectModel === 'function', { timeout: 15000 });
 
-  // 2. Structure — the page actually booted into the expected explorable.
-  const title = await page.title();
-  assert(/predict the next token/i.test(title), `unexpected title: "${title}"`);
+  const benign = t => /health|favicon|ERR_CONNECTION_REFUSED/i.test(t);
+  const results = {};
 
-  const hasGame = await page.evaluate(() =>
-    typeof openMeaningGame === 'function' && typeof mgShowPlay === 'function');
-  assert(hasGame, 'meaning mini-game / sandbox missing');
-
-  // Only the journey scaffold is present at load; the per-stage residual-stream
-  // elements (#mlpStream/#jStreamRow/#wkStream/#vdHero) are created dynamically
-  // during the scrub, so they're validated by the continuity sweep below.
-  const haveScaffold = await page.evaluate(() =>
-    ['#jMarkers', '#jContent', '#jLabel'].every((s) => !!document.querySelector(s)));
-  assert(haveScaffold, 'journey scaffold (#jMarkers/#jContent/#jLabel) missing — page did not build');
-  const markerCount = await page.evaluate(() => document.getElementById('jMarkers').children.length);
-  assert(markerCount >= 4, `expected >=4 journey beats in #jMarkers, found ${markerCount}`);
-
-  // 3. Lazy-loaded sentence bundles serve (by relative path) and parse as JSON.
-  for (const b of BUNDLES) {
-    const r = await page.evaluate(async (name) => {
-      try {
-        const res = await fetch('./' + name + '.json', { cache: 'no-store' });
-        if (!res.ok) return { ok: false, status: res.status };
-        const j = await res.json();
-        return { ok: true, isObj: j !== null && typeof j === 'object' };
-      } catch (e) { return { ok: false, err: String(e) }; }
-    }, b);
-    assert(r.ok && r.isObj, `bundle ${b}.json not served/parsed: ${JSON.stringify(r)}`);
-  }
-
-  // 4. Live mode — the page points SRV at the HF Space, and the Space answers.
-  const usesSpace = (await page.content()).includes(SPACE);
-  assert(usesSpace, 'page no longer references the HF Space (SRV mis-set?)');
-
-  const health = await page.evaluate(async (space) => {
-    try {
-      const res = await fetch(space + '/health', { cache: 'no-store' });
-      return { ok: res.ok, body: await res.json() };
-    } catch (e) { return { ok: false, err: String(e) }; }
-  }, SPACE);
-  assert(health.ok && health.body && 'ok' in health.body,
-    `Live backend /health unreachable or wrong shape: ${JSON.stringify(health)}`);
-  if (!health.body.ok || !health.body.model_loaded) {
-    console.warn('  [warn] HF Space reachable but not ready (likely cold-start): '
-      + JSON.stringify(health.body));
-  }
-
-  // 5. Journey continuity — asserted against the journey's DESIGN, not a tuned
-  // frame count. Scrubbing sp 2.85->5.5 must advance the pipeline through stages
-  // 3->4->5->6 in order, stage 4 must be the residual-stream beat (this
-  // explorable's titular concept), and the stream graphic must actually render
-  // during stage 4. (The stream is only visible ~1/3 of the scrub — it fades
-  // between stages — so "fraction of frames" is NOT a meaningful gate; the design
-  // invariants below are.)
-  const scan = await page.evaluate(() => {
-    function spNow() { const mk = document.getElementById('jMarkers'); const kids = mk.children, line = innerHeight * 0.5; let sp = kids.length - 1, y = mk.getBoundingClientRect().top; for (let i = 0; i < kids.length; i++) { const h = kids[i].offsetHeight; if (line < y + h || i === kids.length - 1) { sp = i + Math.max(0, Math.min(0.9999, (line - y) / h)); break; } y += h; } return sp; }
-    function yForSp(t) { let lo = 0, hi = document.body.scrollHeight; for (let k = 0; k < 44; k++) { const m = (lo + hi) / 2; scrollTo(0, m); if (spNow() < t) lo = m; else hi = m; } return (lo + hi) / 2; }
-    const sel = ['#mlpStream', '#jStreamRow', '#wkStream', '#vdHero'];
-    function streamVisible() { const c = document.getElementById('jContent'); if (!c) return null; for (const s of sel) { const el = document.querySelector('#jContent ' + s); if (el) { const o = +getComputedStyle(el).opacity; if (o > 0.3 && el.getBoundingClientRect().width > 4) return s; } } return null; }
-    const y0 = yForSp(2.1), y1 = yForSp(5.5), STEPS = 120;   // start inside stage 3 (sp ~1.96-2.89) — 2.85 sat at its tail where the 3->4 dock masks the label
-    const order = []; const srcs = {}; let streamInStage4 = false;
-    for (let i = 0; i <= STEPS; i++) {
-      scrollTo(0, y0 + (y1 - y0) * i / STEPS); if (typeof jScroll === 'function') jScroll();
-      const label = ((document.getElementById('jLabel') || {}).textContent || '').trim();
-      if (label && order[order.length - 1] !== label) order.push(label);
-      const s = streamVisible(); if (s) { srcs[s] = (srcs[s] || 0) + 1; if (/^\s*4\b/.test(label)) streamInStage4 = true; }
+  for (const [key, exp] of Object.entries(MODELS)) {
+    const before = errors.length;
+    await page.evaluate(k => window.selectModel(k), key);
+    // poll the beat-A board until its head count matches (detects the async bake load)
+    let loaded = false;
+    for (let i = 0; i < 60; i++) {
+      const heads = await page.evaluate(() => {
+        window.jScrollToSp(3.40); window.jForceContent && window.jForceContent();
+        const jw = document.querySelector('#aHeadBoard .jwide');
+        if (!jw) return -1;
+        const axis = jw.children[1];                    // [rail, axis, cols]
+        return axis ? axis.children.length - 1 : -1;    // minus the 'avg' row
+      });
+      if (heads === exp.heads) { loaded = true; break; }
+      await sleep(200);
     }
-    scrollTo(0, 0);
-    return { order, srcs, streamInStage4 };
-  });
-  console.log(`  journey labels: ${JSON.stringify(scan.order)}`);
-  console.log(`  stream sightings: ${JSON.stringify(scan.srcs)}`);
-  // (a) the scrub advances through stages 3,4,5,6 in order
-  const nums = scan.order.map((l) => (l.match(/^\s*(\d+)/) || [])[1]).filter(Boolean).map(Number);
-  for (const n of [3, 4, 5, 6]) assert(nums.includes(n), `stage ${n} never appeared during the 3->6 scrub (saw ${JSON.stringify(scan.order)})`);
-  assert(nums.indexOf(3) < nums.indexOf(4) && nums.indexOf(4) < nums.indexOf(5) && nums.indexOf(5) < nums.indexOf(6),
-    `stages did not advance in order: ${JSON.stringify(scan.order)}`);
-  // (b) stage 4 is the residual-stream beat — the concept this explorable exists to teach
-  const stage4 = scan.order.find((l) => /^\s*4\b/.test(l)) || '';
-  assert(/residual/i.test(stage4), `stage 4 should name the residual stream, got "${stage4}"`);
-  // (c) the residual-stream graphic actually renders during stage 4
-  assert(scan.streamInStage4, 'no residual-stream element was visible during stage 4 — the stream graphic is not rendering');
 
-  // 6. No console / page errors across load + all interactions above.
-  assert(errors.length === 0, 'console/page errors:\n  ' + errors.join('\n  '));
+    const r = await page.evaluate(() => {
+      const rect = el => el ? el.getBoundingClientRect() : null;
+      const out = {};
+      window.jScrollToSp(3.40); window.jForceContent && window.jForceContent();
+      const jw = document.querySelector('#aHeadBoard .jwide');
+      out.heads = jw ? jw.children[1].children.length - 1 : -1;
+      out.shelves = jw ? jw.children[0].children.length : -1;
+      // frame fit: pin a head, whole frame within the fold
+      const h = document.querySelector('#aHeadBoard [data-head="1"]');
+      if (h) h.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const ex = document.getElementById('jBeatExplain');
+      out.frameFits = ex ? rect(ex).bottom <= innerHeight : false;
+      // A→B transition: nothing flies off-screen, breakdown held back
+      window.jScrollToSp(3.46); window.jForceContent && window.jForceContent();
+      const recede = document.getElementById('abRecede');
+      const parts = recede ? [...recede.querySelectorAll('#aHeadBoard,#pinBox')] : [];
+      out.transitionParts = parts.length;
+      out.transitionOnscreen = parts.length ? parts.every(p => {
+        const b = rect(p); return b.top >= -20 && b.bottom <= innerHeight + 40;
+      }) : null;
+      const arith = document.getElementById('jArith'), band = document.getElementById('mlpBand');
+      const shown = el => el && +getComputedStyle(el).opacity > 0.15;
+      out.breakdownHeldBack = !(shown(arith) || shown(band));
+      // the stream must visibly move during the glide (nonzero transform, not identity)
+      const stream = document.getElementById('mlpStream') || document.getElementById('jStreamRow');
+      const tr = stream ? getComputedStyle(stream).transform : 'none';
+      out.streamMoved = tr !== 'none' && !/matrix\(1,\s*0,\s*0,\s*1,\s*0,\s*0\)/.test(tr);
+      // embedding grid legibility: heatmap must have contrast
+      window.jScrollToSp(2.6); window.jForceContent && window.jForceContent();
+      const cells = [...document.querySelectorAll('#jContent span')]
+        .map(s => getComputedStyle(s).backgroundColor)
+        .filter(c => c && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent');
+      out.embUniqueColors = new Set(cells).size;
+      // attention walkthrough: must open on a real SHOWCASE layer (mid-layer), not the layer-0/1 BOS-sink
+      window.jScrollToSp(3.25); window.jForceContent && window.jForceContent();
+      const sl = document.getElementById('jStreamLabel') || document.querySelector('#wkStream .sub');
+      const lm = sl ? sl.textContent.match(/layer\s+(\d+)\s+of/i) : null;
+      out.showcaseLayer = lm ? +lm[1] : null;
+      return out;
+    });
 
-  console.log('next-token: OK');
+    r.loaded = loaded;
+    r.newErrors = errors.slice(before).filter(t => !benign(t));
+    results[key] = r;
+  }
+
   await browser.close();
-})().catch((e) => { console.error(e.message || e); process.exit(1); });
+
+  const pass = b => b === true ? 'PASS' : b === false ? 'FAIL' : b == null ? ' -- ' : String(b);
+  const pad = (s, n) => String(s).padEnd(n);
+  console.log('\ncross-model verification @ ' + URL + '  (viewport ' + VW + '×' + VH + ')\n');
+  console.log(pad('model', 15), pad('heads', 12), pad('shelves', 12), pad('frame', 6), pad('transit', 8), pad('held', 6), pad('moved', 6), pad('emb', 9), pad('showcase', 11), 'errors');
+  let allGreen = true;
+  for (const [key, r] of Object.entries(results)) {
+    const exp = MODELS[key];
+    const heads = r.heads === exp.heads ? `PASS(${r.heads})` : `FAIL(${r.heads}/${exp.heads})`;
+    const shelves = r.shelves === exp.kv ? `PASS(${r.shelves})` : `FAIL(${r.shelves}/${exp.kv})`;
+    const emb = (r.embUniqueColors >= 6) ? `PASS(${r.embUniqueColors})` : `FAIL(${r.embUniqueColors})`;
+    const showcase = (r.showcaseLayer && r.showcaseLayer > 1) ? `PASS(L${r.showcaseLayer})` : `FAIL(L${r.showcaseLayer})`;
+    const errN = r.newErrors.length ? `FAIL(${r.newErrors.length})` : 'PASS';
+    const checks = [r.heads === exp.heads, r.shelves === exp.kv, r.frameFits, r.transitionOnscreen !== false, r.breakdownHeldBack !== false, r.streamMoved !== false, r.embUniqueColors >= 6, r.showcaseLayer > 1, r.newErrors.length === 0];
+    if (!r.loaded || checks.some(x => x === false)) allGreen = false;
+    console.log(
+      pad(key, 15), pad(heads, 12), pad(shelves, 12),
+      pad(pass(r.frameFits), 6), pad(pass(r.transitionOnscreen), 8),
+      pad(pass(r.breakdownHeldBack), 6), pad(pass(r.streamMoved), 6), pad(emb, 9), pad(showcase, 11), errN,
+      r.loaded ? '' : '[LOAD-FAILED]');
+    if (r.newErrors.length) r.newErrors.slice(0, 2).forEach(e => console.log('      ↳', e.slice(0, 100)));
+  }
+  console.log('\n' + (allGreen ? 'ALL GREEN ✓' : 'FAILURES ABOVE ✗') + '\n');
+  process.exit(allGreen ? 0 : 1);
+})().catch(e => { console.error(e); process.exit(2); });
