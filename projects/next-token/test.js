@@ -25,7 +25,6 @@ const VW = 1440, VH = 700;              // wide-short: the frame that must fit
 // key -> {heads, kv}  (verified from the bakes; kv<heads => GQA)
 const MODELS = {
   'gemma-2-2b':   { heads: 8,  kv: 4 },
-  'gemma-2-2b-it':{ heads: 8,  kv: 4 },
   'gpt2':         { heads: 12, kv: 12 },
   'gpt2-xl':      { heads: 25, kv: 25 },
   'pythia-1.4b':  { heads: 16, kv: 16 },
