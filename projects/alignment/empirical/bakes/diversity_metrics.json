@@ -1,0 +1,26 @@
+{
+  "config": {
+    "n_completions": 20,
+    "max_new_tokens": 40,
+    "temperature": 1.0,
+    "n_prompts": 20,
+    "device": "mps"
+  },
+  "base": {
+    "distinct2": 0.7605832851544935,
+    "mean_self_bleu": 0.23113177515165753,
+    "token_entropy": 9.836264240853058
+  },
+  "instruct": {
+    "distinct2": 0.7211350951516374,
+    "mean_self_bleu": 0.3046716237854921,
+    "token_entropy": 9.785906683841965
+  },
+  "instruct_less_diverse_on": {
+    "distinct2": true,
+    "mean_self_bleu": true,
+    "token_entropy": true
+  },
+  "n_metrics_less_diverse": 3,
+  "elapsed_sec": 97.151780128479
+}

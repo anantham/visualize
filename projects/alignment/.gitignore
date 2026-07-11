@@ -1,0 +1,6 @@
+# Regenerable / heavy experiment outputs — the scripts + bake JSONs are the
+# committed record; adapters, checkpoints, and caches stay local.
+empirical/__pycache__/
+empirical/sft_diag_runs/
+empirical/bakes/rlvr_run/
+empirical/bakes/dpo_run/
