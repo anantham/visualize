@@ -2,6 +2,10 @@
 
 This tracks what the interactive methods workbench can honestly wire today.
 
+> **Provenance rule (see `INCIDENT-2026-07-11-provenance.md`):** every number a
+> widget renders as measured must be copied from a named bake field, and
+> `test.js` derives its expected values from the bakes — not from the page.
+
 | Method | Current widget | Real artifact found | Status |
 |---|---|---|---|
 | Pretraining | illustrative corpus switcher | Prior Atlas / prior-divergence terrain exists, but no corpus-conditioned generation JSON | Needs bake; do not imply from-scratch corpus training |
