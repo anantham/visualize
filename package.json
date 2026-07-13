@@ -6,7 +6,8 @@
     "test:prior-atlas": "node projects/prior-atlas/test.js",
     "test:alignment-methods": "node projects/alignment/methods/test.js",
     "test:pretraining": "node projects/pretraining/test.js",
-    "test:simulator": "node projects/simulator/test.js"
+    "test:simulator": "node projects/simulator/test.js",
+    "test:sft": "node projects/sft/test.js"
   },
   "devDependencies": {
     "playwright": "^1.61.1"
