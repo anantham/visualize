@@ -5,7 +5,8 @@
     "test:next-token": "node projects/next-token/test.js",
     "test:prior-atlas": "node projects/prior-atlas/test.js",
     "test:alignment-methods": "node projects/alignment/methods/test.js",
-    "test:pretraining": "node projects/pretraining/test.js"
+    "test:pretraining": "node projects/pretraining/test.js",
+    "test:simulator": "node projects/simulator/test.js"
   },
   "devDependencies": {
     "playwright": "^1.61.1"
