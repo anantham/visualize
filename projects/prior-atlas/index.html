@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Prior Atlas — maps of model priors</title>
 <style>
   :root{
@@ -24,6 +24,7 @@
   }
   #stage{position:fixed; inset:0; z-index:0; touch-action:none; cursor:crosshair;}
   #stage canvas{display:block;}
+  button{touch-action:manipulation; -webkit-tap-highlight-color:transparent;}
 
   /* ---- HUD overlay ---- */
   .hud{position:fixed; z-index:var(--z-hud); pointer-events:none;}
@@ -252,6 +253,8 @@
   #calibration b{color:var(--gold);}
   #calibration .cal-title{display:block; margin-bottom:4px; color:var(--ink); font-weight:700;}
 
+  #mobilebar,#mobile-backdrop,.mobile-drawer-head{display:none;}
+
   body[data-act="0"] #rail,
   body[data-act="1"] #rail{opacity:.16; pointer-events:none; transform:translateX(-8px);}
   body[data-act="0"] #stage,
@@ -271,24 +274,77 @@
     *{scroll-behavior:auto;}
   }
 
-  /* responsive */
-  @media (max-width:820px){
-    #rail{width:min(320px, calc(100vw - 32px)); max-height:58vh;}
-    #story{left:10px; right:10px; bottom:10px; top:auto; width:auto; min-width:0; max-height:52vh;}
-    #axis{right:10px; top:58vh; transform:none; width:140px;}
-    #calibration{left:10px; right:10px; bottom:10px; width:auto;}
-    #info{top:auto; bottom:0; right:0; left:0; width:auto; max-height:56vh;
-          border-radius:14px 14px 0 0; border-bottom:0;}
-    #info.show{transform:none;}
+  /* compact / touch layout */
+  @media (max-width:1100px){
+    #mobilebar{
+      top:max(10px, env(safe-area-inset-top)); left:10px; right:10px; height:52px;
+      padding:6px 7px 6px 14px; z-index:25; display:flex; align-items:center;
+      justify-content:space-between; gap:12px; pointer-events:auto;
+    }
+    #mobilebar .brand{font-size:14px; font-weight:700; color:var(--ink); white-space:nowrap;}
+    #mobilebar .brand::before{content:""; display:inline-block; width:7px; height:7px;
+      margin-right:8px; border-radius:50%; background:var(--acc); box-shadow:0 0 9px var(--acc);}
+    #mobile-explore{min-width:92px; min-height:44px; border:1px solid var(--line2); border-radius:8px;
+      background:var(--panel2); color:var(--ink); font:650 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      cursor:pointer;}
+    #mobile-explore[aria-expanded="true"]{background:var(--acc); border-color:var(--acc); color:#07111d;}
+    body[data-act="0"] #mobile-explore,body[data-act="1"] #mobile-explore{visibility:hidden;}
+    body[data-act="3"] #mobile-explore{border-color:var(--gold); box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 42%,transparent);}
+
+    #story{left:10px; right:10px; bottom:max(10px, env(safe-area-inset-bottom)); top:auto;
+      width:auto; min-width:0; max-height:min(58dvh, calc(100dvh - 92px)); padding:15px 18px 0;}
+    body[data-act="4"] #story{max-height:calc(100dvh - 82px);}
+    .story-top{margin-bottom:10px;}
+    .story-nav{gap:4px;}
+    .story-dot{width:44px; height:44px; flex:none;}
+    .act h2{font-size:22px;}
+    .story-actions{position:sticky; z-index:2; bottom:0; margin:15px -18px 0; padding:12px 18px max(14px, env(safe-area-inset-bottom));
+      background:color-mix(in srgb,var(--panel) 96%,transparent); box-shadow:0 -14px 24px -22px #000;}
+    .story-actions button,.ladder-controls button{min-height:44px; padding:10px 14px;}
+    .rung{grid-template-columns:minmax(0,1fr) auto auto; gap:5px 9px;}
+    .rung .event{grid-column:1 / -1;}
+
+    #axis{right:10px; top:74px; transform:none; width:134px; padding:9px 10px;}
+    #axis .axis-title{margin-bottom:5px;}
+    .axis-row{grid-template-columns:38px 1fr; gap:6px; padding:3px 0; font-size:10px;}
+    #calibration{display:none;}
     #hint{display:none;}
-  }
-  @media (max-width:520px){
-    #rail{top:10px; left:10px; right:10px; width:auto; max-height:50vh;}
+
+    #rail{display:none;}
+    #mobile-backdrop{position:fixed; inset:0; z-index:30; background:rgba(5,8,12,.72); pointer-events:auto;}
+    body.mobile-controls-open #mobile-backdrop{display:block;}
+    body.mobile-controls-open #rail{display:flex; top:max(10px, env(safe-area-inset-top)); bottom:max(10px, env(safe-area-inset-bottom));
+      left:10px; right:10px; width:auto; max-height:none; z-index:35; gap:8px;}
+    body.mobile-controls-open #rail .title{display:none;}
+    body.mobile-controls-open #rail .scroll{display:flex; padding-right:0; padding-bottom:2px;}
+    .mobile-drawer-head{min-height:52px; padding:6px 7px 6px 14px; align-items:center; justify-content:space-between;
+      font-weight:700; flex:none;}
+    body.mobile-controls-open .mobile-drawer-head{display:flex;}
+    #mobile-controls-close{width:44px; height:44px; border:0; border-radius:8px; background:var(--panel2);
+      color:var(--ink); font-size:22px; line-height:1; cursor:pointer;}
+    body.mobile-controls-open #story,body.mobile-controls-open #axis,body.mobile-controls-open #mobilebar{
+      opacity:.16; pointer-events:none;
+    }
+    .pair{min-height:48px; padding:10px 11px;}
+    .seg button{min-height:40px; padding:7px 12px;}
+    .chk{min-height:44px; margin-top:7px;}
+    .chk input{width:20px; height:20px;}
+
+    #info{top:auto; bottom:0; right:0; left:0; width:auto; max-height:min(68dvh, calc(100dvh - 72px));
+      border-radius:14px 14px 0 0; border-bottom:0; padding-bottom:env(safe-area-inset-bottom);}
+    #info.show{transform:none;}
+    #info .close{width:44px; height:44px; padding:0;}
   }
 </style>
 </head>
 <body data-act="0">
-  <div id="stage" aria-label="3D Prior Atlas terrain. Drag to orbit, scroll to zoom, click a point for detail."></div>
+  <div id="stage" aria-label="3D Prior Atlas terrain. Drag to orbit, pinch or scroll to zoom, and tap or click a point for detail."></div>
+
+  <div id="mobilebar" class="hud card">
+    <span class="brand">Prior Atlas</span>
+    <button id="mobile-explore" type="button" aria-expanded="false" aria-controls="rail">Explore</button>
+  </div>
+  <div id="mobile-backdrop" aria-hidden="true"></div>
 
   <div id="story" class="hud card" aria-live="polite">
     <div class="story-top">
@@ -334,12 +390,12 @@
       <h2>The terrain</h2>
       <p>Now every sampled next-token position becomes a point. Ground position is a lossy UMAP of context; height is the selected pair's <b>surprisal gap</b> in bits.</p>
       <p>Read the height with the scale at right: <b>1 bit = 2×</b>, <b>10 bits = about 1000×</b>, and the labeled Go-struct peak is roughly <b>25 bits = 33 million×</b>.</p>
-      <p>Click peaks to see both models' bit bars. A peak means disagreement on the observed continuation; it does not mean one model is correct.</p>
+      <p>Tap or click peaks to see both models' bit bars. A peak means disagreement on the observed continuation; it does not mean one model is correct.</p>
     </section>
 
     <section class="act" data-act="3">
       <h2>The map of models</h2>
-      <p>The left rail is a map of model priors. Dot distance means "these two models predict differently"; axes are not canonical. Click two dots and the terrain re-forms for that pair.</p>
+      <p>The model map compares model priors. Dot distance means "these two models predict differently"; axes are not canonical. Pick two dots and the terrain re-forms for that pair.</p>
       <p>The same-data pairs flatten: <b>gpt2 to gpt2-xl</b> and <b>pythia-1.4b to pythia-410m</b>. Data-different pairs erupt into mountains.</p>
       <p>Scale still nudges the map: gpt2-xl sits a little closer to other families than gpt2. But data family dominates the shape.</p>
     </section>
@@ -377,6 +433,10 @@
 
   <!-- LEFT RAIL -->
   <div id="rail" class="hud">
+    <div class="card mobile-drawer-head">
+      <span>Explore the atlas</span>
+      <button id="mobile-controls-close" type="button" aria-label="Close Explore panel">&times;</button>
+    </div>
     <div class="card title">
       <h1><span class="dot"></span>Prior Atlas</h1>
       <p>Where two base language models disagree about the next token — a map of what each one's training data made familiar.</p>
@@ -759,6 +819,22 @@
     if(status) status.textContent = `${ladderStep + 1} of 7 visible`;
   }
 
+  const compactLayout = () => matchMedia('(max-width:1100px)').matches;
+  function setMobileControls(open){
+    const wasOpen = document.body.classList.contains('mobile-controls-open');
+    const next = Boolean(open) && compactLayout();
+    document.body.classList.toggle('mobile-controls-open', next);
+    const trigger = document.getElementById('mobile-explore');
+    if(trigger) trigger.setAttribute('aria-expanded', next ? 'true' : 'false');
+    const backdrop = document.getElementById('mobile-backdrop');
+    if(backdrop) backdrop.setAttribute('aria-hidden', next ? 'false' : 'true');
+    if(next){
+      requestAnimationFrame(()=>document.getElementById('mobile-controls-close')?.focus({preventScroll:true}));
+    }else if(wasOpen && trigger){
+      trigger.focus({preventScroll:true});
+    }
+  }
+
   function syncStory(){
     document.body.dataset.act = String(act);
     document.querySelectorAll('.act').forEach((el)=>{
@@ -773,6 +849,8 @@
     const next = document.getElementById('story-next');
     if(back) back.disabled = act === 0;
     if(next) next.textContent = act === STAGES.length - 1 ? 'Stay here' : 'Next';
+    const story = document.getElementById('story');
+    if(story) story.scrollTop = 0;
   }
 
   function applyActPreset(i){
@@ -788,7 +866,13 @@
         computeTargets(state.a, state.b, state.density, state.color);
         startTween(350);
       }
-      selectPoint(0);
+      if(Q.has('pick')){
+        // Preserve an explicit deep-linked point selection.
+      }else if(compactLayout()){
+        deselect();
+      }else{
+        selectPoint(0);
+      }
     }else if(i === 3){
       deselect();
       applyPair('pythia-1.4b', 'pythia-410m', 450);
@@ -801,6 +885,7 @@
     const nextAct = Math.max(0, Math.min(STAGES.length - 1, Number(i)));
     if(Number.isNaN(nextAct)) return;
     act = nextAct;
+    setMobileControls(false);
     syncStory();
     applyActPreset(act);
     if(!opts.silent){
@@ -822,6 +907,9 @@
     document.getElementById('story-back')?.addEventListener('click', ()=>go(act-1));
     document.getElementById('story-next')?.addEventListener('click', ()=>{ if(act < STAGES.length - 1) go(act+1); });
     document.getElementById('ladder-next')?.addEventListener('click', ()=>setLadderStep(ladderStep + 1));
+    document.getElementById('mobile-explore')?.addEventListener('click', ()=>setMobileControls(true));
+    document.getElementById('mobile-controls-close')?.addEventListener('click', ()=>setMobileControls(false));
+    document.getElementById('mobile-backdrop')?.addEventListener('click', ()=>setMobileControls(false));
     setLadderStep(ladderStep);
     const h = parseInt((location.hash || '').replace('#',''), 10);
     if(!Number.isNaN(h)) act = Math.max(0, Math.min(STAGES.length - 1, h));
@@ -950,7 +1038,7 @@
   function mapClick(n){
     if(mapPending===null){ mapPending=n; syncMap(); }
     else if(mapPending===n){ mapPending=null; syncMap(); }
-    else { const a=mapPending, b=n; mapPending=null; applyPair(a, b); syncMap(); }
+    else { const a=mapPending, b=n; mapPending=null; applyPair(a, b); syncMap(); setMobileControls(false); }
   }
   function syncMap(){
     const a=state.a, b=state.b;
@@ -985,7 +1073,7 @@
     b.className='pair'; b.setAttribute('role','radio'); b.dataset.key=p.key;
     b.innerHTML = `<span class="names">${shortName(p.a)} ↔ ${shortName(p.b)}</span>`+
                   `<span class="tag ${p.matched?'same':'diff'}">${p.matched?'same data':'different data'}</span>`;
-    b.addEventListener('click', ()=> setPair(p.key));
+    b.addEventListener('click', ()=>{ setPair(p.key); setMobileControls(false); });
     pairsEl.appendChild(b);
   });
   function syncFallback(){
@@ -1053,7 +1141,7 @@
     if(hit){ selectPoint(hit.index); }
   });
 
-  function selectPoint(i){ selected=i; updateMarker(); renderInfo(i);
+  function selectPoint(i){ selected=i; setMobileControls(false); updateMarker(); renderInfo(i);
     document.getElementById('info').classList.add('show');
     document.getElementById('info').setAttribute('aria-hidden','false');
     const h=document.getElementById('hint'); if(h) h.style.opacity='0';
@@ -1061,7 +1149,7 @@
   function deselect(){ selected=-1; stem.visible=false; ring.visible=false;
     const inf=document.getElementById('info'); inf.classList.remove('show'); inf.setAttribute('aria-hidden','true'); }
   document.getElementById('i-close').addEventListener('click', deselect);
-  addEventListener('keydown', e=>{ if(e.key==='Escape') deselect(); });
+  addEventListener('keydown', e=>{ if(e.key==='Escape'){ deselect(); setMobileControls(false); } });
 
   function updateMarker(){
     if(selected<0) return;
@@ -1140,6 +1228,7 @@
     camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
     mat.uniforms.uPix.value = renderer.getPixelRatio();
+    if(!compactLayout()) setMobileControls(false);
   });
 
   const camDir=new THREE.Vector3();

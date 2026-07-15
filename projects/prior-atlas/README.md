@@ -47,6 +47,12 @@ The bundled page inlines the terrain JSON into `index.html`; the copy in
 
 ## Controls
 
+On compact and touch layouts, the lesson becomes a bottom sheet over the
+terrain. **Explore** opens the model map, pair presets, height and colour modes,
+and legend in a scrollable drawer. Drag rotates the terrain, pinch zooms, and a
+tap opens point detail. Primary touch targets are at least 44 px; point detail
+does not auto-open over the lesson on compact layouts.
+
 Deep links:
 
 - `#0` through `#4` restore the act.
@@ -73,3 +79,7 @@ Run:
 ```bash
 npm run test:prior-atlas
 ```
+
+The release test drives both a 1280 px desktop viewport and a 390 px touch
+viewport. It checks responsive non-overlap, horizontal overflow, drawer focus,
+touch-target sizes, point-detail dismissal, canvas pixels, and console errors.

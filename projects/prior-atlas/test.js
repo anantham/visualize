@@ -182,6 +182,119 @@ function pngStats(buf) {
       throw new Error(`canvas looks blank: unique=${stats.unique} variance=${stats.variance.toFixed(3)}`);
     }
 
+    const mobile = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 1,
+      isMobile: true,
+      hasTouch: true,
+    });
+    mobile.on('pageerror', (e) => errors.push(`mobile: ${e.message}`));
+    mobile.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(`mobile: ${msg.text()}`);
+    });
+
+    try {
+      await mobile.goto(`${BASE}/projects/prior-atlas/?snap=1#2`);
+      await mobile.waitForFunction(() => window.__viz?.state().ready, null, { timeout: 30000 });
+
+      const mobileState = await mobile.evaluate(() => window.__viz.state());
+      if (mobileState.selected !== -1) throw new Error('mobile terrain act should not auto-open point detail');
+
+      const layout = await mobile.evaluate(() => {
+        const rect = (id) => {
+          const el = document.getElementById(id);
+          const r = el.getBoundingClientRect();
+          return { x: r.x, y: r.y, width: r.width, height: r.height, display: getComputedStyle(el).display };
+        };
+        return {
+          viewportMeta: document.querySelector('meta[name="viewport"]').content,
+          overflow: document.documentElement.scrollWidth - innerWidth,
+          story: rect('story'),
+          rail: rect('rail'),
+          axis: rect('axis'),
+          calibration: rect('calibration'),
+          mobilebar: rect('mobilebar'),
+          targets: ['mobile-explore', 'story-back', 'story-next'].map((id) => {
+            const r = document.getElementById(id).getBoundingClientRect();
+            return { id, width: r.width, height: r.height };
+          }).concat([...document.querySelectorAll('.story-dot')].map((el) => {
+            const r = el.getBoundingClientRect();
+            return { id: `act-${el.dataset.act}`, width: r.width, height: r.height };
+          })),
+        };
+      });
+      if (layout.viewportMeta.includes('maximum-scale')) throw new Error('mobile viewport disables user zoom');
+      if (layout.overflow > 0) throw new Error(`mobile page overflows horizontally by ${layout.overflow}px`);
+      if (layout.rail.display !== 'none') throw new Error('desktop rail should be collapsed on mobile');
+      if (layout.calibration.display !== 'none') throw new Error('calibration card should not cover mobile lesson');
+      if (layout.mobilebar.y + layout.mobilebar.height > layout.axis.y) throw new Error('mobile bar overlaps height scale');
+      if (layout.axis.y + layout.axis.height > layout.story.y) throw new Error('height scale overlaps mobile lesson');
+      if (layout.story.y + layout.story.height > 845) throw new Error('mobile lesson extends below viewport');
+      for (const target of layout.targets) {
+        if (target.width < 44 || target.height < 44) {
+          throw new Error(`mobile touch target ${target.id} is ${target.width}x${target.height}`);
+        }
+      }
+
+      await mobile.locator('#mobile-explore').click();
+      await mobile.waitForFunction(() => document.body.classList.contains('mobile-controls-open'));
+      const drawer = await mobile.evaluate(() => {
+        const rail = document.getElementById('rail').getBoundingClientRect();
+        const close = document.getElementById('mobile-controls-close').getBoundingClientRect();
+        const pair = document.querySelector('.pair').getBoundingClientRect();
+        return {
+          expanded: document.getElementById('mobile-explore').getAttribute('aria-expanded'),
+          focused: document.activeElement?.id,
+          rail: { x: rail.x, y: rail.y, width: rail.width, height: rail.height },
+          close: { width: close.width, height: close.height },
+          pair: { width: pair.width, height: pair.height },
+        };
+      });
+      if (drawer.expanded !== 'true' || drawer.focused !== 'mobile-controls-close') {
+        throw new Error('Explore drawer did not open with focus on its close control');
+      }
+      if (drawer.rail.x < 0 || drawer.rail.y < 0 || drawer.rail.x + drawer.rail.width > 390 || drawer.rail.y + drawer.rail.height > 844) {
+        throw new Error('Explore drawer extends outside mobile viewport');
+      }
+      if (drawer.close.width < 44 || drawer.close.height < 44 || drawer.pair.height < 44) {
+        throw new Error('Explore drawer has undersized touch targets');
+      }
+
+      await mobile.locator('.pair[data-key="gpt2|gpt2-xl"]').click();
+      await mobile.waitForFunction(() => window.__viz.state().pair === 'gpt2|gpt2-xl');
+      if (await mobile.locator('body').evaluate((el) => el.classList.contains('mobile-controls-open'))) {
+        throw new Error('pair selection should return mobile users to the terrain');
+      }
+
+      await mobile.evaluate(() => { window.__viz.go(2); window.__viz.selectPoint(0); });
+      await mobile.waitForFunction(() => document.getElementById('info').classList.contains('show'));
+      await mobile.waitForTimeout(350);
+      const closeHeight = await mobile.locator('#i-close').evaluate((el) => el.getBoundingClientRect().height);
+      if (closeHeight < 44) throw new Error(`mobile detail close target is only ${closeHeight}px tall`);
+      await mobile.locator('#i-close').click();
+      if ((await mobile.evaluate(() => window.__viz.state().selected)) !== -1) {
+        throw new Error('mobile point detail did not close');
+      }
+
+      await mobile.evaluate(() => window.__viz.go(4));
+      const finalNav = await mobile.evaluate(() => {
+        const story = document.getElementById('story').getBoundingClientRect();
+        const next = document.getElementById('story-next').getBoundingClientRect();
+        return { storyTop: story.top, storyBottom: story.bottom, nextTop: next.top, nextBottom: next.bottom };
+      });
+      if (finalNav.nextTop < finalNav.storyTop || finalNav.nextBottom > finalNav.storyBottom) {
+        throw new Error('mobile story navigation is not kept visible in the final act');
+      }
+
+      const mobileCanvas = pngStats(await mobile.locator('#stage canvas').screenshot());
+      if (mobileCanvas.unique < 10 || mobileCanvas.variance < 1) {
+        throw new Error(`mobile canvas looks blank: unique=${mobileCanvas.unique} variance=${mobileCanvas.variance.toFixed(3)}`);
+      }
+      await mobile.screenshot({ path: '/tmp/prior-atlas-mobile-check.png' });
+    } finally {
+      await mobile.close();
+    }
+
     if (errors.length) throw new Error(errors.join('; '));
     await page.screenshot({ path: '/tmp/prior-atlas-check.png' });
     console.log('prior-atlas: OK');
