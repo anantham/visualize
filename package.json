@@ -7,7 +7,8 @@
     "test:alignment-methods": "node projects/alignment/methods/test.js",
     "test:pretraining": "node projects/pretraining/test.js",
     "test:simulator": "node projects/simulator/test.js",
-    "test:sft": "node projects/sft/test.js"
+    "test:sft": "node projects/sft/test.js",
+    "test:preferences": "node projects/preferences/test.js"
   },
   "devDependencies": {
     "playwright": "^1.61.1"
