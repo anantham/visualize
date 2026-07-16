@@ -176,6 +176,7 @@ function pngStats(buf) {
       if (!caveats.includes(phrase)) throw new Error(`missing caveat phrase: ${phrase}`);
     }
 
+    await page.waitForFunction(() => getComputedStyle(document.getElementById('msg')).visibility === 'hidden');
     await page.screenshot({ path: '/tmp/prior-atlas-check.png' });
     const canvasPng = await page.locator('#stage canvas').screenshot();
     const stats = pngStats(canvasPng);
