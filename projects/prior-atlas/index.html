@@ -182,8 +182,8 @@
 
   /* load / error message */
   #msg{position:fixed; inset:0; z-index:var(--z-msg); display:flex; align-items:center; justify-content:center;
-       background:var(--bg); transition:opacity .6s ease; text-align:center; padding:24px;}
-  #msg.hide{opacity:0; pointer-events:none;}
+       background:var(--bg); transition:opacity .6s ease, visibility 0s linear; text-align:center; padding:24px;}
+  #msg.hide{opacity:0; visibility:hidden; pointer-events:none; transition:opacity .6s ease, visibility 0s linear .6s;}
   #msg .inner{max-width:420px;}
   #msg .spin{width:34px; height:34px; margin:0 auto 18px; border-radius:50%;
              border:2.5px solid var(--line); border-top-color:var(--acc); animation:spin 1s linear infinite;}

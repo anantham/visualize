@@ -78,6 +78,8 @@ Run:
 
 ```bash
 npm run test:prior-atlas
+# Standalone production deployment:
+PAGE_URL=https://prior-atlas.vercel.app npm run test:prior-atlas
 ```
 
 The release test drives both a 1280 px desktop viewport and a 390 px touch

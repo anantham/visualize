@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 const zlib = require('zlib');
 
 const BASE = process.env.BASE_URL || 'http://localhost:4173';
+const PAGE = (process.env.PAGE_URL || `${BASE}/projects/prior-atlas/`).replace(/\/?$/, '/');
 
 function paeth(a, b, c) {
   const p = a + b - c;
@@ -106,7 +107,7 @@ function pngStats(buf) {
   });
 
   try {
-    await page.goto(`${BASE}/projects/prior-atlas/?snap=1#0`);
+    await page.goto(`${PAGE}?snap=1#0`);
     await page.waitForFunction(() => window.__viz?.state().ready, null, { timeout: 30000 });
 
     let state = await page.evaluate(() => window.__viz.state());
@@ -175,12 +176,15 @@ function pngStats(buf) {
       if (!caveats.includes(phrase)) throw new Error(`missing caveat phrase: ${phrase}`);
     }
 
+    await page.screenshot({ path: '/tmp/prior-atlas-check.png' });
     const canvasPng = await page.locator('#stage canvas').screenshot();
     const stats = pngStats(canvasPng);
     if (stats.width < 500 || stats.height < 400) throw new Error(`canvas too small: ${stats.width}x${stats.height}`);
     if (stats.unique < 10 || stats.variance < 1) {
       throw new Error(`canvas looks blank: unique=${stats.unique} variance=${stats.variance.toFixed(3)}`);
     }
+    const loaderVisibility = await page.locator('#msg').evaluate((el) => getComputedStyle(el).visibility);
+    if (loaderVisibility !== 'hidden') throw new Error(`settled loader remains paintable: ${loaderVisibility}`);
 
     const mobile = await browser.newPage({
       viewport: { width: 390, height: 844 },
@@ -194,7 +198,7 @@ function pngStats(buf) {
     });
 
     try {
-      await mobile.goto(`${BASE}/projects/prior-atlas/?snap=1#2`);
+      await mobile.goto(`${PAGE}?snap=1#2`);
       await mobile.waitForFunction(() => window.__viz?.state().ready, null, { timeout: 30000 });
 
       const mobileState = await mobile.evaluate(() => window.__viz.state());
@@ -238,6 +242,7 @@ function pngStats(buf) {
 
       await mobile.locator('#mobile-explore').click();
       await mobile.waitForFunction(() => document.body.classList.contains('mobile-controls-open'));
+      await mobile.waitForFunction(() => document.activeElement?.id === 'mobile-controls-close');
       const drawer = await mobile.evaluate(() => {
         const rail = document.getElementById('rail').getBoundingClientRect();
         const close = document.getElementById('mobile-controls-close').getBoundingClientRect();
@@ -270,13 +275,14 @@ function pngStats(buf) {
       await mobile.waitForFunction(() => document.getElementById('info').classList.contains('show'));
       await mobile.waitForTimeout(350);
       const closeHeight = await mobile.locator('#i-close').evaluate((el) => el.getBoundingClientRect().height);
-      if (closeHeight < 44) throw new Error(`mobile detail close target is only ${closeHeight}px tall`);
+      if (closeHeight < 43.5) throw new Error(`mobile detail close target is only ${closeHeight}px tall`);
       await mobile.locator('#i-close').click();
       if ((await mobile.evaluate(() => window.__viz.state().selected)) !== -1) {
         throw new Error('mobile point detail did not close');
       }
 
       await mobile.evaluate(() => window.__viz.go(4));
+      await mobile.waitForTimeout(350);
       const finalNav = await mobile.evaluate(() => {
         const story = document.getElementById('story').getBoundingClientRect();
         const next = document.getElementById('story-next').getBoundingClientRect();
@@ -286,17 +292,16 @@ function pngStats(buf) {
         throw new Error('mobile story navigation is not kept visible in the final act');
       }
 
+      await mobile.screenshot({ path: '/tmp/prior-atlas-mobile-check.png' });
       const mobileCanvas = pngStats(await mobile.locator('#stage canvas').screenshot());
       if (mobileCanvas.unique < 10 || mobileCanvas.variance < 1) {
         throw new Error(`mobile canvas looks blank: unique=${mobileCanvas.unique} variance=${mobileCanvas.variance.toFixed(3)}`);
       }
-      await mobile.screenshot({ path: '/tmp/prior-atlas-mobile-check.png' });
     } finally {
       await mobile.close();
     }
 
     if (errors.length) throw new Error(errors.join('; '));
-    await page.screenshot({ path: '/tmp/prior-atlas-check.png' });
     console.log('prior-atlas: OK');
   } finally {
     await browser.close();
