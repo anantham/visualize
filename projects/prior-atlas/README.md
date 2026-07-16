@@ -35,6 +35,20 @@ The page is synced from the validated scratch bake in
 The bundled page inlines the terrain JSON into `index.html`; the copy in
 `data/terrain_data.json` is kept for provenance and scripts.
 
+## Loading
+
+The page preloads its two pinned Three.js modules and requests them in parallel
+while the inline terrain data arrives. The loader reports the real phase and
+elapsed time. First visits show a production-measured `0.5-2.5s` range; after a
+successful visit, that browser sees its own previous observed load time instead.
+When a wait exceeds the measured range, the copy says so rather than letting an
+expired countdown imply that the page is stuck.
+
+The calibration and raw samples are in
+`data/load_benchmark_2026-07-16.json`. It uses first contentful paint to
+interactive terrain as the user-visible metric. The sample is from one location
+and is an expectation range, not a latency guarantee.
+
 ## Honesty Boundaries
 
 - Curated sample, not natural density: domain-balanced and tail-oversampled.
@@ -82,6 +96,7 @@ npm run test:prior-atlas
 PAGE_URL=https://prior-atlas.vercel.app npm run test:prior-atlas
 ```
 
-The release test drives both a 1280 px desktop viewport and a 390 px touch
-viewport. It checks responsive non-overlap, horizontal overflow, drawer focus,
+The release test drives a deliberately delayed loader, a 1280 px desktop
+viewport, and a 390 px touch viewport. It checks parallel CDN starts, calibrated
+loader state, responsive non-overlap, horizontal overflow, drawer focus,
 touch-target sizes, point-detail dismissal, canvas pixels, and console errors.

@@ -96,6 +96,76 @@ function pngStats(buf) {
 
 (async () => {
   const browser = await chromium.launch();
+  const loaderPage = await browser.newPage({ viewport: { width: 960, height: 640 } });
+  const loaderErrors = [];
+  const preloadStarts = [];
+  const releasePreloads = [];
+  loaderPage.on('pageerror', (e) => loaderErrors.push(e.message));
+  loaderPage.on('console', (msg) => {
+    if (msg.type() === 'error') loaderErrors.push(msg.text());
+  });
+  await loaderPage.route('https://unpkg.com/three@0.160.0/**', async (route) => {
+    preloadStarts.push({ url: route.request().url(), at: Date.now() });
+    await new Promise((resolve) => releasePreloads.push(resolve));
+    await route.continue();
+  });
+
+  try {
+    await loaderPage.goto(`${PAGE}?loader-check=${Date.now()}#0`, { waitUntil: 'commit' });
+    await loaderPage.waitForFunction(() => window.__atlasLoader?.state().status === 'loading', null, { timeout: 30000 });
+    const preloadDeadline = Date.now() + 5000;
+    while (new Set(preloadStarts.map((item) => item.url)).size < 2 && Date.now() < preloadDeadline) {
+      await loaderPage.waitForTimeout(25);
+    }
+    await loaderPage.waitForTimeout(350);
+    const loading = await loaderPage.evaluate(() => ({
+      state: window.__atlasLoader.state(),
+      heading: document.getElementById('msg-h').textContent,
+      copy: document.getElementById('msg-p').textContent,
+      visibility: getComputedStyle(document.getElementById('msg')).visibility,
+    }));
+    if (loading.visibility !== 'visible') throw new Error('loader is not visible while 3D modules are pending');
+    if (!loading.heading.trim()) throw new Error('loader phase heading is empty while 3D modules are pending');
+    if (!loading.copy.includes('measured first visits:') || !loading.copy.includes('elapsed')) {
+      throw new Error(`loader is missing its measured range or elapsed time: ${loading.copy}`);
+    }
+    if (loading.state.elapsedMs < 250 || loading.state.estimateSource !== 'benchmark') {
+      throw new Error(`loader timing state is not advancing from the benchmark: ${JSON.stringify(loading.state)}`);
+    }
+    if (loading.state.benchmark.lowMs !== 500 || loading.state.benchmark.highMs !== 2500 || loading.state.benchmark.coldSamples !== 12) {
+      throw new Error(`loader benchmark is not the production-calibrated range: ${JSON.stringify(loading.state.benchmark)}`);
+    }
+    await loaderPage.waitForTimeout(100);
+    if ((await loaderPage.evaluate(() => window.__atlasLoader.state().status)) !== 'loading') {
+      throw new Error('loader settled before the delayed-state screenshot');
+    }
+    await loaderPage.screenshot({ path: '/tmp/prior-atlas-loader-check.png' });
+
+    await loaderPage.waitForFunction(() => window.__atlasLoader.state().elapsedMs > 2600);
+    await loaderPage.waitForFunction(() => document.getElementById('msg-estimate').textContent.includes('taking longer than most measured loads'));
+    const slowCopy = await loaderPage.locator('#msg-p').textContent();
+    if (!slowCopy.includes('taking longer than most measured loads')) {
+      throw new Error(`loader did not acknowledge exceeding the measured range: ${slowCopy}`);
+    }
+    releasePreloads.splice(0).forEach((release) => release());
+
+    await loaderPage.waitForFunction(() => window.__viz?.state().ready, null, { timeout: 30000 });
+    const loaded = await loaderPage.evaluate(() => window.__atlasLoader.state());
+    if (loaded.status !== 'ready' || loaded.elapsedMs < 1000) {
+      throw new Error(`loader did not record the delayed load: ${JSON.stringify(loaded)}`);
+    }
+    const uniquePreloads = preloadStarts.filter((item, i, all) =>
+      all.findIndex((other) => other.url === item.url) === i);
+    if (uniquePreloads.length < 2) throw new Error(`expected both Three.js modules to preload, saw ${uniquePreloads.length}`);
+    const preloadSpread = Math.max(...uniquePreloads.map((item) => item.at)) - Math.min(...uniquePreloads.map((item) => item.at));
+    if (preloadSpread > 500) throw new Error(`Three.js module requests started ${preloadSpread}ms apart instead of in parallel`);
+    await loaderPage.waitForFunction(() => getComputedStyle(document.getElementById('msg')).visibility === 'hidden');
+    if (loaderErrors.length) throw new Error(loaderErrors.join('; '));
+  } finally {
+    releasePreloads.splice(0).forEach((release) => release());
+    await loaderPage.close();
+  }
+
   const page = await browser.newPage({
     viewport: { width: 1280, height: 820 },
     deviceScaleFactor: 1,
