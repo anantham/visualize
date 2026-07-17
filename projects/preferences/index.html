@@ -17,6 +17,10 @@
   .wrap{max-width:940px;margin:0 auto;padding:22px 20px 70px}
   .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);font-weight:750;margin:0}
   h1{font-size:23px;line-height:1.1;letter-spacing:-.01em;margin:6px 0 0}
+  .series{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11.5px;margin:12px 0 0}
+  .series a{color:var(--faint);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+  .series a:hover{border-color:var(--line2);color:var(--muted)}
+  .series a.on{color:var(--ink);border-color:var(--line2);background:var(--panel);font-weight:650}
   .rail{display:flex;gap:6px;margin:14px 0}
   .rail button{flex:1;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);cursor:pointer;font-size:11.5px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rail button[aria-current="true"]{background:var(--cyan);border-color:var(--cyan);color:#04201e;font-weight:700}
@@ -105,6 +109,7 @@
 <div class="wrap">
   <p class="eyebrow" id="eyebrow">Beat 2 · preferences</p>
   <h1>You can't write the answer. But you can pick the better one.</h1>
+  <nav class="series"><a href="../simulator/">← 0 · the simulator</a><a href="../sft/">← 1 · SFT</a><a class="on" href="./">2 · preferences</a></nav>
   <div class="rail" id="rail"></div>
   <p class="line" id="line"></p>
   <div id="app"><div class="load">loading measured preference run…</div></div>
