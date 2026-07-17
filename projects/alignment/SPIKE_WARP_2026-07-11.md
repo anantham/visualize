@@ -101,3 +101,93 @@ production data for the explorable.
 
 Scope honesty: one model pair, one seed, 300 field points + 48 probes. This decides
 architecture; it is not a population, cross-model, or frontier-scale claim.
+
+---
+
+# Follow-up: spikes 2 & 3 — value terrain + residual-stream layout
+
+Ran the value-terrain spike (214 authored prompts across 7 value regions: harmful,
+dual-use, scary-benign, neutral, sensitive-OK, sycophancy-bait, values-advice) and
+then a layout diagnostic. Two plan-changing findings.
+(`value_terrain_spike.py`, `residual_layout_spike.py`.)
+
+## Finding 1 — a sentence-embedding layout does NOT work; the model's own residual stream does.
+
+Laying the value terrain out with MiniLM (surface-form sentence embedding, what
+prior-atlas used) gives **region silhouette 0.05** — harmful / dual-use / scary-benign
+all blend into one "how do I X" blob, because on the *surface* a harmful request and a
+benign one look identical. (That blending is the knife-edge point itself, but it makes
+a useless terrain.)
+
+Laying it out with the model's **residual stream** (last-token hidden state, mid-late
+layer) instead: **silhouette 0.18 at instruct layer 17 — ~3.4× better**, and the map
+reads as real geography: harm clusters in one corner, sycophancy is a fully separated
+island, values/sensitive/neutral occupy their own zones. This is exactly the substrate
+STORYBOARD's hero viz specified; the MiniLM choice was the deviation. **Decision: the
+terrain is laid out by the model's representation, not by sentence embeddings.**
+
+Bonus (measured persona-basin sharpening): instruct beats base on region separation at
+**every** mid-to-late layer (e.g. L17: base 0.10 vs instruct 0.18). Alignment doesn't
+just shift behavior — it makes the value structure *more legible* in the representation.
+A real, on-value-content version of STORYBOARD's E1 "instruction-tuning sharpens a
+geometry."
+
+## Finding 2 — at 0.5B the warp is a COMPLIANCE FLOOD, not a safety eruption.
+
+The refusal-lean warp (instruct − base, one universal comply/refuse continuation pair,
+so the length confound cancels) by region:
+
+| region | warp (bits) | reading |
+|---|---|---|
+| harmful_clear | **+0.19** (49% toward refuse) | ~flat — barely resists |
+| dual_use | −2.07 | more compliant |
+| scary_benign | −4.54 | much more compliant |
+| neutral_help | −0.45 (median −2.69) | more compliant |
+| sensitive_ok | −3.92 | much more compliant |
+| sycophancy_bait | −2.95 | more agreeable |
+| values_advice | −2.13 | more forthcoming |
+
+The dominant effect of alignment at 0.5B is **helpfulness everywhere** — the whole
+terrain floods toward "yes, here's how" (blue). Harm is the lone region that *doesn't*
+flood; it stays put. So "safety" at this scale is not an eruption toward refusal — it is
+the **weak absence of the compliance shift** in the harm corner (harm is +4–5 bits above
+the flooded regions, but only ~0 in absolute terms). On the residual-stream layout this
+is spatially coherent — the harm corner holds red while the rest goes blue
+(`warp_on_residual_terrain.png`) — but it is a subtle corner, not a tall ridge.
+
+This weak-safety reading is now **corroborated three independent ways**: value-terrain
+harm warp +0.19, spike-1 harm nudge +0.76, and `refusal_sweep`'s 2/3 baseline refusal.
+
+## Synthesis — the honest thesis this data actually supports
+
+Prosaic alignment at small scale is **~90% teaching the model to say yes** (a broad
+helpfulness/compliance flood) **+ a thin, weak safety exception** carved into the harm
+corner **+ a sharpening of the value-geometry** (the basin forming). That is a *more
+honest and more counterintuitive* "what prosaic alignment can and cannot do" than "we
+installed safety": it can cheaply make a model broadly helpful and legible; it can only
+weakly and locally make it refuse — which is exactly why the dedicated refusal-direction
+surgery (`refusal_sweep`) exists as a separate, removable mechanism.
+
+## The open fork (needs Aditya's call)
+
+1. **Model scale.** 0.5B safety is genuinely weak (3× corroborated). If the page's
+   emotional payoff is "watch the harm ridge erupt toward refusal," that likely needs a
+   bigger model. **Gemma-2-2b is already on disk** (and already in prior-atlas) — one
+   more spike tells us whether the harm ridge strengthens at 2B, or whether weak-local
+   safety is the true picture at every tractable scale. Options: (a) stay 0.5B and make
+   the honest "compliance-flood + thin safety" the thesis; (b) test 2B/7B for a
+   dramatic ridge; (c) both — 0.5B for the playable live substrate, a bigger model
+   cited for the "at scale it's sharper" beat.
+2. **What the terrain height/color encodes.** refusal-warp (weak but honest),
+   compliance-flood (strong, the real dominant effect), or geometry-sharpening (the
+   basin forming) — or a toggle across all three. My lean: the compound story is the
+   truthful one, so let the reader switch the height metric and *feel* that "alignment"
+   is several different warps at once.
+
+Recommendation: the terrain architecture SURVIVES with the residual-stream layout. Before
+the multi-stage pipeline bake, resolve the model-scale fork — it changes whether the hero
+beat is "the harm ridge erupts" (needs scale) or "the compliance flood, and the one corner
+that resists" (true at 0.5B, and arguably the better lesson).
+
+Scope: one model pair, one seed, 214 authored value prompts. Decides substrate + story;
+not a population or cross-model claim.

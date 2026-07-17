@@ -1,5 +1,12 @@
 # Alignment Explorable — roadmap
 
+> **Superseded for construction on 2026-07-11.** The training-time/LLC concept
+> below is retained as research history. The active visual and evidence contract
+> are [`STORYBOARD_V2.md`](STORYBOARD_V2.md) and
+> [`empirical/EVIDENCE_CONTRACT.md`](empirical/EVIDENCE_CONTRACT.md): one fixed
+> situation lattice, one SmolLM checkpoint lineage, and separately labelled
+> method branches.
+
 A public explorable (sequel to the shipped **next-token** page), at its own subdomain, that
 teaches **how a base model becomes an aligned assistant — and how thin or deep that alignment
 actually is.** Neutral "masks" only; **no personal data** (the personal digital twin is a

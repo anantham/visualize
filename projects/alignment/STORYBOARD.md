@@ -1,5 +1,10 @@
 # Alignment Explorable — MVP storyboard v1 (the attractor reframe)
 
+> **Historical storyboard.** The active build specification is
+> [`STORYBOARD_V2.md`](STORYBOARD_V2.md). V2 keeps residual geometry as a later
+> interpretability lens and uses a fixed model-independent situation map for the
+> main journey.
+
 ## The reframe: alignment is an attractor landscape, not a knife-edge
 
 A single prompt is a *point*. The real object is the **landscape of personas + the dynamics on it**:
