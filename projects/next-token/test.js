@@ -36,6 +36,42 @@ const MODELS = {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// --- embedding mini-game reachability (the "caption crowded out" regression) ---
+// The journey is a pinned 100vh frame; a tall grid (21 rows, or a long sentence) must
+// NOT push the "Meaning enters here" mini-game link below the fold. Checked across a
+// viewport matrix — laptop-short (1440x800) is exactly the case a mobile-only fix missed.
+const FIT_VIEWPORTS = [
+  { w: 1440, h: 900, name: 'desktop-tall',     mobile: false },
+  { w: 1440, h: 800, name: 'laptop-short',     mobile: false },
+  { w: 1280, h: 720, name: 'desktop-720',      mobile: false },
+  { w: 390,  h: 844, name: 'mobile-portrait',  mobile: true  },
+  { w: 844,  h: 390, name: 'mobile-landscape', mobile: true  },
+];
+// Deterministic: land on a stage via the page's OWN scroll hook, then measure whether a
+// mini-game entry link is in-view AND hit-testable (not crowded below the pinned-frame fold).
+// No y-scan → no flake. `reSrc` is a RegExp source string for the link text.
+async function probeStageLink(page, reSrc, sps) {
+  let best = null;
+  for (const sp of sps) {
+    const r = await page.evaluate(async (args) => {
+      const [reSrc, sp] = args, re = new RegExp(reSrc, 'i');
+      if (typeof jScrollToSp === 'function') jScrollToSp(sp);
+      if (typeof jForceContent === 'function') jForceContent();
+      await new Promise(res => setTimeout(res, 80));
+      const link = [...document.querySelectorAll('a')].find(a => re.test(a.textContent));
+      if (!link) return null;
+      const rc = link.getBoundingClientRect(), vh = innerHeight, vw = innerWidth;
+      const inView = rc.top >= 0 && rc.bottom <= vh && rc.left >= 0 && rc.right <= vw && rc.width > 0 && rc.height > 0;
+      const cx = rc.left + rc.width / 2, cy = rc.top + rc.height / 2;
+      let hitOk = false;
+      if (cx >= 0 && cy >= 0 && cx <= vw && cy <= vh) { const el = document.elementFromPoint(cx, cy); hitOk = !!(el && (el === link || link.contains(el))); }
+      return { sp, top: Math.round(rc.top), bottom: Math.round(rc.bottom), vh, inView, hitOk };
+    }, [reSrc, sp]);
+    if (r) { const s = (r.inView ? 2 : 0) + (r.hitOk ? 1 : 0); if (!best || s > best.score) best = { ...r, score: s }; if (r.inView && r.hitOk) break; }
+  }
+  return best;
+}
+
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: VW, height: VH } });
@@ -46,7 +82,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof window.selectModel === 'function', { timeout: 15000 });
 
-  const benign = t => /health|favicon|ERR_CONNECTION_REFUSED/i.test(t);
+  const benign = t => /health|favicon|ERR_CONNECTION_REFUSED|hf\.space|status of 5\d\d/i.test(t);   // sleeping-Space 5xx / remote flakes aren't UI failures
   const results = {};
 
   for (const [key, exp] of Object.entries(MODELS)) {
@@ -99,17 +135,47 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         .map(s => getComputedStyle(s).backgroundColor)
         .filter(c => c && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent');
       out.embUniqueColors = new Set(cells).size;
-      // attention walkthrough: must open on a real SHOWCASE layer (mid-layer), not the layer-0/1 BOS-sink
-      window.jScrollToSp(3.25); window.jForceContent && window.jForceContent();
-      const sl = document.getElementById('jStreamLabel') || document.querySelector('#wkStream .sub');
-      const lm = sl ? sl.textContent.match(/layer\s+(\d+)\s+of/i) : null;
-      out.showcaseLayer = lm ? +lm[1] : null;
+      // attention walkthrough LAYER SWEEP: must ENTER at layer 1 (sink acknowledged in copy) and
+      // ARRIVE at a mid showcase layer (>1) by the end — the old design teleported straight to the
+      // showcase, which read as a bug ("why does attention start at 18?").
+      const rdLayer = () => { const sl = document.getElementById('jStreamLabel') || document.querySelector('#wkStream .sub');
+        const lm = sl ? sl.textContent.match(/layer\s+(\d+)\s+of/i) : null; return lm ? +lm[1] : null; };
+      window.jScrollToSp(3.22); window.jForceContent && window.jForceContent();
+      out.entryLayer = rdLayer();
+      window.jScrollToSp(3.29); window.jForceContent && window.jForceContent();
+      out.showcaseLayer = rdLayer();
       return out;
     });
 
     r.loaded = loaded;
     r.newErrors = errors.slice(before).filter(t => !benign(t));
     results[key] = r;
+  }
+
+  // --- embedding mini-game reachability across the viewport matrix ---
+  const captionResults = [];
+  for (const v of FIT_VIEWPORTS) {
+    const p = await browser.newPage({ viewport: { width: v.w, height: v.h }, isMobile: v.mobile, hasTouch: v.mobile });
+    try {
+      await p.goto(URL, { waitUntil: 'domcontentloaded' });
+      await p.waitForFunction(() => typeof window.jScroll === 'function', { timeout: 15000 });
+      await sleep(400);
+      const emb = await probeStageLink(p, 'Meaning enters', [2.6]);            // §3 embedding mini-game entry
+      const tok = await probeStageLink(p, 'Guess the tokens', [1.4, 1.5, 1.6, 1.75, 1.9]); // §2 tokens entry (renders across a band)
+      const opened = await p.evaluate(() => {
+        if (typeof jScrollToSp === 'function') jScrollToSp(2.6);
+        if (typeof jForceContent === 'function') jForceContent();
+        const a = [...document.querySelectorAll('a')].find(x => /expand the grid/i.test(x.textContent));
+        if (a) a.click();
+        const m = document.getElementById('embView');
+        return m ? getComputedStyle(m).display : null;
+      });
+      const embOk = !!(emb && emb.inView && emb.hitOk), tokOk = !!(tok && tok.inView && tok.hitOk);
+      const ok = embOk && tokOk && opened === 'flex';
+      captionResults.push({ name: v.name, wh: `${v.w}x${v.h}`, ok, emb, tok, opened });
+    } catch (e) {
+      captionResults.push({ name: v.name, wh: `${v.w}x${v.h}`, ok: false, err: e.message });
+    } finally { await p.close(); }
   }
 
   await browser.close();
@@ -124,9 +190,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     const heads = r.heads === exp.heads ? `PASS(${r.heads})` : `FAIL(${r.heads}/${exp.heads})`;
     const shelves = r.shelves === exp.kv ? `PASS(${r.shelves})` : `FAIL(${r.shelves}/${exp.kv})`;
     const emb = (r.embUniqueColors >= 6) ? `PASS(${r.embUniqueColors})` : `FAIL(${r.embUniqueColors})`;
-    const showcase = (r.showcaseLayer && r.showcaseLayer > 1) ? `PASS(L${r.showcaseLayer})` : `FAIL(L${r.showcaseLayer})`;
+    const showcase = (r.entryLayer === 1 && r.showcaseLayer > 1) ? `PASS(L1→L${r.showcaseLayer})` : `FAIL(L${r.entryLayer}→L${r.showcaseLayer})`;
     const errN = r.newErrors.length ? `FAIL(${r.newErrors.length})` : 'PASS';
-    const checks = [r.heads === exp.heads, r.shelves === exp.kv, r.frameFits, r.transitionOnscreen !== false, r.breakdownHeldBack !== false, r.streamMoved !== false, r.embUniqueColors >= 6, r.showcaseLayer > 1, r.newErrors.length === 0];
+    const checks = [r.heads === exp.heads, r.shelves === exp.kv, r.frameFits, r.transitionOnscreen !== false, r.breakdownHeldBack !== false, r.streamMoved !== false, r.embUniqueColors >= 6, r.entryLayer === 1 && r.showcaseLayer > 1, r.newErrors.length === 0];
     if (!r.loaded || checks.some(x => x === false)) allGreen = false;
     console.log(
       pad(key, 15), pad(heads, 12), pad(shelves, 12),
@@ -135,6 +201,17 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       r.loaded ? '' : '[LOAD-FAILED]');
     if (r.newErrors.length) r.newErrors.slice(0, 2).forEach(e => console.log('      ↳', e.slice(0, 100)));
   }
-  console.log('\n' + (allGreen ? 'ALL GREEN ✓' : 'FAILURES ABOVE ✗') + '\n');
-  process.exit(allGreen ? 0 : 1);
+  console.log('\n' + (allGreen ? 'cross-model: ALL GREEN ✓' : 'cross-model: FAILURES ABOVE ✗'));
+
+  // mini-game reachability report — the "entry crowded out below the pinned-frame fold" guard
+  console.log('\nmini-game entries reachable (tokens §2 + embedding §3, not crowded below the fold):');
+  let capGreen = true;
+  const rf = (x, label) => x ? `${label}(top=${x.top}/vh=${x.vh} in=${x.inView} hit=${x.hitOk})` : `${label}(MISSING)`;
+  for (const c of captionResults) {
+    if (!c.ok) capGreen = false;
+    const detail = c.err ? c.err : `${rf(c.tok, 'tokens')} ${rf(c.emb, 'embed')} expandOpens=${c.opened === 'flex'}`;
+    console.log('  ' + (c.ok ? 'PASS' : 'FAIL') + '  ' + pad(c.name, 18) + pad(c.wh, 9) + (c.ok ? '' : detail));
+  }
+  console.log('\n' + (allGreen && capGreen ? 'ALL GREEN ✓' : 'FAILURES ABOVE ✗') + '\n');
+  process.exit(allGreen && capGreen ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(2); });
