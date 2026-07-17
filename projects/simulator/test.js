@@ -58,9 +58,24 @@ const BASE = process.env.SIM_URL || 'http://localhost:4173/projects/simulator/';
   if (d0 === d1) throw new Error('adding examples did not change the distribution');
   await page.screenshot({ path: '/tmp/sim-shots.png' });
 
-  // stage 4 — register
+  // stage 4 — register: flipping clean->broken changes the continuation, and the page
+  // must report the HONEST per-topic split (it mirrors on some topics, corrects on others)
   await page.evaluate(() => window.__viz.go(4));
-  await page.click('[data-idx="1"]'); // broken
+  await page.click('[data-rk="clean"]');
+  const clean = await page.locator('.sent').innerText();
+  await page.click('[data-rk="broken"]');
+  const broken = await page.locator('.sent').innerText();
+  if (clean === broken) throw new Error('clean/broken seed toggle did not change the continuation');
+  const regText = await page.locator('#app').innerText();
+  if (/matches the register it/i.test(regText)) {
+    throw new Error('register stage is overclaiming a general law (it only mirrors on some topics)');
+  }
+  if (!/mirrored/i.test(regText)) throw new Error('register stage should report whether this topic mirrored');
+  // the topic that corrects must actually say so
+  await page.click('[data-rt="1"]');
+  const corrected = await page.locator('#app').innerText();
+  if (!/corrected/i.test(corrected)) throw new Error('a non-mirroring topic must be labelled corrected');
+  await page.click('[data-rt="0"]');
   await page.screenshot({ path: '/tmp/sim-register.png' });
 
   // stage 5

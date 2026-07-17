@@ -102,6 +102,13 @@ const vis=s=>String(s).replace(/\n/g,'↵');           // show newlines in token
 let DATA=null, active=0, timer=null;
 const E={group:'worlds', idx:0, step:0, playing:false};   // engine state
 const FS={q:0, shot:'0'};                                 // few-shot state
+const REG={topic:0, kind:'broken'};                       // register state
+function regIdx(){
+  const s=streamsIn('register');
+  const topics=[...new Set(s.map(x=>x.topic))];
+  const i=s.findIndex(x=>x.topic===topics[REG.topic]&&x.kind===REG.kind);
+  return i<0?0:i;
+}
 const SMP={ctx:0, temp:1.0, topp:1.0, picks:[], lastPick:null};  // sampling state
 
 const STAGES=[
@@ -109,7 +116,7 @@ const STAGES=[
   {id:'sample', tab:'how it picks', line:`The distribution isn't the answer — you still have to <b>pick</b> one token from it. Raise the temperature and the bars flatten; sample again and again and watch the choice wander.`, kind:'sampling'},
   {id:'seed', tab:'you seed it', line:`Same model. Change only <b>what goes in</b> and the whole path changes — it simulates a different kind of document.`, kind:'engine', group:'framings'},
   {id:'shots', tab:'show, don\'t train', line:`Zero examples: the next-token distribution is lost. Add a few examples <b>in the prompt</b> and it snaps onto the answer. No training.`, kind:'shots'},
-  {id:'register', tab:'it mirrors you', line:`Feed it clean prose and it predicts clean tokens. Feed it broken grammar and it predicts <b>broken tokens</b> — it matches the register it's given.`, kind:'engine', group:'register'},
+  {id:'register', tab:'does it read you?', line:`Does it pick up <b>how you write</b>, not just what you ask? Flip a seed to broken grammar and watch the generated tokens. Sometimes your errors come back. Mostly they don't.`, kind:'engine', group:'register'},
   {id:'end', tab:'so far', line:`One machine, endless documents — chosen entirely by what you feed in. Alignment is next: pinning <b>one</b> voice to the front.`, kind:'end'},
 ];
 
@@ -135,7 +142,9 @@ function engineHTML(){
   const dist=atEnd?s.steps[s.steps.length-1].topk:s.steps[E.step].topk;
   const chosen=atEnd?null:s.steps[E.step].chosen;
   const maxp=Math.max(...dist.map(d=>d.p));
-  const inputChips=s.promptPieces.filter(t=>t!=='<bos>').map(t=>`<span class="tok ctx">${esc(vis(t))}</span>`).join('')
+  const inputChips=((s.promptPieces&&s.promptPieces.length)
+      ? s.promptPieces.filter(t=>t!=='<bos>').map(t=>`<span class="tok ctx">${esc(vis(t))}</span>`).join('')
+      : `<span class="tok ctx">${esc(vis(s.prompt))}</span>`)
     + gen.map((t,i)=>`<span class="tok gen ${i===gen.length-1?'newest':''}">${esc(vis(t))}</span>`).join('');
   const distRows=dist.map(d=>{
     const pick=!atEnd && d.tok===chosen;
@@ -170,8 +179,23 @@ function chipsHTML(){
     return `<div class="chips">${streams.map((s,i)=>`<button class="chip" data-idx="${i}" aria-pressed="${i===E.idx}">${esc(s.label)}</button>`).join('')}<span style="align-self:center;color:var(--faint);font-size:12.5px">— same prompt, sampled: each run walks a different path</span></div>`;
   if(E.group==='framings')
     return `<div class="chips">${streams.map((s,i)=>`<button class="chip" data-idx="${i}" aria-pressed="${i===E.idx}">${esc(s.label)}</button>`).join('')}</div>`;
-  if(E.group==='register')
-    return `<div class="chips">${streams.map((s,i)=>`<button class="chip" data-idx="${i}" aria-pressed="${i===E.idx}">${esc(s.label)}</button>`).join('')}</div>`;
+  if(E.group==='register'){
+    const topics=[...new Set(streams.map(s=>s.topic))];
+    const cur=streams[E.idx]||streams[0];
+    const v=DATA.registerVerdict;
+    return `<div class="chips">
+      ${topics.map((t,i)=>`<button class="chip" data-rt="${i}" aria-pressed="${i===REG.topic}">${esc(t)}</button>`).join('')}
+      <span style="flex:1"></span>
+      <button class="chip" data-rk="clean" aria-pressed="${REG.kind==='clean'}">clean seed</button>
+      <button class="chip" data-rk="broken" aria-pressed="${REG.kind==='broken'}">broken seed</button>
+    </div>
+    ${cur.kind==='broken'
+      ? `<div class="hint ${cur.mirrored?'':'ok'}" style="margin:-4px 0 10px">${cur.mirrored
+          ? '↯ this one it <b>mirrored</b> — read the green tokens: your broken grammar comes straight back ("in <i>the</i> Europe")'
+          : '✓ this one it <b>corrected</b> — you wrote it badly; it read through to the meaning and answered in clean English anyway'}</div>`
+      : `<div class="hint ok" style="margin:-4px 0 10px">clean in, clean out — now flip to the broken seed</div>`}
+    ${v?`<div class="hint" style="margin:-4px 0 10px;color:var(--muted)">Across these ${v.total} passages at the same dose, it mirrored <b>${v.mirrored_count}</b>. So it <i>can</i> read your register — but its prior that text is well-written usually wins. Not a law.</div>`:''}`;
+  }
   return '';
 }
 
@@ -283,7 +307,8 @@ function render(){
   $('#line').innerHTML=st.line;
   stopPlay();
   if(st.kind==='engine'){
-    E.group=st.group; E.idx=0; E.step=0;
+    E.group=st.group; E.step=0;
+    E.idx = st.group==='register' ? regIdx() : 0;
     paintEngineStage();
   }else if(st.kind==='shots'){
     $('#app').innerHTML=`<div id="eng">${renderShots()}</div>`;
@@ -298,6 +323,8 @@ function go(i){active=Math.max(0,Math.min(STAGES.length-1,i));history.replaceSta
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]'); if(g){go(+g.dataset.go);return}
   const idx=e.target.closest('[data-idx]'); if(idx){stopPlay();E.idx=+idx.dataset.idx;E.step=0;paintEngineStage();return}
+  const rt=e.target.closest('[data-rt]'); if(rt){stopPlay();REG.topic=+rt.dataset.rt;E.idx=regIdx();E.step=0;paintEngineStage();return}
+  const rk=e.target.closest('[data-rk]'); if(rk){stopPlay();REG.kind=rk.dataset.rk;E.idx=regIdx();E.step=0;paintEngineStage();return}
   const eng=e.target.closest('[data-eng]'); if(eng){
     const a=eng.dataset.eng; const s=curStream();
     if(a==='play'){ if(E.playing){stopPlay();renderEngine()} else {if(E.step>=s.steps.length)E.step=0; play();} }
