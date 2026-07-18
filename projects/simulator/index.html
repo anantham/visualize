@@ -224,7 +224,7 @@ function renderShots(){
       <div class="ctl">
         ${counts.map(n=>`<button class="chip" data-shot="${n}" aria-pressed="${FS.shot===n}">${n} example${n==='1'?'':'s'}</button>`).join('')}
         <span class="sp"></span>
-        <span class="hint ${good?'ok':''}">${good?'✓ the distribution snapped onto “'+esc(q.expected)+'”':'✗ no examples → it has no idea what token you want'}</span>
+        <span class="hint ${good?'ok':''}">${good?'✓ the distribution snapped onto “'+esc(q.expected)+'”':'✗ no examples → almost no weight lands on the answer'}</span>
       </div>
     </div>`;
 }
@@ -290,7 +290,7 @@ function renderSampling(){
 
 function renderEnd(){
   return `<div class="engine" style="display:grid;gap:12px">
-    <div style="font:15px/1.6 -apple-system,sans-serif;color:var(--ink)">You just watched one mechanism do everything: <b style="color:var(--green)">predict the next token, add it, repeat.</b> Everything else — whether it answers, which document it becomes, whether it's clean or broken — came from <b style="color:var(--blue)">what you fed in</b>, not from the model wanting anything.</div>
+    <div style="font:15px/1.6 -apple-system,sans-serif;color:var(--ink)">You just watched one mechanism do everything: <b style="color:var(--green)">predict the next token, add it, repeat.</b> Whether it answers, which document it becomes, how it reads — all of it is steered by <b style="color:var(--blue)">what you feed in</b> pushing against the model's own priors (which sometimes win — it fixed your grammar 3 times in 4). What it never has is a goal of its own.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="dist" style="border-color:color-mix(in srgb,var(--violet) 30%,var(--line))"><div class="lab" style="color:var(--violet)">what it is not</div><div style="color:var(--muted);font-size:13.5px">an agent · a broken chatbot · the "average" of the internet</div></div>
       <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what it is</div><div style="color:var(--muted);font-size:13.5px">a simulator that can run any document you seed</div></div>

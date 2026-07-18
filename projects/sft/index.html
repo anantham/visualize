@@ -136,7 +136,7 @@ const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 const vis=s=>String(s).replace(/\n/g,'↵');
 let DATA=null, active=0, timer=null;
 const E={prompt:0, ckpt:'sft_400', step:0, playing:false};
-const CKPT_META={base:{b:'base',s:'0 steps · raw simulator'},sft_50:{b:'SFT · 50',s:'first demonstrations'},sft_400:{b:'SFT · 400',s:'fully imitated'}};
+const CKPT_META={base:{b:'base',s:'0 steps · raw simulator'},sft_50:{b:'SFT · 50',s:'first demonstrations'},sft_400:{b:'SFT · 400',s:'answers by default'}};
 // Provenance (cited): SmolLM2 paper 2502.02737 + HF dataset cards; our run = align_sft/sft_train.log
 const DISCLOSURE=[
   {name:'SmolLM2 (this model)', data:'smol-smoltalk + UltraFeedback', open:'full'},
@@ -231,7 +231,7 @@ function renderEnd(){
   return `<div class="engine" style="display:grid;gap:12px">
     <div style="color:var(--ink)">Before, you had to <b style="color:var(--blue)">seed</b> the simulator into answering (Beat 0). Now the answer is the default — SFT <b style="color:var(--violet)">baked that framing into the weights</b>.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what you gained</div><div style="color:var(--muted);font-size:13.5px">a reliable assistant · no prompt engineering · a stable format</div></div>
+      <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what you gained</div><div style="color:var(--muted);font-size:13.5px">answers by default · no prompt engineering · a consistent format</div></div>
       <div class="dist" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line))"><div class="lab" style="color:var(--gold)">what you spent</div><div style="color:var(--muted);font-size:13.5px">range — the everything-simulator now mostly speaks in one voice</div></div>
     </div>
     <div style="color:var(--muted)">SFT can only imitate answers someone <i>wrote</i>. To push past the demonstrator — to prefer one answer over another when you can't write the ideal one — you need <b style="color:var(--ink)">preferences</b>. That's next.</div>
