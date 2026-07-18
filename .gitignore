@@ -18,3 +18,4 @@ data/personal-anchors.md
 projects/lineage-of-thought/research/out/insp_*.txt
 projects/lineage-of-thought/research/out/inspect_*.png
 projects/lineage-of-thought/research/out/*.log
+.claude/settings.local.json
