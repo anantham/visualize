@@ -231,10 +231,10 @@ function renderEnd(){
   return `<div class="engine" style="display:grid;gap:12px">
     <div style="color:var(--ink)">Before, you had to <b style="color:var(--blue)">seed</b> the simulator into answering (Beat 0). Now the answer is the default — SFT <b style="color:var(--violet)">baked that framing into the weights</b>.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what you gained</div><div style="color:var(--muted);font-size:13.5px">answers by default · no prompt engineering · a consistent format</div></div>
-      <div class="dist" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line))"><div class="lab" style="color:var(--gold)">what you spent</div><div style="color:var(--muted);font-size:13.5px">range — the everything-simulator now mostly speaks in one voice</div></div>
+      <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what you gained</div><div style="color:var(--muted);font-size:13.5px">answers by default · no prompt engineering · the assistant format</div></div>
+      <div class="dist" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line))"><div class="lab" style="color:var(--gold)">what you spent</div><div style="color:var(--muted);font-size:13.5px">likely range — narrowing toward one voice is the known cost of SFT, though this page doesn't measure it</div></div>
     </div>
-    <div style="color:var(--muted)">SFT can only imitate answers someone <i>wrote</i>. To push past the demonstrator — to prefer one answer over another when you can't write the ideal one — you need <b style="color:var(--ink)">preferences</b>. That's next.</div>
+    <div style="color:var(--muted)">SFT learns by imitating answers someone <i>produced</i>. One way past the demonstrator — to prefer one answer over another when you can't write the ideal one — is <b style="color:var(--ink)">preferences</b>. That's next.</div>
   </div>`;
 }
 
