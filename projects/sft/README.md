@@ -43,3 +43,7 @@ tokens at each checkpoint, plus a few real SmolTalk demonstrations.
 `node projects/sft/test.js` (serve the repo root first) — drives the checkpoint
 scrubber (asserts base reads broken, SFT-400 reads coherent), the demonstrations,
 and checks for a painted distribution, no console errors, no mobile overflow.
+
+## Before editing copy
+
+Read [`../CLAIMS.md`](../CLAIMS.md) — the claims-provenance discipline for these pages. Every number a reader sees is checked by `npm run audit:provenance`; prose claims need a human adversarial read (the gate caught 0 of the 3 overclaims this series shipped).

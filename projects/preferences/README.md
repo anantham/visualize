@@ -59,3 +59,7 @@ log-probability; nothing is simulated.
 artifact-derived, that scrubbing training grows the chosen bar, that the summed view is
 negative while per-token is positive (the length bias), the supervision counts and the
 GPT-4 disclosure, and the before/after install toggle.
+
+## Before editing copy
+
+Read [`../CLAIMS.md`](../CLAIMS.md) — the claims-provenance discipline for these pages. Every number a reader sees is checked by `npm run audit:provenance`; prose claims need a human adversarial read (the gate caught 0 of the 3 overclaims this series shipped).

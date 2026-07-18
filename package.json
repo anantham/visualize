@@ -8,7 +8,9 @@
     "test:pretraining": "node projects/pretraining/test.js",
     "test:simulator": "node projects/simulator/test.js",
     "test:sft": "node projects/sft/test.js",
-    "test:preferences": "node projects/preferences/test.js"
+    "test:preferences": "node projects/preferences/test.js",
+    "audit:provenance": "node projects/audit-provenance.js",
+    "test:series": "node projects/simulator/test.js && node projects/sft/test.js && node projects/preferences/test.js && node projects/audit-provenance.js"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

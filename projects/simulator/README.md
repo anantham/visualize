@@ -48,3 +48,7 @@ top-30 logits per sampling context (so the sampling stage recomputes softmax exa
 `python3 -m http.server 4173`) — drives all six stages, the loop stepping, the
 temperature reshaping, few-shot toggle, seed/register switches, and checks for a
 painted distribution, no console errors, and no mobile overflow.
+
+## Before editing copy
+
+Read [`../CLAIMS.md`](../CLAIMS.md) — the claims-provenance discipline for these pages. Every number a reader sees is checked by `npm run audit:provenance`; prose claims need a human adversarial read (the gate caught 0 of the 3 overclaims this series shipped).
