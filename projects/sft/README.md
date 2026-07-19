@@ -12,8 +12,9 @@ prompt at every checkpoint**, so the only thing that changes is the weights.
 
 1. **watch it happen** — the hero: a checkpoint scrubber (base → SFT-50 →
    SFT-400) over the loop. Scrub it and the same prompt's output transforms from
-   a garbled ramble (the base can't hold the assistant format) into a coherent
-   answer. The assistant is essentially present by step 50.
+   a garbled ramble (the base can't hold the assistant format) into an
+   answer-like reply. On these four prompts, answer-like behavior appears within
+   ~50 steps (a crude auto-check, not a quality metric).
 2. **how: imitation** — the mechanism: real SmolTalk demonstrations, with the
    answer highlighted as the only thing SFT's loss lands on. Same next-token
    prediction as Beat 0, trained on curated replies.

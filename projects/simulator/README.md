@@ -2,8 +2,10 @@
 
 Beat 0 of the alignment series. Teaches what a **base model** actually is *before*
 any alignment: not a broken assistant, but a **simulator** that predicts the next
-token and feeds it back — and whose output is steered entirely by what you feed in.
-Everything shown is real, unedited **gemma-2-2b** (base, no instruction tuning).
+token and feeds it back — and whose output is steered largely by what you feed in
+(against its learned priors, with sampling adding the roll of the dice).
+Most stages show real, unedited **gemma-2-2b** (base, no instruction tuning); the
+sampling stage recomputes and draws interactively in the browser.
 
 ## Stages
 
@@ -13,11 +15,11 @@ Everything shown is real, unedited **gemma-2-2b** (base, no instruction tuning).
 2. **how it picks** — sampling made interactive: a temperature slider reshapes the
    real distribution live (softmax over baked logits, recomputed in-browser), top-p
    trims the tail, and repeated sampling shows the choice wander. Answers greedy vs.
-   temperature vs. top-k vs. top-p.
+   temperature vs. top-p.
 3. **you seed it** — same weights, different framing (Q&A / forum / children's book)
    → a different kind of document is simulated.
 4. **show, don't train** — few-shot in-context learning as distribution-sharpening:
-   0 examples → lost; a few examples → the distribution snaps onto the answer.
+   0 examples → the expected token isn't on top; a few examples → it becomes the top prediction.
 5. **it mirrors you** — clean vs. broken context → the generated tokens match the
    register they're given.
 6. **so far** — the takeaway and the bridge to SFT.
@@ -33,7 +35,8 @@ Everything shown is real, unedited **gemma-2-2b** (base, no instruction tuning).
 
 It records, per stream, the real per-step top-k next-token distribution and chosen
 token; per few-shot query, the answer-step distribution at 0 vs N examples; and the
-top-30 logits per sampling context (so the sampling stage recomputes softmax exactly).
+top-30 logits per sampling context (the sampling stage recomputes softmax over those
+top-30 — an approximation of the full-vocabulary softmax).
 
 ## `window.__viz`
 

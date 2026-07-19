@@ -115,9 +115,9 @@ const STAGES=[
   {id:'loop', tab:'the loop', line:`It doesn't answer — it predicts the <b>next token</b>, adds it to the end, and runs again. Press play and watch a sentence build itself.`, kind:'engine', group:'worlds'},
   {id:'sample', tab:'how it picks', line:`The distribution isn't the answer — you still have to <b>pick</b> one token from it. Raise the temperature and the bars flatten; sample again and again and watch the choice wander.`, kind:'sampling'},
   {id:'seed', tab:'you seed it', line:`Same model. Change only <b>what goes in</b> and the whole path changes — it simulates a different kind of document.`, kind:'engine', group:'framings'},
-  {id:'shots', tab:'show, don\'t train', line:`Zero examples: the next-token distribution is lost. Add a few examples <b>in the prompt</b> and it snaps onto the answer. No training.`, kind:'shots'},
+  {id:'shots', tab:'show, don\'t train', line:`Zero examples: the expected answer isn't the top token. Add a few examples <b>in the prompt</b> and it jumps to the top of the distribution. No training.`, kind:'shots'},
   {id:'register', tab:'does it read you?', line:`Does it pick up <b>how you write</b>, not just what you ask? Flip a seed to broken grammar and watch the generated tokens. Sometimes your errors come back. Mostly they don't.`, kind:'engine', group:'register'},
-  {id:'end', tab:'so far', line:`One machine, endless documents — chosen entirely by what you feed in. Alignment is next: pinning <b>one</b> voice to the front.`, kind:'end'},
+  {id:'end', tab:'so far', line:`One machine, endless documents — shaped largely by what you feed in (its learned priors and the sampling roll do the rest). Alignment is next: pinning <b>one</b> voice to the front.`, kind:'end'},
 ];
 
 function streamsIn(group){return DATA.streams.filter(s=>s.group===group)}
@@ -224,7 +224,7 @@ function renderShots(){
       <div class="ctl">
         ${counts.map(n=>`<button class="chip" data-shot="${n}" aria-pressed="${FS.shot===n}">${n} example${n==='1'?'':'s'}</button>`).join('')}
         <span class="sp"></span>
-        <span class="hint ${good?'ok':''}">${good?'✓ the distribution snapped onto “'+esc(q.expected)+'”':'✗ no examples → almost no weight lands on the answer'}</span>
+        <span class="hint ${good?'ok':''}">${good?'✓ “'+esc(q.expected)+'” is now the top prediction':'✗ without examples, “'+esc(q.expected)+'” isn’t the top prediction'}</span>
       </div>
     </div>`;
 }
@@ -351,10 +351,10 @@ addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='
 
 fetch('./stream.json').then(r=>r.json()).then(d=>{
   DATA=d;
-  $('#foot').textContent='Every token, and every probability bar, is a real unedited generation from '+d.model+' — a base model with no instruction tuning. The bars are its actual top-'+d.topk+' next-token distribution at each step.';
+  $('#foot').textContent='The loop, seed, few-shot and register stages show real, unedited '+d.model+' generations (a base model, no instruction tuning) with its baked top-'+d.topk+' next-token probabilities. The “how it picks” stage is interactive: it recomputes a temperature/top-p distribution over the baked top-30 candidates and draws in your browser — those tokens are your rolls, not baked generations.';
   const h=+location.hash.slice(1); if(!Number.isNaN(h))active=Math.max(0,Math.min(STAGES.length-1,h));
   render(); window.__viz.ready=true;
-}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run beat0_stream_bake.py first ('+esc(String(e))+')</div>';});
+}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run bake_stream.py first ('+esc(String(e))+')</div>';});
 
 window.__viz={
   ready:false,

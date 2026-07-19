@@ -8,7 +8,7 @@ Writes projects/simulator/stream.json:
                     groups: 'worlds' (same prompt, sampled -> different paths),
                             'framings' (different seed -> different document),
                             'register' (clean vs broken seed)
-  fewshotSharpen  : the ANSWER-step distribution at 0 vs 2 shots (ICL = distribution sharpening)
+  fewshotSharpen  : the ANSWER-step distribution at 0 vs 3 shots (ICL = distribution sharpening)
 """
 import json, time, gc
 from pathlib import Path

@@ -147,7 +147,7 @@
 
   <section class="learn">
     <h2>What this page is allowed to claim</h2>
-    <p>The treemaps below are category-level teaching views, not a reconstruction of every training batch. When a lab has not released the corpus recipe, the visualization shows that absence rather than inventing a pantry.</p>
+    <p>The treemaps below are category-level teaching views, not a reconstruction of every training batch. When a lab discloses only broad categories, the treemap shows them as an explicit estimate (hatched, with a "~", never as a known recipe); when nothing is disclosed, it shows no pantry at all.</p>
     <table>
       <thead><tr><th>Model</th><th>Openness</th><th>Use here</th></tr></thead>
       <tbody id="modelRows"></tbody>
@@ -309,7 +309,7 @@ const MODELS = [
       {name:'math', value:15, color:'#b997ff', note:'FineMath and math-heavy mixtures'},
       {name:'code', value:18, color:'#72d39d', note:'Stack-Edu and code-like technical data'},
       {name:'general web', value:12, color:'#55d0c6', note:'broad web mixture'},
-      {name:'instruction-like data', value:6, color:'#ff9e64', note:'SmolTalk-style instruction material in later stages'},
+      {name:'instruction-like data', value:6, color:'#ff9e64', note:'SmolTalk-style instruction material folded into later pretraining (annealing) stages, before separate post-training'},
       {name:'other curated data', value:4, color:'#ff7d79', note:'stage-specific refinements'}
     ]
   },
@@ -505,7 +505,7 @@ const STEPS = [
   {
     mode:'loop',
     title:'The base model is trained by prediction',
-    copy:'The same loss is applied billions or trillions of times. Skill appears as a side effect of getting next-token probabilities less wrong.'
+    copy:'The same loss is applied billions or trillions of times. Capabilities can emerge as a side effect of getting next-token probabilities less wrong.'
   },
   {
     mode:'compute',
@@ -515,7 +515,7 @@ const STEPS = [
   {
     mode:'instability',
     title:'Training is monitored, not ordained',
-    copy:'Large runs use checkpoints, evals, loss curves, restarts, and judgment calls. The final base model is selected, not simply born.'
+    copy:'Large runs use checkpoints, evals, loss curves, and judgment calls (sometimes restarts). The released base model is usually a selected checkpoint, not automatically the last step.'
   },
   {
     mode:'base',
@@ -703,13 +703,15 @@ function drawDisclosure(m){
   drawText(m.family,cx-boxW/2+28,cy-boxH/2+82,13,'#97a4b8','700');
 
   const pantry = m.corpus.length
-    ? (m.openness === 'full recipe' ? 'pantry opens' : 'pantry is partly labeled')
+    ? (m.openness === 'full recipe' ? 'pantry opens' : m.openness === 'high' ? 'pantry mostly opens' : 'pantry is partly labeled')
     : 'pantry is closed';
   const line1 = m.openness === 'opaque'
     ? 'No weights. No full training corpus. We can only inspect public behavior.'
     : m.openness === 'partial'
       ? 'Weights exist, but the exact data mixture is not fully reconstructable.'
-      : 'Weights, checkpoints, data recipe, and training order are inspectable.';
+      : m.openness === 'high'
+        ? 'Weights and datasets are released and the recipe is described; some training details stay summarized.'
+        : 'Weights, checkpoints, data recipe, and training order are inspectable.';
   drawText(pantry,cx-boxW/2+28,cy-boxH/2+120,18,state,'800');
   drawText(line1,cx-boxW/2+28,cy-boxH/2+150,14,'#b9c5d6','500',boxW-56);
   drawText('Use the dropdown to switch models. This scene shows only the selected one.',cx-boxW/2+28,cy+boxH/2-28,12,'#657389','600',boxW-56);
@@ -720,7 +722,7 @@ function drawDisclosure(m){
   roundRect(meterX,meterY,meterW,10,5);
   ctx.fillStyle='rgba(101,115,137,.28)';
   ctx.fill();
-  const fill = m.openness === 'full recipe' ? 1 : (m.openness === 'partial' ? .55 : .14);
+  const fill = m.openness === 'full recipe' ? 1 : m.openness === 'high' ? .82 : (m.openness === 'partial' ? .55 : .14);
   roundRect(meterX,meterY,meterW*fill,10,5);
   ctx.fillStyle=state;
   ctx.fill();
@@ -773,7 +775,7 @@ function drawCorpus(m){
     ctx.stroke();
     if(n.w > 92 && n.h > 48){
       drawText(n.name,n.x+12,n.y+24,13,'#08111a','800',n.w-24);
-      drawText(n.value + '%',n.x+12,n.y+n.h-14,18,'rgba(8,17,26,.86)','800');
+      drawText((m.openness==='partial'?'~':'') + n.value + '%',n.x+12,n.y+n.h-14,18,'rgba(8,17,26,.86)','800');
     }
   }
   const h = hoverNode;
@@ -829,6 +831,7 @@ function drawTokens(){
     drawText(String(32000+i*137),x+12,y+39,11,'#97a4b8','600');
     x += tw + 10;
   });
+  drawText('schematic — illustrative pieces and IDs, not a real tokenizer’s output',b.x,y+68,12,'#657389','600',b.w);
   const arrowY = Math.min(b.y+b.h-78,y+104);
   drawArrow(b.x+40,arrowY,b.x+b.w-40,arrowY,'#e5c766');
   drawText('one training example becomes many prediction tasks',b.x+48,arrowY+32,14,'#e5c766','700');
@@ -873,9 +876,10 @@ function drawCompute(m){
     ctx.fillStyle = i < lit ? 'rgba(102,183,255,.82)' : 'rgba(101,115,137,.22)';
     ctx.fill();
   }
+  const ub = !!(m.tokenLabel && /^up to/i.test(m.tokenLabel));
   drawText(m.name,b.x,b.y+8,22,'#e1e8f2','800');
-  drawText(f ? sci(f) + ' dense training FLOPs' : 'compute not disclosed',b.x,b.y+b.h-62,22,f ? '#e5c766' : '#ff7d79','800');
-  drawText(years ? 'About ' + (years < 1 ? years.toFixed(2) : years.toFixed(0)) + ' H100-years at a rough sustained-throughput assumption.' : 'No responsible compute estimate without parameters and tokens.',b.x,b.y+b.h-30,14,'#97a4b8','500',b.w);
+  drawText(f ? (ub?'≤ ':'') + sci(f) + ' dense training FLOPs' : 'compute not disclosed',b.x,b.y+b.h-62,22,f ? '#e5c766' : '#ff7d79','800');
+  drawText(years ? (ub?'At most about ':'About ') + (years < 1 ? years.toFixed(2) : years.toFixed(0)) + ' H100-years at a rough sustained-throughput assumption' + (ub?' (token count is an upper bound).':'.') : 'No responsible compute estimate without parameters and tokens.',b.x,b.y+b.h-30,14,'#97a4b8','500',b.w);
 }
 function drawInstability(){
   const b = visualBounds();
@@ -899,7 +903,7 @@ function drawInstability(){
     ctx.beginPath(); ctx.moveTo(x,y0-h); ctx.lineTo(x,y0+8); ctx.stroke();
     drawText('ckpt',x-15,y0+28,11,'#e5c766','700');
   });
-  drawText('loss mostly falls, but runs are watched for spikes, regressions, and capability changes',x0,y0-h-22,14,'#97a4b8','500',w);
+  drawText('schematic — loss mostly falls, but runs are watched for spikes, regressions, and capability changes (illustrative, not a measured log)',x0,y0-h-22,14,'#97a4b8','500',w);
 }
 function drawBase(m){
   const b = visualBounds();
@@ -923,12 +927,19 @@ function drawBase(m){
     ctx.fillStyle=col+'33'; ctx.fill(); ctx.strokeStyle=col; ctx.stroke();
     drawText(lab,x-48,y+5,13,'#e1e8f2','700');
   });
+  const isOpaque = m.openness === 'opaque';
+  const isPost = /post-trained/i.test(m.disclosure||'') || /-it$/.test(m.id);
   roundRect(-112,-54,224,108,8);
   ctx.fillStyle='rgba(21,29,40,.92)'; ctx.fill(); ctx.strokeStyle='#66b7ff'; ctx.stroke();
-  drawText('base model',-70,-8,24,'#e1e8f2','800');
+  drawText(isOpaque ? 'base is hidden' : (isPost ? 'base (pretraining)' : 'base model'),-92,-8,22,'#e1e8f2','800');
   drawText(m.family, -40, 23, 14, '#97a4b8','700');
   ctx.restore();
-  drawText('post-training begins after this',b.x,b.y+b.h-10,15,'#e5c766','800');
+  const baseCaption = isOpaque
+    ? 'you only ever meet the post-trained product — its base is not disclosed'
+    : isPost
+      ? 'this is the post-trained sibling; the base above is its pretraining stage'
+      : 'post-training begins after this';
+  drawText(baseCaption,b.x,b.y+b.h-10,15,'#e5c766','800',b.w);
 }
 function drawArrow(x1,y1,x2,y2,color){
   ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2;
