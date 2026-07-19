@@ -36,7 +36,11 @@ sampling stage recomputes and draws interactively in the browser.
 It records, per stream, the real per-step top-k next-token distribution and chosen
 token; per few-shot query, the answer-step distribution at 0 vs N examples; and the
 top-30 logits per sampling context (the sampling stage recomputes softmax over those
-top-30 — an approximation of the full-vocabulary softmax).
+top-30 — an approximation of the full-vocabulary softmax). The register spread (four
+topics, clean control vs broken seed) and its `registerVerdict` are baked here too: the
+continuations are real and greedy, but the per-topic `mirrored` flag is a **disclosed
+heuristic** judgment (set as a constant in the script and surfaced to the reader as
+"Heuristic, disclosed."), not a mechanical metric.
 
 ## `window.__viz`
 

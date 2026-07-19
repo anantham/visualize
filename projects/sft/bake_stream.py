@@ -6,8 +6,9 @@ chosen) at three checkpoints of one real run:
 Same chat-formatted input at every checkpoint, so the ONLY thing that changed is the
 weights. Watch a rambling continuation become a clean assistant answer.
 
-Also grabs a few real SmolTalk demonstrations (the actual SFT training data) so the
-page can show 'this is what it imitated'.
+Also grabs a few example SmolTalk rows (the first qualifying rows from the same
+dataset SFT learns from — not necessarily this run's exact training examples) so the
+page can show 'this is the kind of thing it imitated'.
 
 Writes projects/sft/stream.json.
 """

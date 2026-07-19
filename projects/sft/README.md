@@ -31,7 +31,8 @@ prompt at every checkpoint**, so the only thing that changes is the weights.
 ```
 
 Per prompt, it records token-by-token top-k next-token distributions + chosen
-tokens at each checkpoint, plus a few real SmolTalk demonstrations.
+tokens at each checkpoint, plus a few example SmolTalk rows (the first qualifying
+rows from the same dataset — not necessarily this run's exact training examples).
 
 ## `window.__viz`
 

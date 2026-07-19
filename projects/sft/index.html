@@ -265,7 +265,7 @@ fetch('./stream.json').then(r=>r.json()).then(d=>{
   $('#foot').innerHTML='Real greedy generations (capped at 30 tokens) from one training run of '+esc(d.model)+', same chat-formatted prompt at every checkpoint; bars are its top-'+d.topk+' candidates (full-softmax probabilities, widths scaled to the top candidate). Supervision counts and provenance: SmolLM2 paper (arXiv:2502.02737) and the HuggingFace dataset cards — smol-smoltalk 460,341 rows; ultrafeedback_binarized 61,135 pairs; SmolTalk’s own card states Smol-Magpie-Ultra (400K of ~1M) was generated with Llama-3.1-405B-Instruct, plus synthetic Smol-Rewrite/Summarize/Constraints (~186K). Our run: align_sft log (4,000 examples). Disclosure status per each model’s public docs.';
   const h=+location.hash.slice(1); if(!Number.isNaN(h))active=Math.max(0,Math.min(STAGES.length-1,h));
   render(); window.__viz.ready=true;
-}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run sft_stream_bake.py first ('+esc(String(e))+')</div>';});
+}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run bake_stream.py first ('+esc(String(e))+')</div>';});
 
 window.__viz={ ready:false,
   state:()=>({ready:!!DATA,stage:active,id:STAGES[active].id,ckpt:E.ckpt,prompt:E.prompt,step:E.step,stages:STAGES.length}),

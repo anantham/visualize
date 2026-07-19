@@ -4,11 +4,17 @@ recording the real next-token distribution (top-k) and the chosen token at every
 The UI animates: tokens in -> model -> distribution out -> pick -> feed the token back in.
 
 Writes projects/simulator/stream.json:
-  streams[]       : {label, group, promptPieces[], steps:[{topk:[{tok,p}], chosen}]}
+  streams[]       : {group, label, prompt, promptPieces[], steps:[{topk:[{tok,p}], chosen, chosenInTop}]}
                     groups: 'worlds' (same prompt, sampled -> different paths),
                             'framings' (different seed -> different document),
-                            'register' (clean vs broken seed)
+                            'register' (clean vs broken seed; also carries topic/kind/mirrored)
   fewshotSharpen  : the ANSWER-step distribution at 0 vs 3 shots (ICL = distribution sharpening)
+  sampling        : per-context top-30 logits, for the in-browser temperature/top-p stage
+  registerVerdict : the aggregate register read (see REGISTER below). The generations are
+                    real+greedy; 'mirrored' is a DISCLOSED HEURISTIC judgment (did the broken
+                    continuation pick up the seed's broken-grammar tells more than the clean
+                    control?), not a mechanical metric — it is set as a constant here so the
+                    page and this script agree, and surfaced to the reader as "Heuristic, disclosed."
 """
 import json, time, gc
 from pathlib import Path
@@ -22,17 +28,49 @@ OUT = Path(__file__).resolve().parent / "stream.json"
 TOPK = 8
 N_STEPS = 26
 
+# group, label, prompt, sample?, seed  (worlds + framings; register is generated below)
 SEEDS = [
-    # group, label, prompt, sample?, seed
     ("worlds", "run 1", "How does a compass work?", True, 1),
     ("worlds", "run 2", "How does a compass work?", True, 2),
     ("worlds", "run 3", "How does a compass work?", True, 7),
     ("framings", "a Q&A page", "Q: How does a compass work?\nA:", False, 0),
     ("framings", "a forum thread", "Thread: How does a compass work?\n\nTop reply:", False, 0),
     ("framings", "a children's book", "From a picture book for young children:\n\nHow does a compass work? Well,", False, 0),
-    ("register", "clean prose", "The printing press let ideas spread across Europe. Because books became cheap,", False, 0),
-    ("register", "broken prose", "The printing press is let the idea spread in the Europe. Because the book is become cheap,", False, 0),
 ]
+
+# Register spread: the SAME short broken dose across four topics, clean control vs broken seed.
+# 'mirrored' is a disclosed heuristic read of the greedy continuation (did it pick up the broken
+# grammar tells more than the clean control did?) — a human judgment, held as a constant so the
+# baked data and the page's registerVerdict stay in sync. See registerVerdict.note.
+REGISTER = [
+    {
+        "topic": "the printing press",
+        "clean": "The printing press let ideas spread across Europe. Because books became cheap,",
+        "broken": "The printing press is let the idea spread in the Europe. Because the book is become cheap,",
+        "mirrored": True,
+    },
+    {
+        "topic": "magnetism",
+        "clean": "The Earth makes a magnetic field deep in its core. Because the field reaches into space,",
+        "broken": "The Earth is make a magnetic field deep in the core. Because the field is reach to the space,",
+        "mirrored": False,
+    },
+    {
+        "topic": "photosynthesis",
+        "clean": "Plants turn sunlight into sugar inside their leaves. Because this releases oxygen,",
+        "broken": "The plant is turn the sunlight into a sugar inside the leaf. Because this is give out oxygen,",
+        "mirrored": False,
+    },
+    {
+        "topic": "the telephone",
+        "clean": "The telephone let people talk across great distances. Because businesses adopted it quickly,",
+        "broken": "The telephone is let the people talk across the big distance. Because the business is adopt it quick,",
+        "mirrored": False,
+    },
+]
+REGISTER_NOTE = ("same short broken dose across topics; 'mirrored' = the continuation picked up "
+                 "more of the seed's broken grammar tells than the clean control did. "
+                 "Heuristic, disclosed.")
 
 FEWSHOT = {
     # prose format avoids gemma's "glossary => HTML" habit, so the answer token itself
@@ -115,6 +153,15 @@ def main():
         data["streams"].append({"group": group, "label": label, "prompt": prompt,
                                 "promptPieces": pp, "steps": steps})
 
+    # register spread: clean control + broken seed per topic, greedy
+    for r in REGISTER:
+        for kind in ("clean", "broken"):
+            print(f"  stream: register/{r['topic']} · {kind}", flush=True)
+            pp, steps = stream(model, tok, r[kind], sample=False, seed=0)
+            data["streams"].append({"group": "register", "label": f"{r['topic']} · {kind}",
+                                    "topic": r["topic"], "kind": kind, "mirrored": r["mirrored"],
+                                    "prompt": r[kind], "promptPieces": pp, "steps": steps})
+
     print("  fewshot sharpen...", flush=True)
     fs = {"task": FEWSHOT["task"], "shotCounts": FEWSHOT["shotCounts"], "queries": []}
     for q, exp in FEWSHOT["queries"]:
@@ -127,6 +174,14 @@ def main():
 
     print("  sampling logits...", flush=True)
     data["sampling"] = [{"context": c, "tokens": topk_logits(model, tok, c, 30)} for c in SAMPLING_CONTEXTS]
+
+    # aggregate register read — a disclosed heuristic (see REGISTER / registerVerdict.note)
+    data["registerVerdict"] = {
+        "note": REGISTER_NOTE,
+        "topics": [{"topic": r["topic"], "mirrored": r["mirrored"]} for r in REGISTER],
+        "mirrored_count": sum(1 for r in REGISTER if r["mirrored"]),
+        "total": len(REGISTER),
+    }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, indent=2, ensure_ascii=False))
