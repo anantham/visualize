@@ -86,7 +86,7 @@ Deep links:
 | `selectPoint(i)` | open the point detail panel |
 | `point(i)` | return raw point data |
 | `pairs()` | return all 15 model pairs |
-| `stats(a,b)` | return deterministic terrain-height stats for a pair |
+| `stats(a,b)` | deterministic bit-gap stats for a pair: `{ meanDiv, maxDiv, above10, n }` in bits/char (display-mode independent) |
 
 Run:
 

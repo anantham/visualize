@@ -206,11 +206,11 @@ function pngStats(buf) {
       same: window.__viz.stats('pythia-1.4b', 'pythia-410m'),
       diff: window.__viz.stats('gpt2', 'gemma-2-2b'),
     }));
-    if (!(shape.same.meanH < shape.diff.meanH)) {
-      throw new Error(`same-data pair should be flatter: ${shape.same.meanH} !< ${shape.diff.meanH}`);
+    if (!(shape.same.meanDiv < shape.diff.meanDiv)) {
+      throw new Error(`same-data pair should be flatter: ${shape.same.meanDiv} !< ${shape.diff.meanDiv}`);
     }
-    if (!(shape.same.maxH < shape.diff.maxH)) {
-      throw new Error(`same-data max should be lower: ${shape.same.maxH} !< ${shape.diff.maxH}`);
+    if (!(shape.same.maxDiv < shape.diff.maxDiv)) {
+      throw new Error(`same-data max should be lower: ${shape.same.maxDiv} !< ${shape.diff.maxDiv}`);
     }
 
     await page.evaluate(() => window.__viz.go(2));
@@ -218,8 +218,8 @@ function pngStats(buf) {
     const axis = await page.locator('#axis').textContent();
     const calibration = await page.locator('#calibration').textContent();
     if (!axis.includes('20 bits') || !axis.includes('million×')) throw new Error('axis missing bits + x-factor scale');
-    if (!calibration.includes('33 million×') || !calibration.includes('memorization')) {
-      throw new Error('calibration peak copy missing 25-bit x-factor framing');
+    if (!calibration.includes('million×') || !calibration.includes('coverage')) {
+      throw new Error('calibration peak copy missing x-factor + coverage framing');
     }
 
     let panel = await page.locator('#info').evaluate((el) => ({
@@ -229,8 +229,8 @@ function pngStats(buf) {
     }));
     if (!panel.shown || panel.hidden !== 'false') throw new Error('detail panel did not open on terrain act');
     if (!panel.text.includes('bits / char')) throw new Error('detail panel missing divergence unit');
-    if (!panel.text.includes('million×') || !panel.text.includes('coverage / memorization')) {
-      throw new Error('detail panel missing x-factor or coverage/memorization line');
+    if (!panel.text.includes('million×') || !panel.text.includes('coverage')) {
+      throw new Error('detail panel missing x-factor or coverage line');
     }
 
     await page.evaluate(() => window.__viz.go(3));
@@ -242,7 +242,7 @@ function pngStats(buf) {
 
     await page.evaluate(() => window.__viz.go(4));
     const caveats = await page.locator('.act[data-act="4"]').textContent();
-    for (const phrase of ['Curated sample', 'UMAP is lossy', 'not correctness', 'tail shape', 'Scale is second-order']) {
+    for (const phrase of ['Curated sample', 'UMAP is lossy', 'not correctness', 'tail shape', 'Scale looks second-order']) {
       if (!caveats.includes(phrase)) throw new Error(`missing caveat phrase: ${phrase}`);
     }
 

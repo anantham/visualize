@@ -394,21 +394,21 @@
         <div class="mini-stat"><div class="num">~0.15</div><div class="lbl">Pile model bits on "Len"</div></div>
         <div class="mini-stat"><div class="num">25.4</div><div class="lbl">gpt2 bits on the same token</div></div>
       </div>
-      <p>That is not a harder token in the abstract. It is a coverage scar: one corpus made the string familiar, the other did not.</p>
+      <p>That is not a harder token in the abstract. It reads as a coverage gap: the string was familiar to one corpus and not the other.</p>
     </section>
 
     <section class="act" data-act="2">
       <h2>The terrain</h2>
-      <p>Now every sampled next-token position becomes a point. Ground position is a lossy UMAP of context; height is the selected pair's <b>surprisal gap</b> in bits.</p>
-      <p>Read the height with the scale at right: <b>1 bit = 2×</b>, <b>10 bits = about 1000×</b>, and the labeled Go-struct peak is roughly <b>25 bits = 33 million×</b>.</p>
+      <p>Now every sampled position on the observed continuation becomes a point. Ground position is a lossy UMAP of context; height encodes the selected pair's per-character <b>surprisal gap</b> (bits/char).</p>
+      <p>Each bit doubles the likelihood ratio: <b>1 bit = 2×</b>, <b>10 bits ≈ 1000×</b>, the labeled Go-struct peak ≈ <b>24 bits ≈ 15 million×</b> per character (the tallest point on the whole terrain reaches ~25 bits) — read exact values from a point's tooltip. In <b>reveal</b> (the default) tall peaks are lifted nonlinearly so small gaps stay visible, so compare heights loosely, not as a bit ruler.</p>
       <p>Tap or click peaks to see both models' bit bars. A peak means disagreement on the observed continuation; it does not mean one model is correct.</p>
     </section>
 
     <section class="act" data-act="3">
       <h2>The map of models</h2>
-      <p>The model map compares model priors. Dot distance means "these two models predict differently"; axes are not canonical. Pick two dots and the terrain re-forms for that pair.</p>
+      <p>The model map summarizes the terrain. Dot distance ≈ the average per-character surprisal gap between two models over these 3,000 observed continuations — not full next-token-distribution disagreement; axes are not canonical. Pick two dots and the terrain re-forms for that pair.</p>
       <p>The same-data pairs flatten: <b>gpt2 to gpt2-xl</b> and <b>pythia-1.4b to pythia-410m</b>. Data-different pairs erupt into mountains.</p>
-      <p>Scale still nudges the map: gpt2-xl sits a little closer to other families than gpt2. But data family dominates the shape.</p>
+      <p>Scale still nudges the map: gpt2-xl sits a little closer to other families than gpt2. But across these six models, data family separates the map more than scale does.</p>
     </section>
 
     <section class="act" data-act="4">
@@ -419,7 +419,7 @@
         <li><b>UMAP is lossy.</b> The x-y projection is chosen for readability; the axes are not canonical.</li>
         <li><b>Surprisal gap is not correctness.</b> This is |bitsA - bitsB| on the observed continuation, not symmetric JSD and not a score of which model is better.</li>
         <li><b>Flattening is elevation, not tail shape.</b> Same-data pairs make shorter mountains, but the p99/median tail shape still overlaps; gpt2 to gpt2-xl flattens less than the Pythia pair.</li>
-        <li><b>Scale is second-order.</b> Bigger models nudge the terrain, but data differences dominate.</li>
+        <li><b>Scale looks second-order here.</b> On this six-model roster the two same-data pairs flatten while cross-data pairs erupt — an observation on these pairs, not a controlled data-vs-scale result (changing family also changes tokenizer and recipe).</li>
       </ul>
     </section>
 
@@ -429,8 +429,8 @@
     </div>
   </div>
 
-  <div id="axis" class="hud card" aria-label="Height scale">
-    <div class="axis-title">Height scale</div>
+  <div id="axis" class="hud card" aria-label="Bits to likelihood reference">
+    <div class="axis-title">Bits → likelihood</div>
     <div class="axis-row"><b>1 bit</b><span>2× likely</span></div>
     <div class="axis-row"><b>4 bits</b><span>16× likely</span></div>
     <div class="axis-row"><b>10 bits</b><span>~1000× likely</span></div>
@@ -439,7 +439,7 @@
 
   <div id="calibration" class="hud card">
     <span class="cal-title">Calibration peak</span>
-    Go struct token <b>"Len"</b>: gpt2 reads it as about <b>25 bits</b> of surprise while gemma is near <b>1.6</b>. That gap is roughly <b>33 million×</b>: memorization / coverage, not difficulty.
+    Go struct token <b>"Len"</b>: gpt2 reads it at about <b>25.4 b/char</b> of surprise while gemma is near <b>1.6</b> — a gap of ~<b>24 bits</b>, about <b>15 million×</b> more likely per character: coverage, not difficulty.
   </div>
 
   <!-- LEFT RAIL -->
@@ -450,7 +450,7 @@
     </div>
     <div class="card title">
       <h1><span class="dot"></span>Prior Atlas</h1>
-      <p>Where two base language models disagree about the next token — a map of what each one's training data made familiar.</p>
+      <p>Where two base language models diverge on the observed next token — a map of what each one's training data made familiar.</p>
     </div>
 
     <div class="scroll">
@@ -495,8 +495,8 @@
         <b>300 Pile passages</b>, balanced across 6 domains — 3,000 next-token positions, scored by
         <b>6 base models</b>. Height is the per-character divergence (bits) between the two selected
         models, computed live as |bits<sub>A</sub> − bits<sub>B</sub>| — so any of the 15 pairs works.
-        <b>Faithful</b> weights each point toward the Pile's natural domain mix (code becomes as rare as
-        it truly is); <b>Reveal</b> lifts every hidden peak into view.
+        <b>Faithful</b> re-weights the six sampled domains toward their relative Pile proportions (code
+        becomes rarer) — it does not recover natural text density; <b>Reveal</b> lifts every hidden peak into view.
         <span class="um">The x–y ground is a UMAP projection of context: illustrative, not measured — the height is the measurement.</span>
       </div>
     </div>
@@ -1266,7 +1266,7 @@
     const barRow = (name, val, isSurp)=>{
       const w = Math.max(3, Math.min(100, (val/scaleMax)*100));
       const cls = isSurp ? 'surp' : 'conf';
-      const tag = isSurp ? 'more surprised' : (matched ? 'less surprised' : 'confident');
+      const tag = isSurp ? 'more surprised' : 'less surprised';
       const hr = MODEL_BY_NAME[name].params_hr;
       return `<div class="row"><span class="m">${name} <span style="color:var(--faint)">·${hr}</span></span>`+
              `<span class="bits">${val.toFixed(2)} <span class="u2">b/char</span></span></div>`+
@@ -1293,16 +1293,16 @@
         `<span class="mem">calibration</span>, not coverage — <b>${surp}</b> runs a touch more surprised than `+
         `<span class="mem">${memo}</span>. No memorization gap: same corpus, so scale alone barely moves the prediction.`;
     }else if(div>=4){
-      plain = `<b>${surp} didn't see this</b> — it was lost on “${esc(p.next)}”, while `+
-        `<span class="mem">${memo} saw it</span> and predicted it near-certainly (${memoBits.toFixed(2)} b/char). `+
-        `This string looks like it lived in <span class="mem">${memo}</span>'s data (<span class="mem">${mf}</span>), `+
-        `not <b>${surp}</b>'s (<b>${sf}</b>) — coverage / memorization, not difficulty.`;
+      plain = `<b>${surp} was far more surprised</b> by “${esc(p.next)}” (${surpBits.toFixed(2)} b/char) than `+
+        `<span class="mem">${memo}</span> (${memoBits.toFixed(2)} b/char). A gap this large is the signature of a `+
+        `coverage difference — the continuation likely sat more squarely in <span class="mem">${memo}</span>'s corpus `+
+        `(<span class="mem">${mf}</span>) than <b>${surp}</b>'s (<b>${sf}</b>). One point can't prove either model saw the exact string.`;
     }else if(div>=1){
-      plain = `<b>${surp} was more surprised</b> than <span class="mem">${memo}</span> — a coverage gap: `+
+      plain = `<b>${surp} was more surprised</b> than <span class="mem">${memo}</span> — consistent with a coverage difference: `+
         `this continuation sat more squarely in <span class="mem">${memo}</span>'s corpus (<span class="mem">${mf}</span>).`;
     }else{
-      plain = `Both models saw this — their priors agree (only ${div.toFixed(2)} b/char apart). `+
-        `A common string shared by <b>${sf}</b> and <span class="mem">${mf}</span>.`;
+      plain = `Both models find this continuation familiar — their priors agree here (only ${div.toFixed(2)} b/char apart). `+
+        `A common string across <b>${sf}</b> and <span class="mem">${mf}</span>.`;
     }
     document.getElementById('i-plain').innerHTML = plain;
   }
@@ -1356,17 +1356,17 @@
   loader.finish();
   setTimeout(()=>{ window.__ready = true; }, snap ? 60 : 1400);
 
-  function statsForPair(a=state.a, b=state.b, density=state.density){
-    let s=0, mx=0, tall=0, n=0;
+  // Deterministic stats on the raw per-character bit gap — independent of display mode.
+  function statsForPair(a=state.a, b=state.b){
+    let s=0, mx=0, above=0, n=0;
     for(let i=0;i<N;i++){
       const div = divOf(PTS[i], a, b);
       if(div == null) continue;
-      const h = heightOf(div, density);
-      s += h; n++;
-      if(h > mx) mx = h;
-      if(h > 10) tall++;
+      s += div; n++;
+      if(div > mx) mx = div;
+      if(div > 10) above++;
     }
-    return { a, b, pair:pairKey(a,b), matched:isMatched(a,b), meanH:n?s/n:0, maxH:mx, tall, n };
+    return { a, b, pair:pairKey(a,b), matched:isMatched(a,b), meanDiv:n?s/n:0, maxDiv:mx, above10:above, n };
   }
   function publicState(){
     return { ready:vizReady, act, acts:STAGES.length, ladderStep,
