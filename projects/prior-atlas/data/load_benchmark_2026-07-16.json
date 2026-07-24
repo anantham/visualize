@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "metric": "milliseconds from first contentful paint to window.__viz reporting ready",
+  "environment": {
+    "location": "India",
+    "browser": "headless Chromium 149 on macOS",
+    "url": "https://prior-atlas.vercel.app",
+    "cold_method": "fresh browser process and context for every sample",
+    "repeat_method": "successive pages in one browser context after a priming load"
+  },
+  "before_optimization": {
+    "measured_at": "2026-07-16T05:38:36.031Z",
+    "cold_samples_ms": [
+      5788.9,
+      6558.9,
+      5558.0,
+      3883.0,
+      3580.6,
+      1348.3,
+      2665.4,
+      2006.5,
+      1448.6,
+      2085.4
+    ],
+    "stats_ms": {
+      "n": 10,
+      "min": 1348.3,
+      "p10": 1438.6,
+      "p25": 2026.2,
+      "p50": 3123.0,
+      "p75": 5139.3,
+      "p90": 5865.9,
+      "max": 6558.9
+    },
+    "network_shape": "Three.js completed before OrbitControls began"
+  },
+  "after_optimization": {
+    "measured_at": "2026-07-16T05:48:56.314Z",
+    "changes": [
+      "modulepreload starts both pinned CDN requests while the inline dataset downloads",
+      "Promise.all fetches and evaluates the two imports without an avoidable serial wait"
+    ],
+    "cold_samples_ms": [
+      3331.7,
+      2178.3,
+      925.4,
+      687.2,
+      727.9,
+      652.4,
+      649.4,
+      743.2,
+      663.2,
+      731.3,
+      737.3,
+      1218.0
+    ],
+    "cold_stats_ms": {
+      "n": 12,
+      "min": 649.4,
+      "p10": 653.5,
+      "p25": 681.2,
+      "p50": 734.3,
+      "p75": 998.6,
+      "p90": 2082.3,
+      "max": 3331.7
+    },
+    "repeat_samples_ms": [327.1, 299.3, 282.2, 317.6, 301.4],
+    "repeat_stats_ms": {
+      "n": 5,
+      "min": 282.2,
+      "p50": 301.4,
+      "p90": 323.3,
+      "max": 327.1
+    },
+    "displayed_first_visit_range_ms": [500, 2500],
+    "range_rule": "rounded outward around the cold p10-p90 interval",
+    "network_shape": "Three.js and OrbitControls requests began within 0.3 ms of one another"
+  },
+  "limitations": [
+    "This is a small single-location sample, not a universal latency guarantee.",
+    "CDN and connection variance can still produce waits outside the displayed range.",
+    "The loader shows elapsed time and a measured range, not a false-precision countdown.",
+    "After a successful visit, the page reports that browser's own previous observed load time."
+  ]
+}

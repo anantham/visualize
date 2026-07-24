@@ -1,0 +1,2358 @@
+{
+  "status": "running",
+  "training_batches": [
+    {
+      "step": 1,
+      "loss": 0.7200544476509094,
+      "grad_norm": 8.696167945861816,
+      "learning_rate": 0.0,
+      "entropy": 1.579736441373825,
+      "num_tokens": 435.0,
+      "logits/chosen": -1.5921135020978523,
+      "logits/rejected": -1.4025125828656284,
+      "mean_token_accuracy": 0.49242424964904785,
+      "rewards/chosen": -0.036540651111863554,
+      "rewards/rejected": 0.016362571390345693,
+      "rewards/accuracies": 0.0,
+      "rewards/margins": -0.05290322157088667,
+      "logps/chosen": -54.03780460357666,
+      "logps/rejected": -45.493309020996094,
+      "epoch": 0.3333333333333333
+    },
+    {
+      "step": 2,
+      "loss": 0.67820805311203,
+      "grad_norm": 5.677920341491699,
+      "learning_rate": 1.6666666666666667e-05,
+      "entropy": 1.203277587890625,
+      "num_tokens": 864.0,
+      "logits/chosen": -2.3452930114078585,
+      "logits/rejected": -1.7357060061560736,
+      "mean_token_accuracy": 0.6562884598970413,
+      "rewards/chosen": 0.020333957858383656,
+      "rewards/rejected": -0.009809160139411688,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.030143117532134056,
+      "logps/chosen": -42.43670463562012,
+      "logps/rejected": -43.04235601425171,
+      "epoch": 0.6666666666666666
+    },
+    {
+      "step": 3,
+      "loss": 0.7295485734939575,
+      "grad_norm": 8.028642654418945,
+      "learning_rate": 3.3333333333333335e-05,
+      "entropy": 2.053927779197693,
+      "num_tokens": 1338.0,
+      "logits/chosen": -0.9793172573697739,
+      "logits/rejected": -0.9653387827750964,
+      "mean_token_accuracy": 0.3189699836075306,
+      "rewards/chosen": -0.05102252966025844,
+      "rewards/rejected": 0.01833295839605853,
+      "rewards/accuracies": 0.25,
+      "rewards/margins": -0.0693554887548089,
+      "logps/chosen": -92.5970344543457,
+      "logps/rejected": -50.802839279174805,
+      "epoch": 1.0
+    },
+    {
+      "step": 4,
+      "loss": 0.6795039176940918,
+      "grad_norm": 7.168308734893799,
+      "learning_rate": 5e-05,
+      "entropy": 1.7836224138736725,
+      "num_tokens": 1808.0,
+      "logits/chosen": -1.2516431470296936,
+      "logits/rejected": -0.9007588365139105,
+      "mean_token_accuracy": 0.42524704337120056,
+      "rewards/chosen": 0.052875710651278496,
+      "rewards/rejected": 0.02446336788125336,
+      "rewards/accuracies": 0.5,
+      "rewards/margins": 0.028412343934178352,
+      "logps/chosen": -81.74860382080078,
+      "logps/rejected": -56.636229515075684,
+      "epoch": 1.3333333333333333
+    },
+    {
+      "step": 5,
+      "loss": 0.6527764797210693,
+      "grad_norm": 7.211418151855469,
+      "learning_rate": 4.761904761904762e-05,
+      "entropy": 1.7168278098106384,
+      "num_tokens": 2267.0,
+      "logits/chosen": -1.2149740831676499,
+      "logits/rejected": -1.3576774403904424,
+      "mean_token_accuracy": 0.45995671674609184,
+      "rewards/chosen": 0.046028328011743724,
+      "rewards/rejected": -0.037879848619922996,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.08390817791223526,
+      "logps/chosen": -69.10363912582397,
+      "logps/rejected": -44.15789604187012,
+      "epoch": 1.6666666666666665
+    },
+    {
+      "step": 6,
+      "loss": 0.5958940386772156,
+      "grad_norm": 5.734203815460205,
+      "learning_rate": 4.523809523809524e-05,
+      "entropy": 1.327725112438202,
+      "num_tokens": 2676.0,
+      "logits/chosen": -2.4518301695021663,
+      "logits/rejected": -1.8457857675022549,
+      "mean_token_accuracy": 0.5705741718411446,
+      "rewards/chosen": 0.16313167195767164,
+      "rewards/rejected": -0.04547371924854815,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.20860538817942142,
+      "logps/chosen": -34.92665147781372,
+      "logps/rejected": -39.38214445114136,
+      "epoch": 2.0
+    },
+    {
+      "step": 7,
+      "loss": 0.4950522184371948,
+      "grad_norm": 5.29848575592041,
+      "learning_rate": 4.2857142857142856e-05,
+      "entropy": 1.562458336353302,
+      "num_tokens": 3125.0,
+      "logits/chosen": -1.8140565605906698,
+      "logits/rejected": -1.1308752350132876,
+      "mean_token_accuracy": 0.5649350732564926,
+      "rewards/chosen": 0.3432811857201159,
+      "rewards/rejected": -0.11305494559928775,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.4563361406326294,
+      "logps/chosen": -48.67974138259888,
+      "logps/rejected": -51.61101150512695,
+      "epoch": 2.3333333333333335
+    },
+    {
+      "step": 8,
+      "loss": 0.5186113119125366,
+      "grad_norm": 4.493675231933594,
+      "learning_rate": 4.047619047619048e-05,
+      "entropy": 1.3322103321552277,
+      "num_tokens": 3553.0,
+      "logits/chosen": -2.2098112393142584,
+      "logits/rejected": -1.9100108612151374,
+      "mean_token_accuracy": 0.5114918127655983,
+      "rewards/chosen": 0.29783135070465505,
+      "rewards/rejected": -0.0995395677164197,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.3973709288984537,
+      "logps/chosen": -46.45821666717529,
+      "logps/rejected": -36.66581630706787,
+      "epoch": 2.6666666666666665
+    },
+    {
+      "step": 9,
+      "loss": 0.36372485756874084,
+      "grad_norm": 4.951199054718018,
+      "learning_rate": 3.809523809523809e-05,
+      "entropy": 1.8800925016403198,
+      "num_tokens": 4014.0,
+      "logits/chosen": -0.923671757243749,
+      "logits/rejected": -1.0916009497948183,
+      "mean_token_accuracy": 0.39250895008444786,
+      "rewards/chosen": 0.6065778806805611,
+      "rewards/rejected": -0.2429095320403576,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.8494874089956284,
+      "logps/chosen": -80.78438949584961,
+      "logps/rejected": -55.865580558776855,
+      "epoch": 3.0
+    },
+    {
+      "step": 10,
+      "loss": 0.4310905337333679,
+      "grad_norm": 3.376403570175171,
+      "learning_rate": 3.571428571428572e-05,
+      "entropy": 1.599250927567482,
+      "num_tokens": 4434.0,
+      "logits/chosen": -1.9369478033196112,
+      "logits/rejected": -1.3272942365744176,
+      "mean_token_accuracy": 0.4816252663731575,
+      "rewards/chosen": 0.6187888784334064,
+      "rewards/rejected": -0.041742611676454544,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 0.6605315003544092,
+      "logps/chosen": -49.85840606689453,
+      "logps/rejected": -37.8825740814209,
+      "epoch": 3.3333333333333335
+    },
+    {
+      "step": 11,
+      "loss": 0.23866336047649384,
+      "grad_norm": 3.2819738388061523,
+      "learning_rate": 3.3333333333333335e-05,
+      "entropy": 1.5710481256246567,
+      "num_tokens": 4904.0,
+      "logits/chosen": -1.6096555831139547,
+      "logits/rejected": -1.5175010561943054,
+      "mean_token_accuracy": 0.4735589139163494,
+      "rewards/chosen": 0.965371772646904,
+      "rewards/rejected": -0.3771785832941532,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.342550367116928,
+      "logps/chosen": -69.23734855651855,
+      "logps/rejected": -54.34550380706787,
+      "epoch": 3.6666666666666665
+    },
+    {
+      "step": 12,
+      "loss": 0.2572237551212311,
+      "grad_norm": 3.918079137802124,
+      "learning_rate": 3.095238095238095e-05,
+      "entropy": 1.5022046566009521,
+      "num_tokens": 5352.0,
+      "logits/chosen": -1.5130872323915556,
+      "logits/rejected": -1.4216957039991327,
+      "mean_token_accuracy": 0.5681818127632141,
+      "rewards/chosen": 0.6481927335262299,
+      "rewards/rejected": -0.6815503314137459,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.329743042588234,
+      "logps/chosen": -46.979963302612305,
+      "logps/rejected": -58.36400508880615,
+      "epoch": 4.0
+    },
+    {
+      "step": 13,
+      "loss": 0.285472571849823,
+      "grad_norm": 2.548647880554199,
+      "learning_rate": 2.857142857142857e-05,
+      "entropy": 1.600052386522293,
+      "num_tokens": 5798.0,
+      "logits/chosen": -1.7623341362197678,
+      "logits/rejected": -1.634327627363659,
+      "mean_token_accuracy": 0.5089285671710968,
+      "rewards/chosen": 0.852743998169899,
+      "rewards/rejected": -0.4665918853133917,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.3193358555436134,
+      "logps/chosen": -49.4477915763855,
+      "logps/rejected": -47.52509355545044,
+      "epoch": 4.333333333333333
+    },
+    {
+      "step": 14,
+      "loss": 0.15525951981544495,
+      "grad_norm": 2.4656684398651123,
+      "learning_rate": 2.6190476190476192e-05,
+      "entropy": 1.7776075601577759,
+      "num_tokens": 6259.0,
+      "logits/chosen": -1.0935547228387221,
+      "logits/rejected": -1.2591716929888115,
+      "mean_token_accuracy": 0.42188500240445137,
+      "rewards/chosen": 1.102139487862587,
+      "rewards/rejected": -0.8271045908331871,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.9292440712451935,
+      "logps/chosen": -75.82877349853516,
+      "logps/rejected": -61.7075309753418,
+      "epoch": 4.666666666666667
+    },
+    {
+      "step": 15,
+      "loss": 0.21227122843265533,
+      "grad_norm": 2.7142605781555176,
+      "learning_rate": 2.380952380952381e-05,
+      "entropy": 1.1484435051679611,
+      "num_tokens": 6690.0,
+      "logits/chosen": -2.4587543685932207,
+      "logits/rejected": -1.617774788538615,
+      "mean_token_accuracy": 0.6795112937688828,
+      "rewards/chosen": 0.9278318015858531,
+      "rewards/rejected": -0.5377692356705666,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.4656010568141937,
+      "logps/chosen": -34.295533657073975,
+      "logps/rejected": -48.669400215148926,
+      "epoch": 5.0
+    },
+    {
+      "step": 16,
+      "loss": 0.17071974277496338,
+      "grad_norm": 2.482940673828125,
+      "learning_rate": 2.1428571428571428e-05,
+      "entropy": 1.542881190776825,
+      "num_tokens": 7129.0,
+      "logits/chosen": -1.8167154448372977,
+      "logits/rejected": -1.2247135810779803,
+      "mean_token_accuracy": 0.5297619141638279,
+      "rewards/chosen": 1.0469322446733713,
+      "rewards/rejected": -0.6993119399994612,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.7462442219257355,
+      "logps/chosen": -53.91178560256958,
+      "logps/rejected": -51.207791328430176,
+      "epoch": 5.333333333333333
+    },
+    {
+      "step": 17,
+      "loss": 0.19977472722530365,
+      "grad_norm": 1.5518854856491089,
+      "learning_rate": 1.9047619047619046e-05,
+      "entropy": 1.3888420015573502,
+      "num_tokens": 7582.0,
+      "logits/chosen": -1.9270748708155248,
+      "logits/rejected": -1.7124424168041774,
+      "mean_token_accuracy": 0.5439935177564621,
+      "rewards/chosen": 1.2229697369039059,
+      "rewards/rejected": -0.7264817766845226,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.9494515433907509,
+      "logps/chosen": -52.0381178855896,
+      "logps/rejected": -48.249282360076904,
+      "epoch": 5.666666666666667
+    },
+    {
+      "step": 18,
+      "loss": 0.11378367245197296,
+      "grad_norm": 1.7719590663909912,
+      "learning_rate": 1.6666666666666667e-05,
+      "entropy": 1.4253237545490265,
+      "num_tokens": 8028.0,
+      "logits/chosen": -1.877812227787187,
+      "logits/rejected": -1.8862986768412793,
+      "mean_token_accuracy": 0.565945491194725,
+      "rewards/chosen": 1.0389120876789093,
+      "rewards/rejected": -1.37796950340271,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 2.4168815910816193,
+      "logps/chosen": -49.36120796203613,
+      "logps/rejected": -68.16792583465576,
+      "epoch": 6.0
+    },
+    {
+      "step": 19,
+      "loss": 0.13193413615226746,
+      "grad_norm": 1.8845075368881226,
+      "learning_rate": 1.4285714285714285e-05,
+      "entropy": 1.3471645340323448,
+      "num_tokens": 8458.0,
+      "logits/chosen": -2.11530656938429,
+      "logits/rejected": -1.4794176601486289,
+      "mean_token_accuracy": 0.6542207822203636,
+      "rewards/chosen": 1.0400072038173676,
+      "rewards/rejected": -0.9614649079740047,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 2.00147208571434,
+      "logps/chosen": -33.489426612854004,
+      "logps/rejected": -53.957632064819336,
+      "epoch": 6.333333333333333
+    },
+    {
+      "step": 20,
+      "loss": 0.04747727885842323,
+      "grad_norm": 1.1086833477020264,
+      "learning_rate": 1.1904761904761905e-05,
+      "entropy": 1.8011374473571777,
+      "num_tokens": 8943.0,
+      "logits/chosen": -1.4187237906765628,
+      "logits/rejected": -1.606600171327591,
+      "mean_token_accuracy": 0.30817100033164024,
+      "rewards/chosen": 1.4736286401748657,
+      "rewards/rejected": -1.8354369103908539,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 3.3090656399726868,
+      "logps/chosen": -83.87954521179199,
+      "logps/rejected": -76.48409080505371,
+      "epoch": 6.666666666666667
+    },
+    {
+      "step": 21,
+      "loss": 0.20684126019477844,
+      "grad_norm": 1.5717074871063232,
+      "learning_rate": 9.523809523809523e-06,
+      "entropy": 1.073878213763237,
+      "num_tokens": 9366.0,
+      "logits/chosen": -2.376593524188378,
+      "logits/rejected": -1.9928567262796255,
+      "mean_token_accuracy": 0.6886727809906006,
+      "rewards/chosen": 1.0349992886185646,
+      "rewards/rejected": -0.7284173667430878,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 1.76341662555933,
+      "logps/chosen": -35.54392910003662,
+      "logps/rejected": -44.398836612701416,
+      "epoch": 7.0
+    },
+    {
+      "step": 22,
+      "loss": 0.07909123599529266,
+      "grad_norm": 1.3218154907226562,
+      "learning_rate": 7.142857142857143e-06,
+      "entropy": 1.2670750170946121,
+      "num_tokens": 9833.0,
+      "logits/chosen": -1.9681659500320237,
+      "logits/rejected": -1.5722821699076401,
+      "mean_token_accuracy": 0.6154220849275589,
+      "rewards/chosen": 1.330138748511672,
+      "rewards/rejected": -1.3259987831115723,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 2.6561375558376312,
+      "logps/chosen": -48.31302070617676,
+      "logps/rejected": -60.55291557312012,
+      "epoch": 7.333333333333333
+    },
+    {
+      "step": 23,
+      "loss": 0.08523335307836533,
+      "grad_norm": 1.261175513267517,
+      "learning_rate": 4.7619047619047615e-06,
+      "entropy": 1.4995794296264648,
+      "num_tokens": 10274.0,
+      "logits/chosen": -2.2233725681639553,
+      "logits/rejected": -1.7495149632294973,
+      "mean_token_accuracy": 0.49796367064118385,
+      "rewards/chosen": 1.4562964737415314,
+      "rewards/rejected": -1.0714838281273842,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 2.527780294418335,
+      "logps/chosen": -56.27248191833496,
+      "logps/rejected": -56.39444923400879,
+      "epoch": 7.666666666666667
+    },
+    {
+      "step": 24,
+      "loss": 0.17586177587509155,
+      "grad_norm": 1.4250078201293945,
+      "learning_rate": 2.3809523809523808e-06,
+      "entropy": 1.375723049044609,
+      "num_tokens": 10704.0,
+      "logits/chosen": -1.9316326851632082,
+      "logits/rejected": -1.942814686970833,
+      "mean_token_accuracy": 0.5585121363401413,
+      "rewards/chosen": 0.8451545350253582,
+      "rewards/rejected": -1.646490167826414,
+      "rewards/accuracies": 1.0,
+      "rewards/margins": 2.4916447326540947,
+      "logps/chosen": -47.49785137176514,
+      "logps/rejected": -63.07973003387451,
+      "epoch": 8.0
+    },
+    {
+      "step": 24,
+      "train_runtime": 60.171,
+      "train_samples_per_second": 1.595,
+      "train_steps_per_second": 0.399,
+      "total_flos": 25389788897280.0,
+      "train_loss": 0.3426696687626342,
+      "epoch": 8.0
+    }
+  ],
+  "fixed_probe": [
+    {
+      "step": 0,
+      "chosen_sum": -62.803967942794166,
+      "rejected_sum": -46.53676247596741,
+      "margin_sum": -16.267205466826756,
+      "chosen_mean": -2.7223877273499966,
+      "rejected_mean": -3.971190224091212,
+      "margin_mean": 1.2488024967412155,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -1.188754916191101,
+            "mean": -0.08491106331348419,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -34.31953430175781,
+            "mean": -3.119957685470581,
+            "tokens": 11
+          },
+          "margin_sum": 33.13077938556671,
+          "margin_mean": 3.035046622157097
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -66.29421997070312,
+            "mean": -2.882357358932495,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -41.89698028564453,
+            "mean": -3.2228446006774902,
+            "tokens": 13
+          },
+          "margin_sum": -24.397239685058594,
+          "margin_mean": 0.3404872417449951
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -53.31801223754883,
+            "mean": -2.423546075820923,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -65.2681655883789,
+            "mean": -3.626009225845337,
+            "tokens": 18
+          },
+          "margin_sum": 11.950153350830078,
+          "margin_mean": 1.202463150024414
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -99.85003662109375,
+            "mean": -3.566072702407837,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -60.84260940551758,
+            "mean": -4.056173801422119,
+            "tokens": 15
+          },
+          "margin_sum": -39.00742721557617,
+          "margin_mean": 0.4901010990142822
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -78.44905090332031,
+            "mean": -2.241401433944702,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -57.71654510498047,
+            "mean": -5.7716546058654785,
+            "tokens": 10
+          },
+          "margin_sum": -20.732505798339844,
+          "margin_mean": 3.5302531719207764
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -67.18312072753906,
+            "mean": -3.0537781715393066,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -36.408660888671875,
+            "mean": -2.600618600845337,
+            "tokens": 14
+          },
+          "margin_sum": -30.774459838867188,
+          "margin_mean": -0.4531595706939697
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -91.95586395263672,
+            "mean": -3.2841379642486572,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -57.43873596191406,
+            "mean": -4.786561489105225,
+            "tokens": 12
+          },
+          "margin_sum": -34.517127990722656,
+          "margin_mean": 1.5024235248565674
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -26.911800384521484,
+            "mean": -1.4164105653762817,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -39.993553161621094,
+            "mean": -3.9993553161621094,
+            "tokens": 10
+          },
+          "margin_sum": 13.08175277709961,
+          "margin_mean": 2.5829447507858276
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -92.39443969726562,
+            "mean": -4.199747085571289,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -70.25894165039062,
+            "mean": -4.683929443359375,
+            "tokens": 15
+          },
+          "margin_sum": -22.135498046875,
+          "margin_mean": 0.48418235778808594
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -54.12073516845703,
+            "mean": -2.5771777629852295,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -41.64912033081055,
+            "mean": -5.206140041351318,
+            "tokens": 8
+          },
+          "margin_sum": -12.471614837646484,
+          "margin_mean": 2.628962278366089
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -11.869894027709961,
+            "mean": -1.6956990957260132,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -8.987078666687012,
+            "mean": -1.1233848333358765,
+            "tokens": 8
+          },
+          "margin_sum": -2.882815361022949,
+          "margin_mean": -0.5723142623901367
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -110.11168670654297,
+            "mean": -5.24341344833374,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -43.661224365234375,
+            "mean": -5.457653045654297,
+            "tokens": 8
+          },
+          "margin_sum": -66.4504623413086,
+          "margin_mean": 0.21423959732055664
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "chosen_sum": -62.803967942794166,
+      "rejected_sum": -46.53676247596741,
+      "margin_sum": -16.267205466826756,
+      "chosen_mean": -2.7223877273499966,
+      "rejected_mean": -3.971190224091212,
+      "margin_mean": 1.2488024967412155,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -1.188754916191101,
+            "mean": -0.08491106331348419,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -34.31953430175781,
+            "mean": -3.119957685470581,
+            "tokens": 11
+          },
+          "margin_sum": 33.13077938556671,
+          "margin_mean": 3.035046622157097
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -66.29421997070312,
+            "mean": -2.882357358932495,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -41.89698028564453,
+            "mean": -3.2228446006774902,
+            "tokens": 13
+          },
+          "margin_sum": -24.397239685058594,
+          "margin_mean": 0.3404872417449951
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -53.31801223754883,
+            "mean": -2.423546075820923,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -65.2681655883789,
+            "mean": -3.626009225845337,
+            "tokens": 18
+          },
+          "margin_sum": 11.950153350830078,
+          "margin_mean": 1.202463150024414
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -99.85003662109375,
+            "mean": -3.566072702407837,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -60.84260940551758,
+            "mean": -4.056173801422119,
+            "tokens": 15
+          },
+          "margin_sum": -39.00742721557617,
+          "margin_mean": 0.4901010990142822
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -78.44905090332031,
+            "mean": -2.241401433944702,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -57.71654510498047,
+            "mean": -5.7716546058654785,
+            "tokens": 10
+          },
+          "margin_sum": -20.732505798339844,
+          "margin_mean": 3.5302531719207764
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -67.18312072753906,
+            "mean": -3.0537781715393066,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -36.408660888671875,
+            "mean": -2.600618600845337,
+            "tokens": 14
+          },
+          "margin_sum": -30.774459838867188,
+          "margin_mean": -0.4531595706939697
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -91.95586395263672,
+            "mean": -3.2841379642486572,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -57.43873596191406,
+            "mean": -4.786561489105225,
+            "tokens": 12
+          },
+          "margin_sum": -34.517127990722656,
+          "margin_mean": 1.5024235248565674
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -26.911800384521484,
+            "mean": -1.4164105653762817,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -39.993553161621094,
+            "mean": -3.9993553161621094,
+            "tokens": 10
+          },
+          "margin_sum": 13.08175277709961,
+          "margin_mean": 2.5829447507858276
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -92.39443969726562,
+            "mean": -4.199747085571289,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -70.25894165039062,
+            "mean": -4.683929443359375,
+            "tokens": 15
+          },
+          "margin_sum": -22.135498046875,
+          "margin_mean": 0.48418235778808594
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -54.12073516845703,
+            "mean": -2.5771777629852295,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -41.64912033081055,
+            "mean": -5.206140041351318,
+            "tokens": 8
+          },
+          "margin_sum": -12.471614837646484,
+          "margin_mean": 2.628962278366089
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -11.869894027709961,
+            "mean": -1.6956990957260132,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -8.987078666687012,
+            "mean": -1.1233848333358765,
+            "tokens": 8
+          },
+          "margin_sum": -2.882815361022949,
+          "margin_mean": -0.5723142623901367
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -110.11168670654297,
+            "mean": -5.24341344833374,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -43.661224365234375,
+            "mean": -5.457653045654297,
+            "tokens": 8
+          },
+          "margin_sum": -66.4504623413086,
+          "margin_mean": 0.21423959732055664
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "chosen_sum": -62.38082783420881,
+      "rejected_sum": -46.61593675613403,
+      "margin_sum": -15.764891078074774,
+      "chosen_mean": -2.7044229190796614,
+      "rejected_mean": -3.9773637851079306,
+      "margin_mean": 1.272940866028269,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -1.2394171953201294,
+            "mean": -0.0885298028588295,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -34.41188049316406,
+            "mean": -3.1283528804779053,
+            "tokens": 11
+          },
+          "margin_sum": 33.17246329784393,
+          "margin_mean": 3.0398230776190758
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -66.02983093261719,
+            "mean": -2.8708622455596924,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -42.07709503173828,
+            "mean": -3.2366995811462402,
+            "tokens": 13
+          },
+          "margin_sum": -23.952735900878906,
+          "margin_mean": 0.36583733558654785
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -52.36581039428711,
+            "mean": -2.3802640438079834,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -65.3724365234375,
+            "mean": -3.6318020820617676,
+            "tokens": 18
+          },
+          "margin_sum": 13.00662612915039,
+          "margin_mean": 1.2515380382537842
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -100.01988220214844,
+            "mean": -3.572138547897339,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -61.26810073852539,
+            "mean": -4.084539890289307,
+            "tokens": 15
+          },
+          "margin_sum": -38.75178146362305,
+          "margin_mean": 0.5124013423919678
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -77.53132629394531,
+            "mean": -2.2151806354522705,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -57.32755661010742,
+            "mean": -5.732755661010742,
+            "tokens": 10
+          },
+          "margin_sum": -20.20376968383789,
+          "margin_mean": 3.5175750255584717
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -67.33937072753906,
+            "mean": -3.060880422592163,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -36.61749267578125,
+            "mean": -2.615535259246826,
+            "tokens": 14
+          },
+          "margin_sum": -30.721878051757812,
+          "margin_mean": -0.4453451633453369
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -91.60079956054688,
+            "mean": -3.2714571952819824,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -57.15953826904297,
+            "mean": -4.763294696807861,
+            "tokens": 12
+          },
+          "margin_sum": -34.441261291503906,
+          "margin_mean": 1.491837501525879
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -26.601436614990234,
+            "mean": -1.4000755548477173,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -40.33804702758789,
+            "mean": -4.033804893493652,
+            "tokens": 10
+          },
+          "margin_sum": 13.736610412597656,
+          "margin_mean": 2.633729338645935
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -91.80587768554688,
+            "mean": -4.172994613647461,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -70.2995376586914,
+            "mean": -4.686635971069336,
+            "tokens": 15
+          },
+          "margin_sum": -21.50634002685547,
+          "margin_mean": 0.513641357421875
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -51.9001579284668,
+            "mean": -2.471436023712158,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -41.44635009765625,
+            "mean": -5.180793762207031,
+            "tokens": 8
+          },
+          "margin_sum": -10.453807830810547,
+          "margin_mean": 2.709357738494873
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -11.899177551269531,
+            "mean": -1.6998825073242188,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -9.115762710571289,
+            "mean": -1.1394703388214111,
+            "tokens": 8
+          },
+          "margin_sum": -2.783414840698242,
+          "margin_mean": -0.5604121685028076
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -110.23684692382812,
+            "mean": -5.249373435974121,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -43.95744323730469,
+            "mean": -5.494680404663086,
+            "tokens": 8
+          },
+          "margin_sum": -66.27940368652344,
+          "margin_mean": 0.24530696868896484
+        }
+      ]
+    },
+    {
+      "step": 6,
+      "chosen_sum": -59.50555216272672,
+      "rejected_sum": -47.76531513532003,
+      "margin_sum": -11.740237027406693,
+      "chosen_mean": -2.5846709671119847,
+      "rejected_mean": -4.072086662054062,
+      "margin_mean": 1.487415694942077,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -1.1902269124984741,
+            "mean": -0.08501620590686798,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -36.28309631347656,
+            "mean": -3.2984633445739746,
+            "tokens": 11
+          },
+          "margin_sum": 35.09286940097809,
+          "margin_mean": 3.2134471386671066
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -63.89752197265625,
+            "mean": -2.77815318107605,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -42.61109924316406,
+            "mean": -3.2777769565582275,
+            "tokens": 13
+          },
+          "margin_sum": -21.286422729492188,
+          "margin_mean": 0.49962377548217773
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -50.035919189453125,
+            "mean": -2.274359941482544,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -66.14152526855469,
+            "mean": -3.6745290756225586,
+            "tokens": 18
+          },
+          "margin_sum": 16.105606079101562,
+          "margin_mean": 1.4001691341400146
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -94.30290222167969,
+            "mean": -3.3679606914520264,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -62.54585266113281,
+            "mean": -4.1697235107421875,
+            "tokens": 15
+          },
+          "margin_sum": -31.757049560546875,
+          "margin_mean": 0.8017628192901611
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -73.04450988769531,
+            "mean": -2.0869860649108887,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -58.70805740356445,
+            "mean": -5.870805740356445,
+            "tokens": 10
+          },
+          "margin_sum": -14.33645248413086,
+          "margin_mean": 3.7838196754455566
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -64.36045837402344,
+            "mean": -2.9254753589630127,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -37.7553596496582,
+            "mean": -2.6968114376068115,
+            "tokens": 14
+          },
+          "margin_sum": -26.605098724365234,
+          "margin_mean": -0.22866392135620117
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -88.18279266357422,
+            "mean": -3.149385452270508,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -57.83850860595703,
+            "mean": -4.819875717163086,
+            "tokens": 12
+          },
+          "margin_sum": -30.344284057617188,
+          "margin_mean": 1.6704902648925781
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -24.780399322509766,
+            "mean": -1.3042315244674683,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -41.39091491699219,
+            "mean": -4.139091491699219,
+            "tokens": 10
+          },
+          "margin_sum": 16.610515594482422,
+          "margin_mean": 2.8348599672317505
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -88.23452758789062,
+            "mean": -4.010660171508789,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -74.06928253173828,
+            "mean": -4.937952041625977,
+            "tokens": 15
+          },
+          "margin_sum": -14.165245056152344,
+          "margin_mean": 0.9272918701171875
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -47.93142318725586,
+            "mean": -2.2824487686157227,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -41.60832977294922,
+            "mean": -5.201041221618652,
+            "tokens": 8
+          },
+          "margin_sum": -6.323093414306641,
+          "margin_mean": 2.9185924530029297
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -11.836459159851074,
+            "mean": -1.690922737121582,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -9.2830171585083,
+            "mean": -1.1603771448135376,
+            "tokens": 8
+          },
+          "margin_sum": -2.5534420013427734,
+          "margin_mean": -0.5305455923080444
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -106.26948547363281,
+            "mean": -5.060451507568359,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -44.94873809814453,
+            "mean": -5.618592262268066,
+            "tokens": 8
+          },
+          "margin_sum": -61.32074737548828,
+          "margin_mean": 0.558140754699707
+        }
+      ]
+    },
+    {
+      "step": 9,
+      "chosen_sum": -56.174351106087364,
+      "rejected_sum": -49.49531920750936,
+      "margin_sum": -6.679031898578008,
+      "chosen_mean": -2.438918147236109,
+      "rejected_mean": -4.20888767639796,
+      "margin_mean": 1.7699695291618507,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -0.9693285226821899,
+            "mean": -0.06923775374889374,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -39.164222717285156,
+            "mean": -3.5603837966918945,
+            "tokens": 11
+          },
+          "margin_sum": 38.194894194602966,
+          "margin_mean": 3.491146042943001
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -61.766510009765625,
+            "mean": -2.685500383377075,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -43.68329620361328,
+            "mean": -3.3602535724639893,
+            "tokens": 13
+          },
+          "margin_sum": -18.083213806152344,
+          "margin_mean": 0.6747531890869141
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -46.738914489746094,
+            "mean": -2.1244962215423584,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -67.71620178222656,
+            "mean": -3.7620112895965576,
+            "tokens": 18
+          },
+          "margin_sum": 20.97728729248047,
+          "margin_mean": 1.6375150680541992
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -88.85282897949219,
+            "mean": -3.1733152866363525,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -65.25723266601562,
+            "mean": -4.350481986999512,
+            "tokens": 15
+          },
+          "margin_sum": -23.595596313476562,
+          "margin_mean": 1.1771667003631592
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -68.27508544921875,
+            "mean": -1.9507167339324951,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -59.697975158691406,
+            "mean": -5.969797611236572,
+            "tokens": 10
+          },
+          "margin_sum": -8.577110290527344,
+          "margin_mean": 4.019080877304077
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -60.76337432861328,
+            "mean": -2.7619714736938477,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -40.146507263183594,
+            "mean": -2.867607593536377,
+            "tokens": 14
+          },
+          "margin_sum": -20.616867065429688,
+          "margin_mean": 0.1056361198425293
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -84.34893798828125,
+            "mean": -3.0124621391296387,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -58.60557556152344,
+            "mean": -4.883798122406006,
+            "tokens": 12
+          },
+          "margin_sum": -25.743362426757812,
+          "margin_mean": 1.8713359832763672
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -21.423627853393555,
+            "mean": -1.1275593042373657,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -43.347965240478516,
+            "mean": -4.33479642868042,
+            "tokens": 10
+          },
+          "margin_sum": 21.92433738708496,
+          "margin_mean": 3.207237124443054
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -84.58030700683594,
+            "mean": -3.84455943107605,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -79.25288391113281,
+            "mean": -5.283525466918945,
+            "tokens": 15
+          },
+          "margin_sum": -5.327423095703125,
+          "margin_mean": 1.4389660358428955
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -42.86671447753906,
+            "mean": -2.0412721633911133,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -41.226200103759766,
+            "mean": -5.153275012969971,
+            "tokens": 8
+          },
+          "margin_sum": -1.6405143737792969,
+          "margin_mean": 3.1120028495788574
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -11.243942260742188,
+            "mean": -1.6062774658203125,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -9.325895309448242,
+            "mean": -1.1657369136810303,
+            "tokens": 8
+          },
+          "margin_sum": -1.9180469512939453,
+          "margin_mean": -0.4405405521392822
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -102.26264190673828,
+            "mean": -4.869649410247803,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -46.519874572753906,
+            "mean": -5.814984321594238,
+            "tokens": 8
+          },
+          "margin_sum": -55.742767333984375,
+          "margin_mean": 0.9453349113464355
+        }
+      ]
+    },
+    {
+      "step": 12,
+      "chosen_sum": -53.58525415261587,
+      "rejected_sum": -51.66844733556112,
+      "margin_sum": -1.9168068170547485,
+      "chosen_mean": -2.3192116087302566,
+      "rejected_mean": -4.384535372257233,
+      "margin_mean": 2.065323763526976,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -0.8604187965393066,
+            "mean": -0.061458487063646317,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -41.751747131347656,
+            "mean": -3.7956132888793945,
+            "tokens": 11
+          },
+          "margin_sum": 40.89132833480835,
+          "margin_mean": 3.734154801815748
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -58.998355865478516,
+            "mean": -2.565145969390869,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -45.31743621826172,
+            "mean": -3.4859566688537598,
+            "tokens": 13
+          },
+          "margin_sum": -13.680919647216797,
+          "margin_mean": 0.9208106994628906
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -44.94264221191406,
+            "mean": -2.0428473949432373,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -69.92173767089844,
+            "mean": -3.8845410346984863,
+            "tokens": 18
+          },
+          "margin_sum": 24.979095458984375,
+          "margin_mean": 1.841693639755249
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -84.31761169433594,
+            "mean": -3.011343240737915,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -68.52960205078125,
+            "mean": -4.568640232086182,
+            "tokens": 15
+          },
+          "margin_sum": -15.788009643554688,
+          "margin_mean": 1.5572969913482666
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -65.6149673461914,
+            "mean": -1.8747133016586304,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -61.62415313720703,
+            "mean": -6.162415504455566,
+            "tokens": 10
+          },
+          "margin_sum": -3.990814208984375,
+          "margin_mean": 4.287702202796936
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -57.731449127197266,
+            "mean": -2.6241567134857178,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -41.79155731201172,
+            "mean": -2.9851112365722656,
+            "tokens": 14
+          },
+          "margin_sum": -15.939891815185547,
+          "margin_mean": 0.36095452308654785
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -80.93310546875,
+            "mean": -2.890468120574951,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -60.515132904052734,
+            "mean": -5.0429277420043945,
+            "tokens": 12
+          },
+          "margin_sum": -20.417972564697266,
+          "margin_mean": 2.1524596214294434
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -18.860010147094727,
+            "mean": -0.9926320910453796,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -45.462303161621094,
+            "mean": -4.546230316162109,
+            "tokens": 10
+          },
+          "margin_sum": 26.602293014526367,
+          "margin_mean": 3.5535982251167297
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -83.00759887695312,
+            "mean": -3.7730727195739746,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -85.6366958618164,
+            "mean": -5.709113121032715,
+            "tokens": 15
+          },
+          "margin_sum": 2.6290969848632812,
+          "margin_mean": 1.9360404014587402
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -38.964027404785156,
+            "mean": -1.8554298877716064,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -40.46303176879883,
+            "mean": -5.0578789710998535,
+            "tokens": 8
+          },
+          "margin_sum": 1.4990043640136719,
+          "margin_mean": 3.202449083328247
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -10.065918922424316,
+            "mean": -1.4379884004592896,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -9.153432846069336,
+            "mean": -1.144179105758667,
+            "tokens": 8
+          },
+          "margin_sum": -0.9124860763549805,
+          "margin_mean": -0.29380929470062256
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -98.72694396972656,
+            "mean": -4.701282978057861,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -49.85453796386719,
+            "mean": -6.231817245483398,
+            "tokens": 8
+          },
+          "margin_sum": -48.872406005859375,
+          "margin_mean": 1.530534267425537
+        }
+      ]
+    },
+    {
+      "step": 15,
+      "chosen_sum": -52.04275284707546,
+      "rejected_sum": -55.03153785069784,
+      "margin_sum": 2.988785003622373,
+      "chosen_mean": -2.2550619120399156,
+      "rejected_mean": -4.666441281636556,
+      "margin_mean": 2.41137936959664,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -0.6908314824104309,
+            "mean": -0.04934510588645935,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -45.782005310058594,
+            "mean": -4.16200065612793,
+            "tokens": 11
+          },
+          "margin_sum": 45.09117382764816,
+          "margin_mean": 4.11265555024147
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -57.58885955810547,
+            "mean": -2.503863573074341,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -48.12779235839844,
+            "mean": -3.7021379470825195,
+            "tokens": 13
+          },
+          "margin_sum": -9.461067199707031,
+          "margin_mean": 1.1982743740081787
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -43.72587966918945,
+            "mean": -1.9875400066375732,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -73.98074340820312,
+            "mean": -4.11004114151001,
+            "tokens": 18
+          },
+          "margin_sum": 30.254863739013672,
+          "margin_mean": 2.1225011348724365
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -81.9037094116211,
+            "mean": -2.9251325130462646,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -72.68268585205078,
+            "mean": -4.845512390136719,
+            "tokens": 15
+          },
+          "margin_sum": -9.221023559570312,
+          "margin_mean": 1.920379877090454
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -63.17763137817383,
+            "mean": -1.8050751686096191,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -63.640411376953125,
+            "mean": -6.364041328430176,
+            "tokens": 10
+          },
+          "margin_sum": 0.4627799987792969,
+          "margin_mean": 4.558966159820557
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -54.80980682373047,
+            "mean": -2.4913549423217773,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -44.37220001220703,
+            "mean": -3.169442892074585,
+            "tokens": 14
+          },
+          "margin_sum": -10.437606811523438,
+          "margin_mean": 0.6780879497528076
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -80.13182830810547,
+            "mean": -2.8618509769439697,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -63.3697509765625,
+            "mean": -5.280812740325928,
+            "tokens": 12
+          },
+          "margin_sum": -16.76207733154297,
+          "margin_mean": 2.418961763381958
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -17.030330657958984,
+            "mean": -0.8963332176208496,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -48.07139587402344,
+            "mean": -4.8071393966674805,
+            "tokens": 10
+          },
+          "margin_sum": 31.041065216064453,
+          "margin_mean": 3.910806179046631
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -80.75235748291016,
+            "mean": -3.6705617904663086,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -94.07600402832031,
+            "mean": -6.27173376083374,
+            "tokens": 15
+          },
+          "margin_sum": 13.323646545410156,
+          "margin_mean": 2.6011719703674316
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -38.1097297668457,
+            "mean": -1.814749002456665,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -41.977779388427734,
+            "mean": -5.247222423553467,
+            "tokens": 8
+          },
+          "margin_sum": 3.8680496215820312,
+          "margin_mean": 3.4324734210968018
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -10.280797958374023,
+            "mean": -1.4686853885650635,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -10.360807418823242,
+            "mean": -1.2951009273529053,
+            "tokens": 8
+          },
+          "margin_sum": 0.08000946044921875,
+          "margin_mean": -0.1735844612121582
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -96.31127166748047,
+            "mean": -4.586251258850098,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -53.9368782043457,
+            "mean": -6.742109775543213,
+            "tokens": 8
+          },
+          "margin_sum": -42.374393463134766,
+          "margin_mean": 2.1558585166931152
+        }
+      ]
+    },
+    {
+      "step": 18,
+      "chosen_sum": -51.282832423845925,
+      "rejected_sum": -57.65857728322347,
+      "margin_sum": 6.375744859377543,
+      "chosen_mean": -2.2214465821161866,
+      "rejected_mean": -4.8895764748255415,
+      "margin_mean": 2.6681298927093544,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -0.6289677619934082,
+            "mean": -0.04492626711726189,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -49.54850387573242,
+            "mean": -4.504409313201904,
+            "tokens": 11
+          },
+          "margin_sum": 48.919536113739014,
+          "margin_mean": 4.459483046084642
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -56.650238037109375,
+            "mean": -2.4630539417266846,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -49.915374755859375,
+            "mean": -3.839644193649292,
+            "tokens": 13
+          },
+          "margin_sum": -6.73486328125,
+          "margin_mean": 1.3765902519226074
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -43.065528869628906,
+            "mean": -1.957524061203003,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -76.97828674316406,
+            "mean": -4.276571273803711,
+            "tokens": 18
+          },
+          "margin_sum": 33.912757873535156,
+          "margin_mean": 2.319047212600708
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -80.61809539794922,
+            "mean": -2.8792176246643066,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -74.78118133544922,
+            "mean": -4.985412120819092,
+            "tokens": 15
+          },
+          "margin_sum": -5.8369140625,
+          "margin_mean": 2.106194496154785
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -61.99649429321289,
+            "mean": -1.7713284492492676,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -65.0830078125,
+            "mean": -6.50830078125,
+            "tokens": 10
+          },
+          "margin_sum": 3.0865135192871094,
+          "margin_mean": 4.736972332000732
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -53.224117279052734,
+            "mean": -2.419278144836426,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -46.50181579589844,
+            "mean": -3.3215582370758057,
+            "tokens": 14
+          },
+          "margin_sum": -6.722301483154297,
+          "margin_mean": 0.9022800922393799
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -77.8593521118164,
+            "mean": -2.780691146850586,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -65.84980773925781,
+            "mean": -5.487483978271484,
+            "tokens": 12
+          },
+          "margin_sum": -12.009544372558594,
+          "margin_mean": 2.7067928314208984
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -16.716228485107422,
+            "mean": -0.8798015117645264,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -49.96254348754883,
+            "mean": -4.9962544441223145,
+            "tokens": 10
+          },
+          "margin_sum": 33.246315002441406,
+          "margin_mean": 4.116452932357788
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -80.89505767822266,
+            "mean": -3.6770479679107666,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -101.22886657714844,
+            "mean": -6.74859094619751,
+            "tokens": 15
+          },
+          "margin_sum": 20.33380889892578,
+          "margin_mean": 3.071542978286743
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -38.35060119628906,
+            "mean": -1.826219081878662,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -43.77690887451172,
+            "mean": -5.472113609313965,
+            "tokens": 8
+          },
+          "margin_sum": 5.426307678222656,
+          "margin_mean": 3.6458945274353027
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -9.86719036102295,
+            "mean": -1.4095985889434814,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -10.753673553466797,
+            "mean": -1.3442091941833496,
+            "tokens": 8
+          },
+          "margin_sum": 0.8864831924438477,
+          "margin_mean": -0.06538939476013184
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -95.5221176147461,
+            "mean": -4.548672199249268,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -57.52295684814453,
+            "mean": -7.190369606018066,
+            "tokens": 8
+          },
+          "margin_sum": -37.99916076660156,
+          "margin_mean": 2.641697406768799
+        }
+      ]
+    },
+    {
+      "step": 21,
+      "chosen_sum": -50.58852828045686,
+      "rejected_sum": -59.32760286331177,
+      "margin_sum": 8.739074582854906,
+      "chosen_mean": -2.1894915079077086,
+      "rejected_mean": -5.0341124931971235,
+      "margin_mean": 2.844620985289415,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -0.5344443917274475,
+            "mean": -0.038174599409103394,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -51.62371826171875,
+            "mean": -4.693065166473389,
+            "tokens": 11
+          },
+          "margin_sum": 51.0892738699913,
+          "margin_mean": 4.654890567064285
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -56.28539276123047,
+            "mean": -2.447190999984741,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -51.19942855834961,
+            "mean": -3.938417673110962,
+            "tokens": 13
+          },
+          "margin_sum": -5.085964202880859,
+          "margin_mean": 1.4912266731262207
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -41.819637298583984,
+            "mean": -1.9008926153182983,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -78.28783416748047,
+            "mean": -4.3493242263793945,
+            "tokens": 18
+          },
+          "margin_sum": 36.468196868896484,
+          "margin_mean": 2.448431611061096
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -79.8134765625,
+            "mean": -2.8504812717437744,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -76.52886962890625,
+            "mean": -5.101924419403076,
+            "tokens": 15
+          },
+          "margin_sum": -3.28460693359375,
+          "margin_mean": 2.2514431476593018
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -60.54681396484375,
+            "mean": -1.7299089431762695,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -65.9012680053711,
+            "mean": -6.590126991271973,
+            "tokens": 10
+          },
+          "margin_sum": 5.354454040527344,
+          "margin_mean": 4.860218048095703
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -52.14994812011719,
+            "mean": -2.3704521656036377,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -47.00080108642578,
+            "mean": -3.3572001457214355,
+            "tokens": 14
+          },
+          "margin_sum": -5.149147033691406,
+          "margin_mean": 0.9867479801177979
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -77.19009399414062,
+            "mean": -2.756788969039917,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -67.58634948730469,
+            "mean": -5.632195949554443,
+            "tokens": 12
+          },
+          "margin_sum": -9.603744506835938,
+          "margin_mean": 2.8754069805145264
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -15.702301025390625,
+            "mean": -0.8264368772506714,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -50.57707214355469,
+            "mean": -5.0577073097229,
+            "tokens": 10
+          },
+          "margin_sum": 34.87477111816406,
+          "margin_mean": 4.231270432472229
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -81.62261962890625,
+            "mean": -3.7101190090179443,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -106.52311706542969,
+            "mean": -7.101541042327881,
+            "tokens": 15
+          },
+          "margin_sum": 24.900497436523438,
+          "margin_mean": 3.3914220333099365
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -37.49561309814453,
+            "mean": -1.7855054140090942,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -44.94206237792969,
+            "mean": -5.617757797241211,
+            "tokens": 8
+          },
+          "margin_sum": 7.446449279785156,
+          "margin_mean": 3.8322523832321167
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -9.55744743347168,
+            "mean": -1.3653496503829956,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -10.830354690551758,
+            "mean": -1.3537943363189697,
+            "tokens": 8
+          },
+          "margin_sum": 1.2729072570800781,
+          "margin_mean": -0.011555314064025879
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -94.34455108642578,
+            "mean": -4.492597579956055,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -60.93035888671875,
+            "mean": -7.616294860839844,
+            "tokens": 8
+          },
+          "margin_sum": -33.41419219970703,
+          "margin_mean": 3.123697280883789
+        }
+      ]
+    },
+    {
+      "step": 24,
+      "chosen_sum": -50.51681353648504,
+      "rejected_sum": -60.218692779541016,
+      "margin_sum": 9.701879243055979,
+      "chosen_mean": -2.1853978938112655,
+      "rejected_mean": -5.105428218841553,
+      "margin_mean": 2.9200303250302873,
+      "pairs": [
+        {
+          "pair": 0,
+          "chosen": {
+            "sum": -0.557328462600708,
+            "mean": -0.039809174835681915,
+            "tokens": 14
+          },
+          "rejected": {
+            "sum": -52.631256103515625,
+            "mean": -4.7846598625183105,
+            "tokens": 11
+          },
+          "margin_sum": 52.07392764091492,
+          "margin_mean": 4.744850687682629
+        },
+        {
+          "pair": 1,
+          "chosen": {
+            "sum": -55.88130187988281,
+            "mean": -2.429621934890747,
+            "tokens": 23
+          },
+          "rejected": {
+            "sum": -51.74256896972656,
+            "mean": -3.9801976680755615,
+            "tokens": 13
+          },
+          "margin_sum": -4.13873291015625,
+          "margin_mean": 1.5505757331848145
+        },
+        {
+          "pair": 2,
+          "chosen": {
+            "sum": -42.004066467285156,
+            "mean": -1.909275770187378,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -78.84684753417969,
+            "mean": -4.380380630493164,
+            "tokens": 18
+          },
+          "margin_sum": 36.84278106689453,
+          "margin_mean": 2.471104860305786
+        },
+        {
+          "pair": 3,
+          "chosen": {
+            "sum": -79.92981719970703,
+            "mean": -2.8546364307403564,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -77.22056579589844,
+            "mean": -5.148037910461426,
+            "tokens": 15
+          },
+          "margin_sum": -2.7092514038085938,
+          "margin_mean": 2.2934014797210693
+        },
+        {
+          "pair": 4,
+          "chosen": {
+            "sum": -60.28580093383789,
+            "mean": -1.7224514484405518,
+            "tokens": 35
+          },
+          "rejected": {
+            "sum": -66.55398559570312,
+            "mean": -6.655398368835449,
+            "tokens": 10
+          },
+          "margin_sum": 6.268184661865234,
+          "margin_mean": 4.9329469203948975
+        },
+        {
+          "pair": 5,
+          "chosen": {
+            "sum": -51.600059509277344,
+            "mean": -2.3454573154449463,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -48.60087585449219,
+            "mean": -3.4714910984039307,
+            "tokens": 14
+          },
+          "margin_sum": -2.9991836547851562,
+          "margin_mean": 1.1260337829589844
+        },
+        {
+          "pair": 6,
+          "chosen": {
+            "sum": -77.25090026855469,
+            "mean": -2.758960723876953,
+            "tokens": 28
+          },
+          "rejected": {
+            "sum": -68.76371765136719,
+            "mean": -5.730309963226318,
+            "tokens": 12
+          },
+          "margin_sum": -8.4871826171875,
+          "margin_mean": 2.9713492393493652
+        },
+        {
+          "pair": 7,
+          "chosen": {
+            "sum": -15.560033798217773,
+            "mean": -0.8189491629600525,
+            "tokens": 19
+          },
+          "rejected": {
+            "sum": -51.66157150268555,
+            "mean": -5.166157245635986,
+            "tokens": 10
+          },
+          "margin_sum": 36.10153770446777,
+          "margin_mean": 4.347208082675934
+        },
+        {
+          "pair": 8,
+          "chosen": {
+            "sum": -81.9276351928711,
+            "mean": -3.7239835262298584,
+            "tokens": 22
+          },
+          "rejected": {
+            "sum": -109.31759643554688,
+            "mean": -7.287839889526367,
+            "tokens": 15
+          },
+          "margin_sum": 27.38996124267578,
+          "margin_mean": 3.563856363296509
+        },
+        {
+          "pair": 9,
+          "chosen": {
+            "sum": -36.5450439453125,
+            "mean": -1.740240216255188,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -43.76042175292969,
+            "mean": -5.470052719116211,
+            "tokens": 8
+          },
+          "margin_sum": 7.2153778076171875,
+          "margin_mean": 3.729812502861023
+        },
+        {
+          "pair": 10,
+          "chosen": {
+            "sum": -9.424697875976562,
+            "mean": -1.3463853597640991,
+            "tokens": 7
+          },
+          "rejected": {
+            "sum": -10.989913940429688,
+            "mean": -1.373739242553711,
+            "tokens": 8
+          },
+          "margin_sum": 1.565216064453125,
+          "margin_mean": 0.027353882789611816
+        },
+        {
+          "pair": 11,
+          "chosen": {
+            "sum": -95.23507690429688,
+            "mean": -4.535003662109375,
+            "tokens": 21
+          },
+          "rejected": {
+            "sum": -62.53499221801758,
+            "mean": -7.816874027252197,
+            "tokens": 8
+          },
+          "margin_sum": -32.7000846862793,
+          "margin_mean": 3.2818703651428223
+        }
+      ]
+    }
+  ]
+}

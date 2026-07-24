@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pretraining - the model's first world</title>
+<style>
+  :root{
+    --bg:#0e1319; --bg2:#111923; --panel:#151d28; --panel2:#1b2634;
+    --ink:#e1e8f2; --muted:#97a4b8; --faint:#657389; --line:#273244;
+    --blue:#66b7ff; --green:#72d39d; --gold:#e5c766; --rose:#ff7d79;
+    --violet:#b997ff; --cyan:#55d0c6; --paper:#f1f5fb;
+  }
+  *{box-sizing:border-box}
+  html{height:100%; scroll-behavior:smooth}
+  body{
+    margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #stage{
+    position:sticky; top:0; height:100vh; overflow:hidden;
+    background:
+      radial-gradient(circle at 78% 18%, rgba(102,183,255,.11), transparent 28%),
+      linear-gradient(180deg,#101721 0%,#0b1017 100%);
+  }
+  canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+  .hud{
+    position:absolute; left:24px; top:22px; width:min(420px, calc(100vw - 48px));
+    z-index:5; pointer-events:none;
+  }
+  .kicker{
+    color:var(--blue); font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px;
+  }
+  h1{font-size:clamp(32px,5vw,62px); line-height:1.02; margin:0 0 12px; letter-spacing:0; max-width:12ch}
+  .lead{color:#b9c5d6; font-size:clamp(15px,1.55vw,18px); max-width:39ch; margin:0 0 18px}
+  .selector{
+    display:inline-flex; align-items:center; gap:10px; padding:9px 10px;
+    border:1px solid rgba(132,158,196,.22); border-radius:8px;
+    background:rgba(15,22,32,.76); backdrop-filter:blur(12px);
+    pointer-events:auto;
+  }
+  .selector label{font-size:12px; color:var(--muted)}
+  select{
+    appearance:auto; background:#101824; color:var(--ink); border:1px solid #35455e;
+    border-radius:6px; padding:6px 8px; font:700 13px/1.2 inherit; max-width:210px;
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:7px; margin-top:10px; padding:5px 9px;
+    border:1px solid rgba(132,158,196,.18); border-radius:999px;
+    background:rgba(15,22,32,.62); color:var(--muted); font-size:12px;
+  }
+  .badge b{color:var(--ink)}
+  .side{
+    position:absolute; right:24px; top:22px; width:min(370px, calc(100vw - 48px));
+    z-index:5; padding:15px 16px 16px; border:1px solid rgba(132,158,196,.18);
+    border-radius:8px; background:rgba(15,22,32,.78); backdrop-filter:blur(12px);
+    box-shadow:0 16px 50px rgba(0,0,0,.28);
+  }
+  .side h2{font-size:17px; margin:0 0 7px; letter-spacing:0}
+  .side p{margin:0; color:var(--muted); font-size:13px}
+  .statgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:13px}
+  .stat{
+    border:1px solid rgba(132,158,196,.15); border-radius:8px;
+    background:rgba(23,32,45,.7); padding:9px 10px; min-height:64px;
+  }
+  .stat .l{font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)}
+  .stat .v{margin-top:4px; font:700 15px/1.15 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--paper)}
+  .stat .s{margin-top:3px; font-size:11px; color:var(--faint)}
+  .caption{
+    position:absolute; left:24px; bottom:22px; z-index:5;
+    max-width:min(680px, calc(100vw - 48px)); color:#c8d3e2; font-size:16px;
+    background:rgba(15,22,32,.72); border:1px solid rgba(132,158,196,.16);
+    border-radius:8px; padding:13px 15px; backdrop-filter:blur(12px);
+  }
+  .caption b{color:var(--ink)}
+  #progress{
+    position:fixed; left:0; top:0; height:3px; width:0%; background:linear-gradient(90deg,var(--blue),var(--green),var(--gold));
+    z-index:30;
+  }
+  .scroll{
+    position:relative; z-index:1; margin-top:-100vh; pointer-events:none;
+  }
+  .step{height:100vh; display:flex; align-items:flex-end; padding:0 24px 28px}
+  .step .marker{
+    width:min(560px, calc(100vw - 48px)); min-height:1px;
+  }
+  .step h3{margin:0 0 8px; font-size:22px; letter-spacing:0}
+  .step p{margin:0; color:var(--muted); font-size:14px; max-width:48ch}
+  .learn{
+    max-width:980px; margin:0 auto; padding:70px 22px 90px;
+  }
+  .learn h2{font-size:28px; margin:0 0 12px}
+  .learn p{color:var(--muted); max-width:72ch}
+  table{width:100%; border-collapse:collapse; margin-top:22px; font-size:13px}
+  th,td{border-bottom:1px solid var(--line); padding:10px 9px; text-align:left; vertical-align:top}
+  th{color:var(--paper); font-size:11px; text-transform:uppercase; letter-spacing:.08em}
+  td{color:#b9c5d6}
+  td b{color:var(--ink)}
+  .source{font-size:12px; color:var(--faint); margin-top:18px}
+  .source a{color:var(--blue)}
+  @media (max-width:800px){
+    .hud{top:16px; left:16px}
+    .side{left:16px; right:auto; top:auto; bottom:96px; width:calc(100vw - 32px); max-height:33vh; overflow:auto}
+    .caption{left:16px; bottom:16px; max-width:calc(100vw - 32px); font-size:14px}
+    h1{font-size:38px}
+    .lead{font-size:14px}
+    .statgrid{grid-template-columns:1fr 1fr}
+    .step{padding:0 16px 20px}
+  }
+  @media (max-height:680px){
+    .side{display:none}
+    .caption{font-size:14px}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<main>
+  <section id="stage" aria-label="Pretraining explorable">
+    <canvas id="viz"></canvas>
+    <div class="hud">
+      <div class="kicker">pretraining</div>
+      <h1>The model's first world</h1>
+      <p class="lead">Before alignment, a model learns a prior from a data mixture: web pages, code, books, papers, forums, and sometimes a lot we cannot inspect.</p>
+      <div class="selector">
+        <label for="model">model</label>
+        <select id="model"></select>
+      </div>
+      <div class="badge" id="badge"></div>
+    </div>
+    <aside class="side" id="side"></aside>
+    <div class="caption" id="caption"></div>
+  </section>
+
+  <section class="scroll" aria-hidden="true">
+    <div class="step" data-step="0"><div class="marker"></div></div>
+    <div class="step" data-step="1"><div class="marker"></div></div>
+    <div class="step" data-step="2"><div class="marker"></div></div>
+    <div class="step" data-step="3"><div class="marker"></div></div>
+    <div class="step" data-step="4"><div class="marker"></div></div>
+    <div class="step" data-step="5"><div class="marker"></div></div>
+    <div class="step" data-step="6"><div class="marker"></div></div>
+  </section>
+
+  <section class="learn">
+    <h2>What this page is allowed to claim</h2>
+    <p>The treemaps below are category-level teaching views, not a reconstruction of every training batch. When a lab discloses only broad categories, the treemap shows them as an explicit estimate (hatched, with a "~", never as a known recipe); when nothing is disclosed, it shows no pantry at all.</p>
+    <table>
+      <thead><tr><th>Model</th><th>Openness</th><th>Use here</th></tr></thead>
+      <tbody id="modelRows"></tbody>
+    </table>
+    <p class="source">
+      Sources: Pythia and The Pile, OLMo and Dolma, SmolLM2, and Llama 3 public technical reports. Compute estimates use the rough dense-transformer rule <code>6 * parameters * tokens</code> and are marked as estimates, not disclosed wall-clock training logs.
+    </p>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+const SOURCES = {
+  gpt2: 'GPT-2 paper and model card',
+  pythia: 'Pythia paper + The Pile paper',
+  olmo: 'OLMo paper + Dolma paper',
+  smol: 'SmolLM2 technical report',
+  llama: 'Llama 3 Herd paper',
+  qwen: 'Qwen2.5 technical report and model cards',
+  mistral: 'Mistral 7B paper and model card',
+  gemma: 'Gemma 2 technical report and model card',
+  opaque: 'public API/model card; no weights or full corpus recipe'
+};
+
+const PILE_CORPUS = [
+  {name:'web crawl and web text', value:31, color:'#66b7ff', note:'Pile-CC, OpenWebText2, Hacker News, IRC, subtitles'},
+  {name:'academic and science', value:22, color:'#b997ff', note:'arXiv, PubMed, PMC, NIH, PhilPapers'},
+  {name:'code', value:9, color:'#72d39d', note:'GitHub'},
+  {name:'books', value:12, color:'#e5c766', note:'Books3, BookCorpus2, Gutenberg'},
+  {name:'forums and Q&A', value:6, color:'#ff9e64', note:'Stack Exchange and community text'},
+  {name:'law and patents', value:10, color:'#55d0c6', note:'FreeLaw, USPTO'},
+  {name:'reference and misc', value:10, color:'#ff7d79', note:'Wikipedia, math, EuroParl, Enron, other sources'}
+];
+const GEMMA_CORPUS = [
+  {name:'web documents', value:55, color:'#66b7ff', note:'broad web document mixture; exact recipe not public'},
+  {name:'code', value:15, color:'#72d39d', note:'code and technical text; exact amount not public'},
+  {name:'math and science', value:12, color:'#b997ff', note:'math-heavy and scientific text categories'},
+  {name:'multilingual text', value:10, color:'#55d0c6', note:'Gemma vocabulary and training include non-English coverage'},
+  {name:'other undisclosed mixture', value:8, color:'#657389', note:'remaining category details are not public'}
+];
+const QWEN_CORPUS = [
+  {name:'multilingual web', value:54, color:'#66b7ff', note:'large multilingual web-scale corpus; exact recipe not public'},
+  {name:'code', value:16, color:'#72d39d', note:'code-heavy training category'},
+  {name:'math', value:12, color:'#b997ff', note:'math and reasoning-oriented data'},
+  {name:'structured / synthetic', value:10, color:'#e5c766', note:'reported data improvements; exact mix not public'},
+  {name:'other undisclosed mixture', value:8, color:'#657389', note:'remaining training recipe not released'}
+];
+const PARTIAL_WEB_CORPUS = [
+  {name:'public web / online text', value:65, color:'#66b7ff', note:'broad online text category; exact documents not public'},
+  {name:'code', value:13, color:'#72d39d', note:'code capability is reported, exact amount undisclosed'},
+  {name:'math / technical text', value:8, color:'#b997ff', note:'technical and reasoning-oriented sources'},
+  {name:'multilingual text', value:6, color:'#55d0c6', note:'non-English coverage category'},
+  {name:'other undisclosed mixture', value:8, color:'#657389', note:'remaining details not public'}
+];
+
+const MODELS = [
+  {
+    id:'gpt2',
+    name:'GPT-2',
+    family:'GPT-2',
+    openness:'partial',
+    disclosure:'weights open; WebText described but exact corpus not released',
+    params:124e6,
+    tokens:null,
+    tokenLabel:'WebText 40GB',
+    time:'not disclosed',
+    computeNote:'training token count not public',
+    source:SOURCES.gpt2,
+    color:'#66b7ff',
+    corpus:[
+      {name:'WebText from outbound Reddit links', value:100, color:'#66b7ff', note:'OpenAI described the source construction; the exact dataset was not released'}
+    ]
+  },
+  {
+    id:'gpt2-xl',
+    name:'GPT-2 XL',
+    family:'GPT-2',
+    openness:'partial',
+    disclosure:'weights open; same WebText family, exact corpus not released',
+    params:1.5e9,
+    tokens:null,
+    tokenLabel:'WebText 40GB',
+    time:'not disclosed',
+    computeNote:'training token count not public',
+    source:SOURCES.gpt2,
+    color:'#66b7ff',
+    corpus:[
+      {name:'WebText from outbound Reddit links', value:100, color:'#66b7ff', note:'Same disclosed source family as GPT-2; exact documents not released'}
+    ]
+  },
+  {
+    id:'pythia-1.4b',
+    name:'Pythia 1.4B',
+    family:'Pythia',
+    openness:'full recipe',
+    disclosure:'open data order, open checkpoints',
+    params:1.4e9,
+    tokens:300e9,
+    tokenLabel:'300B',
+    time:'154 checkpoints released',
+    computeNote:'estimated, exact wall clock varies',
+    source:SOURCES.pythia,
+    color:'#66b7ff',
+    corpus:PILE_CORPUS
+  },
+  {
+    id:'pythia-12b',
+    name:'Pythia 12B',
+    family:'Pythia',
+    openness:'full recipe',
+    disclosure:'open data order, open checkpoints',
+    params:12e9,
+    tokens:300e9,
+    tokenLabel:'300B',
+    time:'154 checkpoints released',
+    computeNote:'estimated, exact wall clock varies',
+    source:SOURCES.pythia,
+    color:'#66b7ff',
+    corpus:PILE_CORPUS
+  },
+  {
+    id:'olmo-7b',
+    name:'OLMo 7B',
+    family:'OLMo',
+    openness:'full recipe',
+    disclosure:'Dolma corpus documented',
+    params:7e9,
+    tokens:2.5e12,
+    tokenLabel:'~2.5T',
+    time:'multi-stage open run',
+    computeNote:'estimated from params and tokens',
+    source:SOURCES.olmo,
+    color:'#72d39d',
+    corpus:[
+      {name:'web pages', value:56, color:'#66b7ff', note:'Common Crawl-derived web text after filtering'},
+      {name:'code', value:14, color:'#72d39d', note:'permissive code sources'},
+      {name:'scientific papers', value:8, color:'#b997ff', note:'papers and scholarly text'},
+      {name:'social and forums', value:8, color:'#ff9e64', note:'public social/forum material'},
+      {name:'books and reference', value:7, color:'#e5c766', note:'public-domain books and encyclopedic material'},
+      {name:'other curated text', value:7, color:'#55d0c6', note:'remaining disclosed Dolma components'}
+    ]
+  },
+  {
+    id:'smollm2-1.7b',
+    name:'SmolLM2 1.7B',
+    family:'SmolLM2',
+    openness:'high',
+    disclosure:'datasets released, recipe described',
+    params:1.7e9,
+    tokens:11e12,
+    tokenLabel:'~11T',
+    time:'multi-stage overtraining',
+    computeNote:'estimated from params and tokens',
+    source:SOURCES.smol,
+    color:'#e5c766',
+    corpus:[
+      {name:'educational web', value:45, color:'#66b7ff', note:'filtered web text chosen for small-model learning'},
+      {name:'math', value:15, color:'#b997ff', note:'FineMath and math-heavy mixtures'},
+      {name:'code', value:18, color:'#72d39d', note:'Stack-Edu and code-like technical data'},
+      {name:'general web', value:12, color:'#55d0c6', note:'broad web mixture'},
+      {name:'instruction-like data', value:6, color:'#ff9e64', note:'SmolTalk-style instruction material folded into later pretraining (annealing) stages, before separate post-training'},
+      {name:'other curated data', value:4, color:'#ff7d79', note:'stage-specific refinements'}
+    ]
+  },
+  {
+    id:'qwen2.5-0.5b',
+    name:'Qwen2.5 0.5B',
+    family:'Qwen2.5',
+    openness:'partial',
+    disclosure:'weights open; broad data scale disclosed, exact corpus not public',
+    params:0.5e9,
+    tokens:18e12,
+    tokenLabel:'up to ~18T',
+    time:'not disclosed',
+    computeNote:'estimated; exact corpus not public',
+    source:SOURCES.qwen,
+    color:'#55d0c6',
+    corpus:QWEN_CORPUS
+  },
+  {
+    id:'qwen2.5-7b',
+    name:'Qwen2.5 7B',
+    family:'Qwen2.5',
+    openness:'partial',
+    disclosure:'weights open; broad data scale disclosed, exact corpus not public',
+    params:7e9,
+    tokens:18e12,
+    tokenLabel:'up to ~18T',
+    time:'not disclosed',
+    computeNote:'estimated; exact corpus not public',
+    source:SOURCES.qwen,
+    color:'#55d0c6',
+    corpus:QWEN_CORPUS
+  },
+  {
+    id:'mistral-7b',
+    name:'Mistral 7B',
+    family:'Mistral',
+    openness:'partial',
+    disclosure:'weights open; exact pretraining corpus not public',
+    params:7.3e9,
+    tokens:null,
+    tokenLabel:'not disclosed',
+    time:'not disclosed',
+    computeNote:'unknown because tokens are not public',
+    source:SOURCES.mistral,
+    color:'#e5c766',
+    corpus:PARTIAL_WEB_CORPUS
+  },
+  {
+    id:'gemma-2-2b',
+    name:'Gemma 2 2B',
+    family:'Gemma 2',
+    openness:'partial',
+    disclosure:'weights open; broad corpus categories disclosed, exact mix not public',
+    params:2.1e9,
+    tokens:2e12,
+    tokenLabel:'~2T',
+    time:'not disclosed',
+    computeNote:'estimated; exact corpus not public',
+    source:SOURCES.gemma,
+    color:'#b997ff',
+    corpus:GEMMA_CORPUS
+  },
+  {
+    id:'gemma-2-2b-it',
+    name:'Gemma 2 2B IT',
+    family:'Gemma 2',
+    openness:'partial',
+    disclosure:'post-trained sibling; same base pretraining family as Gemma 2 2B',
+    params:2.1e9,
+    tokens:2e12,
+    tokenLabel:'~2T base',
+    time:'post-trained after base',
+    computeNote:'base estimate only; instruction tuning is later',
+    source:SOURCES.gemma,
+    color:'#b997ff',
+    corpus:GEMMA_CORPUS
+  },
+  {
+    id:'gemma-2-9b',
+    name:'Gemma 2 9B',
+    family:'Gemma 2',
+    openness:'partial',
+    disclosure:'weights open; broad corpus categories disclosed, exact mix not public',
+    params:8.9e9,
+    tokens:8e12,
+    tokenLabel:'~8T',
+    time:'not disclosed',
+    computeNote:'estimated; exact corpus not public',
+    source:SOURCES.gemma,
+    color:'#b997ff',
+    corpus:GEMMA_CORPUS
+  },
+  {
+    id:'gemma-2-27b',
+    name:'Gemma 2 27B',
+    family:'Gemma 2',
+    openness:'partial',
+    disclosure:'weights open; broad corpus categories disclosed, exact mix not public',
+    params:27e9,
+    tokens:13e12,
+    tokenLabel:'~13T',
+    time:'not disclosed',
+    computeNote:'estimated; exact corpus not public',
+    source:SOURCES.gemma,
+    color:'#b997ff',
+    corpus:GEMMA_CORPUS
+  },
+  {
+    id:'llama3-8b',
+    name:'Llama 3 8B',
+    family:'Llama 3',
+    openness:'partial',
+    disclosure:'weights open, exact pretraining mix not public',
+    params:8e9,
+    tokens:15e12,
+    tokenLabel:'~15T',
+    time:'large production cluster',
+    computeNote:'estimated; corpus categories not exact',
+    source:SOURCES.llama,
+    color:'#ff7d79',
+    corpus:[
+      {name:'publicly available online data', value:70, color:'#66b7ff', note:'Meta reports broad public sources, not exact recipe'},
+      {name:'code', value:12, color:'#72d39d', note:'code capability is reported, exact amount undisclosed'},
+      {name:'multilingual data', value:8, color:'#b997ff', note:'language coverage reported at category level'},
+      {name:'math/reasoning text', value:5, color:'#e5c766', note:'category-level inference, not exact'},
+      {name:'undisclosed mix', value:5, color:'#657389', note:'remaining details not public'}
+    ]
+  },
+  {
+    id:'gpt-4o',
+    name:'GPT-4o',
+    family:'OpenAI API model',
+    openness:'opaque',
+    disclosure:'no weights and no full corpus recipe',
+    params:null,
+    tokens:null,
+    tokenLabel:'not disclosed',
+    time:'not disclosed',
+    computeNote:'unknown',
+    source:SOURCES.opaque,
+    color:'#b997ff',
+    corpus:[]
+  },
+  {
+    id:'claude-3.5-sonnet',
+    name:'Claude 3.5 Sonnet',
+    family:'Anthropic API model',
+    openness:'opaque',
+    disclosure:'no weights and no full corpus recipe',
+    params:null,
+    tokens:null,
+    tokenLabel:'not disclosed',
+    time:'not disclosed',
+    computeNote:'unknown',
+    source:SOURCES.opaque,
+    color:'#ff7d79',
+    corpus:[]
+  },
+  {
+    id:'gemini-1.5-pro',
+    name:'Gemini 1.5 Pro',
+    family:'Google API model',
+    openness:'opaque',
+    disclosure:'no weights and no full corpus recipe',
+    params:null,
+    tokens:null,
+    tokenLabel:'not disclosed',
+    time:'not disclosed',
+    computeNote:'unknown',
+    source:SOURCES.opaque,
+    color:'#55d0c6',
+    corpus:[]
+  }
+];
+
+const STEPS = [
+  {
+    mode:'select',
+    title:'First question: can we inspect the pantry?',
+    copy:'Some base models come with recipes. Some only come with weights. Some only come as an API. The difference matters before any alignment story begins.'
+  },
+  {
+    mode:'corpus',
+    title:'The corpus becomes a prior',
+    copy:'The largest rectangles are the texts the model sees most. This is not a neutral average of humanity; it is a particular sampled archive.'
+  },
+  {
+    mode:'tokens',
+    title:'Text is broken into token IDs',
+    copy:'Pretraining does not teach values directly. It repeatedly asks: given these token IDs, which token ID comes next?'
+  },
+  {
+    mode:'loop',
+    title:'The base model is trained by prediction',
+    copy:'The same loss is applied billions or trillions of times. Capabilities can emerge as a side effect of getting next-token probabilities less wrong.'
+  },
+  {
+    mode:'compute',
+    title:'This is an industrial process',
+    copy:'Token count, parameter count, hardware, and wall-clock time all matter. Public papers often disclose some of these and hide others.'
+  },
+  {
+    mode:'instability',
+    title:'Training is monitored, not ordained',
+    copy:'Large runs use checkpoints, evals, loss curves, and judgment calls (sometimes restarts). The released base model is usually a selected checkpoint, not automatically the last step.'
+  },
+  {
+    mode:'base',
+    title:'The result is a base model',
+    copy:'It can continue, imitate, translate, code, and roleplay. It is still not an aligned assistant. Post-training starts after this.'
+  }
+];
+
+const cv = document.getElementById('viz');
+const ctx = cv.getContext('2d');
+const modelSel = document.getElementById('model');
+const side = document.getElementById('side');
+const caption = document.getElementById('caption');
+const badge = document.getElementById('badge');
+const progress = document.getElementById('progress');
+let W = 0, H = 0, dpr = 1;
+let active = 0;
+let selected = MODELS[0].id;
+let hoverNode = null;
+let pointer = {x:-1,y:-1};
+let treemapNodes = [];
+
+function fmt(n){
+  if(n == null) return 'unknown';
+  if(n >= 1e12) return (n/1e12).toFixed(n >= 10e12 ? 0 : 1) + 'T';
+  if(n >= 1e9) return (n/1e9).toFixed(n >= 10e9 ? 0 : 1) + 'B';
+  return String(n);
+}
+function flops(model){
+  if(!model.params || !model.tokens) return null;
+  return 6 * model.params * model.tokens;
+}
+function h100Years(model){
+  const f = flops(model);
+  if(!f) return null;
+  const sustained = 400e12;
+  return f / sustained / (365.25 * 24 * 3600);
+}
+function sci(n){
+  if(!n) return 'unknown';
+  const e = Math.floor(Math.log10(n));
+  const m = n / Math.pow(10,e);
+  return m.toFixed(1) + 'e' + e;
+}
+function currentModel(){
+  return MODELS.find(m => m.id === selected) || MODELS[0];
+}
+function stageProgress(){
+  const max = document.documentElement.scrollHeight - innerHeight;
+  return max > 0 ? Math.max(0, Math.min(1, scrollY / max)) : 0;
+}
+function resize(){
+  dpr = Math.max(1, Math.min(2, devicePixelRatio || 1));
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+function setStep(i){
+  active = Math.max(0, Math.min(STEPS.length-1, i));
+  updateText();
+  draw();
+}
+function updateFromScroll(){
+  const p = stageProgress();
+  const i = Math.min(STEPS.length-1, Math.floor(p * STEPS.length + 0.0001));
+  if(i !== active) setStep(i);
+  progress.style.width = (p*100).toFixed(2) + '%';
+  draw();
+}
+function setupModelSelect(){
+  modelSel.innerHTML = MODELS.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  modelSel.value = selected;
+  modelSel.addEventListener('change', () => {
+    selected = modelSel.value;
+    hoverNode = null;
+    updateText();
+    draw();
+  });
+}
+function updateText(){
+  const m = currentModel();
+  const s = STEPS[active];
+  const opennessColor = m.openness === 'opaque' ? 'var(--rose)' : (m.openness === 'partial' ? 'var(--gold)' : 'var(--green)');
+  badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${opennessColor};display:inline-block"></span><b>${m.openness}</b><span>${m.disclosure}</span>`;
+  const copy = s.mode === 'corpus' && !m.corpus.length
+    ? 'This model does not disclose weights or a full training corpus recipe. The honest visualization is an empty pantry, not an invented treemap.'
+    : s.copy;
+  caption.innerHTML = `<b>${s.title}</b><br>${copy}`;
+  const hf = h100Years(m);
+  const f = flops(m);
+  side.innerHTML = `
+    <h2>${m.name}</h2>
+    <p>${m.disclosure}. Source view: ${m.source}.</p>
+    <div class="statgrid">
+      <div class="stat"><div class="l">parameters</div><div class="v">${m.params ? fmt(m.params) : 'not public'}</div><div class="s">model size</div></div>
+      <div class="stat"><div class="l">training tokens</div><div class="v">${m.tokenLabel}</div><div class="s">pretraining scale</div></div>
+      <div class="stat"><div class="l">dense flops</div><div class="v">${f ? sci(f) : 'unknown'}</div><div class="s">${m.computeNote}</div></div>
+      <div class="stat"><div class="l">H100-equivalent</div><div class="v">${hf ? (hf < 1 ? hf.toFixed(2) : hf.toFixed(0)) + ' yr' : 'unknown'}</div><div class="s">rough 400 TFLOP/s estimate</div></div>
+    </div>`;
+}
+function fillRows(){
+  document.getElementById('modelRows').innerHTML = MODELS.map(m => `
+    <tr><td><b>${m.name}</b></td><td>${m.openness}</td><td>${m.disclosure}. ${m.corpus.length ? 'Treemap uses category rollups.' : 'No corpus treemap is shown.'}</td></tr>
+  `).join('');
+}
+
+function clear(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0e1319';
+  ctx.fillRect(0,0,W,H);
+  const g = ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'rgba(102,183,255,.07)');
+  g.addColorStop(.55,'rgba(114,211,157,.03)');
+  g.addColorStop(1,'rgba(229,199,102,.05)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+}
+function roundRect(x,y,w,h,r){
+  const rr = Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+function drawText(text,x,y,size,color,weight='500',maxWidth=null){
+  ctx.fillStyle=color; ctx.font=`${weight} ${size}px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif`;
+  if(maxWidth) wrap(text,x,y,maxWidth,size*1.32);
+  else ctx.fillText(text,x,y);
+}
+function wrap(text,x,y,maxWidth,lineHeight){
+  const words = text.split(/\s+/);
+  let line = '';
+  for(const word of words){
+    const test = line ? line + ' ' + word : word;
+    if(ctx.measureText(test).width > maxWidth && line){
+      ctx.fillText(line,x,y); y += lineHeight; line = word;
+    } else line = test;
+  }
+  if(line) ctx.fillText(line,x,y);
+}
+function draw(){
+  if(!W || !H) return;
+  const m = currentModel();
+  const mode = STEPS[active].mode;
+  clear();
+  treemapNodes = [];
+  if(mode === 'select') drawDisclosure(m);
+  if(mode === 'corpus') drawCorpus(m);
+  if(mode === 'tokens') drawTokens(m);
+  if(mode === 'loop') drawLoop(m);
+  if(mode === 'compute') drawCompute(m);
+  if(mode === 'instability') drawInstability(m);
+  if(mode === 'base') drawBase(m);
+  drawStepRail();
+}
+function visualBounds(){
+  const left = W < 880 ? 24 : 470;
+  const top = W < 880 ? 170 : 118;
+  const right = W < 880 ? W - 24 : W - 420;
+  const bottom = H < 720 ? H - 120 : H - 170;
+  return {x:left,y:top,w:Math.max(280,right-left),h:Math.max(240,bottom-top)};
+}
+function drawDisclosure(m){
+  const b = visualBounds();
+  const state = m.openness === 'opaque' ? '#ff7d79' : (m.openness === 'partial' ? '#e5c766' : '#72d39d');
+  const cx = b.x + b.w/2;
+  const cy = b.y + b.h/2;
+  const boxW = Math.min(520,b.w);
+  const boxH = Math.min(260,b.h);
+  roundRect(cx-boxW/2,cy-boxH/2,boxW,boxH,10);
+  ctx.fillStyle = 'rgba(21,29,40,.78)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(132,158,196,.22)';
+  ctx.stroke();
+
+  ctx.fillStyle = state;
+  ctx.beginPath();
+  ctx.arc(cx,cy-boxH/2+48,9,0,Math.PI*2);
+  ctx.fill();
+  drawText(m.name,cx-boxW/2+28,cy-boxH/2+54,26,'#e1e8f2','800');
+  drawText(m.family,cx-boxW/2+28,cy-boxH/2+82,13,'#97a4b8','700');
+
+  const pantry = m.corpus.length
+    ? (m.openness === 'full recipe' ? 'pantry opens' : m.openness === 'high' ? 'pantry mostly opens' : 'pantry is partly labeled')
+    : 'pantry is closed';
+  const line1 = m.openness === 'opaque'
+    ? 'No weights. No full training corpus. We can only inspect public behavior.'
+    : m.openness === 'partial'
+      ? 'Weights exist, but the exact data mixture is not fully reconstructable.'
+      : m.openness === 'high'
+        ? 'Weights and datasets are released and the recipe is described; some training details stay summarized.'
+        : 'Weights, checkpoints, data recipe, and training order are inspectable.';
+  drawText(pantry,cx-boxW/2+28,cy-boxH/2+120,18,state,'800');
+  drawText(line1,cx-boxW/2+28,cy-boxH/2+150,14,'#b9c5d6','500',boxW-56);
+  drawText('Use the dropdown to switch models. This scene shows only the selected one.',cx-boxW/2+28,cy+boxH/2-28,12,'#657389','600',boxW-56);
+
+  const meterX = cx-boxW/2+28;
+  const meterY = cy+boxH/2-62;
+  const meterW = boxW-56;
+  roundRect(meterX,meterY,meterW,10,5);
+  ctx.fillStyle='rgba(101,115,137,.28)';
+  ctx.fill();
+  const fill = m.openness === 'full recipe' ? 1 : m.openness === 'high' ? .82 : (m.openness === 'partial' ? .55 : .14);
+  roundRect(meterX,meterY,meterW*fill,10,5);
+  ctx.fillStyle=state;
+  ctx.fill();
+}
+function splitTreemap(items,x,y,w,h,vertical=true,nodes=[]){
+  const total = items.reduce((a,b)=>a+b.value,0);
+  if(!items.length || total <= 0) return nodes;
+  if(items.length === 1){
+    nodes.push({...items[0],x,y,w,h});
+    return nodes;
+  }
+  let acc = 0, split = 1;
+  for(let i=0;i<items.length-1;i++){
+    if(i > 0 && acc + items[i].value > total/2) break;
+    acc += items[i].value;
+    split = i + 1;
+  }
+  split = Math.max(1, Math.min(items.length - 1, split));
+  const a = items.slice(0,split);
+  const b = items.slice(split);
+  const av = a.reduce((s,it)=>s+it.value,0);
+  const frac = av/total;
+  if(vertical){
+    const aw = w*frac;
+    splitTreemap(a,x,y,aw,h,!vertical,nodes);
+    splitTreemap(b,x+aw,y,w-aw,h,!vertical,nodes);
+  } else {
+    const ah = h*frac;
+    splitTreemap(a,x,y,w,ah,!vertical,nodes);
+    splitTreemap(b,x,y+ah,w,h-ah,!vertical,nodes);
+  }
+  return nodes;
+}
+function drawCorpus(m){
+  const b = visualBounds();
+  if(!m.corpus.length){
+    drawOpaque(b,m);
+    return;
+  }
+  const sorted = [...m.corpus].sort((a,b)=>b.value-a.value);
+  treemapNodes = splitTreemap(sorted,b.x,b.y,b.w,b.h,true,[]);
+  for(const n of treemapNodes){
+    const pad = 4;
+    roundRect(n.x+pad,n.y+pad,Math.max(0,n.w-pad*2),Math.max(0,n.h-pad*2),8);
+    ctx.fillStyle = n.color;
+    ctx.globalAlpha = .78;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,.16)';
+    ctx.stroke();
+    if(n.w > 92 && n.h > 48){
+      drawText(n.name,n.x+12,n.y+24,13,'#08111a','800',n.w-24);
+      drawText((m.openness==='partial'?'~':'') + n.value + '%',n.x+12,n.y+n.h-14,18,'rgba(8,17,26,.86)','800');
+    }
+  }
+  const h = hoverNode;
+  if(h){
+    roundRect(h.x+3,h.y+3,h.w-6,h.h-6,8);
+    ctx.strokeStyle = '#f1f5fb'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1;
+    const tx = Math.min(W-330, Math.max(20, pointer.x+18));
+    const ty = Math.min(H-132, Math.max(90, pointer.y+18));
+    roundRect(tx,ty,300,96,8);
+    ctx.fillStyle='rgba(10,15,22,.94)'; ctx.fill();
+    ctx.strokeStyle='#34455d'; ctx.stroke();
+    drawText(h.name,tx+12,ty+24,14,'#e1e8f2','800');
+    drawText(h.value + '% of this teaching treemap',tx+12,ty+46,12,'#e5c766','700');
+    drawText(h.note,tx+12,ty+68,12,'#97a4b8','500',272);
+  }
+  if(m.openness === 'partial'){
+    ctx.save();
+    ctx.globalAlpha = .35;
+    for(let x=b.x-80; x<b.x+b.w+80; x+=26){
+      ctx.strokeStyle='#0e1319'; ctx.beginPath(); ctx.moveTo(x,b.y+b.h); ctx.lineTo(x+180,b.y); ctx.stroke();
+    }
+    ctx.restore();
+    drawText('partial disclosure: exact proportions are not public',b.x+12,b.y+b.h+28,12,'#e5c766','700');
+  }
+}
+function drawOpaque(b,m){
+  roundRect(b.x,b.y,b.w,b.h,8);
+  ctx.fillStyle='rgba(21,29,40,.62)'; ctx.fill();
+  ctx.strokeStyle='#34455d'; ctx.stroke();
+  for(let i=0;i<18;i++){
+    const x = b.x + 32 + (i%6)*(b.w-64)/6;
+    const y = b.y + 42 + Math.floor(i/6)*(b.h-84)/3;
+    roundRect(x,y,Math.max(34,(b.w-90)/8),34,6);
+    ctx.fillStyle='rgba(101,115,137,.28)'; ctx.fill();
+  }
+  drawText('CORPUS NOT DISCLOSED',b.x+34,b.y+b.h/2-6,24,'#ff7d79','800');
+  drawText('We can study behavior, but not inspect the training mixture.',b.x+34,b.y+b.h/2+26,14,'#97a4b8','500',Math.min(520,b.w-68));
+}
+function drawTokens(){
+  const b = visualBounds();
+  const sentence = 'The model learns a prior from text.';
+  const pieces = ['The',' model',' learns',' a',' prior',' from',' text','.'];
+  drawText(sentence,b.x,b.y+8,24,'#e1e8f2','700');
+  const startY = b.y + 76;
+  let x = b.x, y = startY;
+  pieces.forEach((p,i) => {
+    const tw = Math.max(54, ctx.measureText(p).width + 28);
+    if(x + tw > b.x + b.w){ x = b.x; y += 72; }
+    roundRect(x,y,tw,48,8);
+    ctx.fillStyle = i%2 ? 'rgba(102,183,255,.18)' : 'rgba(114,211,157,.16)';
+    ctx.fill(); ctx.strokeStyle='#34455d'; ctx.stroke();
+    drawText(p,x+12,y+22,15,'#e1e8f2','700');
+    drawText(String(32000+i*137),x+12,y+39,11,'#97a4b8','600');
+    x += tw + 10;
+  });
+  drawText('schematic — illustrative pieces and IDs, not a real tokenizer’s output',b.x,y+68,12,'#657389','600',b.w);
+  const arrowY = Math.min(b.y+b.h-78,y+104);
+  drawArrow(b.x+40,arrowY,b.x+b.w-40,arrowY,'#e5c766');
+  drawText('one training example becomes many prediction tasks',b.x+48,arrowY+32,14,'#e5c766','700');
+}
+function drawLoop(m){
+  const b = visualBounds();
+  const cx = b.x + b.w/2, cy = b.y + b.h/2;
+  const t = performance.now()/1000;
+  for(let i=0;i<7;i++){
+    const r = 72 + i*17 + Math.sin(t+i)*4;
+    ctx.strokeStyle = `rgba(102,183,255,${.16+i*.035})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,t*.5+i,t*.5+i+Math.PI*1.45);
+    ctx.stroke();
+  }
+  const labels = ['context','prediction','loss','gradient','weights','checkpoint'];
+  labels.forEach((lab,i) => {
+    const a = -Math.PI/2 + i*Math.PI*2/labels.length + t*.08;
+    const x = cx + Math.cos(a)*150, y = cy + Math.sin(a)*150;
+    roundRect(x-55,y-20,110,40,8);
+    ctx.fillStyle='rgba(21,29,40,.84)'; ctx.fill(); ctx.strokeStyle='#34455d'; ctx.stroke();
+    drawText(lab,x-42,y+5,13,'#e1e8f2','700');
+  });
+  roundRect(cx-118,cy-42,236,84,8);
+  ctx.fillStyle='rgba(229,199,102,.14)'; ctx.fill(); ctx.strokeStyle='rgba(229,199,102,.45)'; ctx.stroke();
+  drawText('next token',cx-70,cy-8,24,'#e5c766','800');
+  drawText((m.tokenLabel || 'many') + ' tokens',cx-62,cy+22,13,'#97a4b8','700');
+}
+function drawCompute(m){
+  const b = visualBounds();
+  const f = flops(m);
+  const years = h100Years(m);
+  const cols = 18, rows = 8;
+  const cell = Math.min(24, (b.w-20)/cols, (b.h-92)/rows);
+  const gx = b.x + (b.w - cols*cell)/2;
+  const gy = b.y + 36;
+  const lit = years ? Math.max(4, Math.min(cols*rows, Math.round(Math.log10(years+1)*34))) : 0;
+  for(let i=0;i<cols*rows;i++){
+    const x = gx + (i%cols)*cell, y = gy + Math.floor(i/cols)*cell;
+    roundRect(x+2,y+2,cell-4,cell-4,4);
+    ctx.fillStyle = i < lit ? 'rgba(102,183,255,.82)' : 'rgba(101,115,137,.22)';
+    ctx.fill();
+  }
+  const ub = !!(m.tokenLabel && /^up to/i.test(m.tokenLabel));
+  drawText(m.name,b.x,b.y+8,22,'#e1e8f2','800');
+  drawText(f ? (ub?'≤ ':'') + sci(f) + ' dense training FLOPs' : 'compute not disclosed',b.x,b.y+b.h-62,22,f ? '#e5c766' : '#ff7d79','800');
+  drawText(years ? (ub?'At most about ':'About ') + (years < 1 ? years.toFixed(2) : years.toFixed(0)) + ' H100-years at a rough sustained-throughput assumption' + (ub?' (token count is an upper bound).':'.') : 'No responsible compute estimate without parameters and tokens.',b.x,b.y+b.h-30,14,'#97a4b8','500',b.w);
+}
+function drawInstability(){
+  const b = visualBounds();
+  const x0 = b.x + 20, y0 = b.y + b.h - 54;
+  const w = b.w - 40, h = b.h - 104;
+  ctx.strokeStyle='#34455d';
+  ctx.beginPath(); ctx.moveTo(x0,y0-h); ctx.lineTo(x0,y0); ctx.lineTo(x0+w,y0); ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<=160;i++){
+    const x = x0 + w*i/160;
+    const base = Math.exp(-i/70);
+    const wiggle = Math.sin(i*.28)*.018 + Math.sin(i*.071)*.025;
+    const spike = (i===74 || i===111) ? .18 : 0;
+    const y = y0 - h*(.12 + base*.72 + wiggle + spike);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='#66b7ff'; ctx.lineWidth=3; ctx.stroke(); ctx.lineWidth=1;
+  [22,54,88,126,156].forEach((i,idx)=>{
+    const x = x0 + w*i/160;
+    ctx.strokeStyle=idx===3?'#e5c766':'rgba(229,199,102,.5)';
+    ctx.beginPath(); ctx.moveTo(x,y0-h); ctx.lineTo(x,y0+8); ctx.stroke();
+    drawText('ckpt',x-15,y0+28,11,'#e5c766','700');
+  });
+  drawText('schematic — loss mostly falls, but runs are watched for spikes, regressions, and capability changes (illustrative, not a measured log)',x0,y0-h-22,14,'#97a4b8','500',w);
+}
+function drawBase(m){
+  const b = visualBounds();
+  const cx = b.x + b.w/2, cy = b.y + b.h/2;
+  const rings = [
+    ['continue text','#66b7ff',0],
+    ['imitate style','#72d39d',1],
+    ['recall facts','#e5c766',2],
+    ['write code','#b997ff',3],
+    ['roleplay','#ff7d79',4],
+    ['translate','#55d0c6',5]
+  ];
+  ctx.save();
+  ctx.translate(cx,cy);
+  rings.forEach(([lab,col],i)=>{
+    const a = i*Math.PI*2/rings.length - Math.PI/2;
+    const x = Math.cos(a)*170, y = Math.sin(a)*128;
+    ctx.strokeStyle='rgba(132,158,196,.24)';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(x,y); ctx.stroke();
+    roundRect(x-66,y-22,132,44,8);
+    ctx.fillStyle=col+'33'; ctx.fill(); ctx.strokeStyle=col; ctx.stroke();
+    drawText(lab,x-48,y+5,13,'#e1e8f2','700');
+  });
+  const isOpaque = m.openness === 'opaque';
+  const isPost = /post-trained/i.test(m.disclosure||'') || /-it$/.test(m.id);
+  roundRect(-112,-54,224,108,8);
+  ctx.fillStyle='rgba(21,29,40,.92)'; ctx.fill(); ctx.strokeStyle='#66b7ff'; ctx.stroke();
+  drawText(isOpaque ? 'base is hidden' : (isPost ? 'base (pretraining)' : 'base model'),-92,-8,22,'#e1e8f2','800');
+  drawText(m.family, -40, 23, 14, '#97a4b8','700');
+  ctx.restore();
+  const baseCaption = isOpaque
+    ? 'you only ever meet the post-trained product — its base is not disclosed'
+    : isPost
+      ? 'this is the post-trained sibling; the base above is its pretraining stage'
+      : 'post-training begins after this';
+  drawText(baseCaption,b.x,b.y+b.h-10,15,'#e5c766','800',b.w);
+}
+function drawArrow(x1,y1,x2,y2,color){
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a = Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-12*Math.cos(a-.45),y2-12*Math.sin(a-.45)); ctx.lineTo(x2-12*Math.cos(a+.45),y2-12*Math.sin(a+.45)); ctx.closePath(); ctx.fill();
+  ctx.lineWidth=1;
+}
+function drawStepRail(){
+  const x = W - 22, y = H/2 - STEPS.length*9;
+  for(let i=0;i<STEPS.length;i++){
+    ctx.beginPath(); ctx.arc(x,y+i*18,4.2,0,Math.PI*2);
+    ctx.fillStyle = i === active ? '#e5c766' : 'rgba(151,164,184,.35)';
+    ctx.fill();
+  }
+}
+cv.addEventListener('pointermove', e => {
+  const r = cv.getBoundingClientRect();
+  pointer.x = e.clientX - r.left; pointer.y = e.clientY - r.top;
+  hoverNode = treemapNodes.find(n => pointer.x >= n.x && pointer.x <= n.x+n.w && pointer.y >= n.y && pointer.y <= n.y+n.h) || null;
+  draw();
+});
+cv.addEventListener('pointerleave', () => { hoverNode = null; draw(); });
+addEventListener('resize', resize);
+addEventListener('scroll', updateFromScroll, {passive:true});
+
+window.__viz = {
+  state: () => ({ready:true, project:'pretraining', step:active, mode:STEPS[active].mode, model:selected, openness:currentModel().openness, hasCorpus:currentModel().corpus.length > 0}),
+  go: (i) => { setStep(i); history.replaceState(null,'','#'+active); },
+  setModel: (id) => { if(MODELS.some(m=>m.id===id)){ selected=id; modelSel.value=id; updateText(); draw(); } },
+  models: () => MODELS.map(m => ({id:m.id, name:m.name, openness:m.openness, tokens:m.tokenLabel, hasCorpus:m.corpus.length>0})),
+  corpus: () => currentModel().corpus.slice(),
+  estimate: () => ({flops:flops(currentModel()), h100Years:h100Years(currentModel())})
+};
+
+setupModelSelect();
+fillRows();
+updateText();
+resize();
+updateFromScroll();
+setInterval(() => {
+  if(['loop','base'].includes(STEPS[active].mode)) draw();
+}, 80);
+</script>
+</body>
+</html>

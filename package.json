@@ -2,7 +2,15 @@
   "private": true,
   "description": "Dev-only test harness for the explorables (Playwright). The explorables themselves have no build step and load CDN-only — this is not a bundler.",
   "scripts": {
-    "test:next-token": "node projects/next-token/test.js"
+    "test:next-token": "node projects/next-token/test.js",
+    "test:prior-atlas": "node projects/prior-atlas/test.js",
+    "test:alignment-methods": "node projects/alignment/methods/test.js",
+    "test:pretraining": "node projects/pretraining/test.js",
+    "test:simulator": "node projects/simulator/test.js",
+    "test:sft": "node projects/sft/test.js",
+    "test:preferences": "node projects/preferences/test.js",
+    "audit:provenance": "node projects/audit-provenance.js",
+    "test:series": "node projects/simulator/test.js && node projects/sft/test.js && node projects/preferences/test.js && node projects/audit-provenance.js"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

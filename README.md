@@ -11,7 +11,7 @@ backlog.
 
 ## The explorables
 
-Nine are built. Most are a **single self-contained `index.html`** — no build
+Ten are built. Most are a **single self-contained `index.html`** — no build
 step, no install (canvas 2D or Three.js from a CDN). Two are larger:
 `lineage-of-thought` adds a Vite/React `app/` (the one deliberate build-step
 exception), and `next-token` is a ~7 MB generated page with an optional
@@ -29,9 +29,10 @@ ones directly in a browser, or serve the repo (below) and visit the path.
 | [`projects/earth-seasons/`](projects/earth-seasons/) | sunlight, axial tilt, seasons on a 3D globe | Three.js (CDN) |
 | [`projects/lineage-of-thought/`](projects/lineage-of-thought/) | who shaped whom — an Obsidian vault of thinkers rendered as a zoomable influence timeline (globe to come) | canvas 2D + Vite/React `app/` |
 | [`projects/next-token/`](projects/next-token/) | how an English sentence is transformed on a transformer's **residual stream** — text → tokens → vectors → a running vector each layer amends → next-token logits; "Live mode" runs your own sentence | self-contained page + HF Space backend |
+| [`projects/prior-atlas/`](projects/prior-atlas/) | where two base language models disagree about next tokens — a 3D terrain of corpus familiarity, coverage gaps, and same-data flattening | Three.js (CDN) |
 
-Each project folder has its own `README.md` with the concept, controls, stage
-list, and testing-hook API.
+Each project folder has its own `README.md` with the concept, controls,
+stage list where applicable, and testing-hook API.
 
 ## Running
 
@@ -120,11 +121,13 @@ projects/                  each folder: index.html + README.md + test.js
   earth-seasons/           project 7 (Three.js)
   lineage-of-thought/      influence timeline (canvas) + Vite/React app/ + research pipeline
   next-token/              residual-stream explainer (generated ~7MB page) + HF Space "Live mode"
+  prior-atlas/             3D prior-divergence terrain over 3,000 sampled next-token positions
 ```
 
 ## Status & next
 
-Built: projects 1–7 plus `lineage-of-thought` and `next-token` (see table).
+Built: projects 1–7 plus `lineage-of-thought`, `next-token`, and `prior-atlas`
+(see table).
 Backlog highlights in `ideas.md`: sense-of-scale v2 (custom anchors, mileage,
 annual rainfall strip), phasors DFT bank extension, and re-anchoring abstract
 sense-of-scale categories in the bodily style of pour & rain. For

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Simulator — a base model, one token at a time</title>
+<style>
+  :root{
+    --ink:#e6ecf5; --muted:#8b96a8; --faint:#5c6675; --paper:#0f1319; --panel:#161c26;
+    --panel2:#1b2330; --line:#273141; --line2:#3a465c; --black:#0b0f14;
+    --blue:#5fb0ff; --green:#69d58c; --red:#ff7a6e; --gold:#e8c66b; --violet:#c792ea;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+  button,input,select{font:inherit;color:inherit}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 20px 70px}
+  .top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);font-weight:750;margin:0}
+  h1{font-size:23px;line-height:1.1;letter-spacing:-.01em;margin:6px 0 0}
+  .series{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11.5px;margin:12px 0 0}
+  .series a{color:var(--faint);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+  .series a:hover{border-color:var(--line2);color:var(--muted)}
+  .series a.on{color:var(--ink);border-color:var(--line2);background:var(--panel);font-weight:650}
+  .rail{display:flex;gap:6px;margin:14px 0}
+  .rail button{flex:1;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);cursor:pointer;font-size:11.5px;letter-spacing:.02em;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail button[aria-current="true"]{background:var(--blue);border-color:var(--blue);color:#08111c;font-weight:700}
+  .line{color:var(--muted);margin:2px 0 16px;min-height:22px}
+  .line b{color:var(--ink)}
+
+  .engine{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;overflow:hidden}
+  .flow{display:grid;gap:9px}
+  .lab{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:5px}
+  .strip{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:56px;line-height:2.1}
+  .tok{display:inline-block;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 5px;margin:1px 2px;border-radius:6px;white-space:pre}
+  .tok.ctx{background:#1e2836;color:#b9c6da}
+  .tok.gen{background:color-mix(in srgb,var(--green) 20%,var(--black));color:#bff0cf;border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}
+  .tok.newest{animation:pop .45s ease}
+  @keyframes pop{0%{transform:translateY(-8px) scale(.7);opacity:0}60%{transform:translateY(0) scale(1.08)}100%{transform:none;opacity:1}}
+  .caret{display:inline-block;width:2px;height:16px;background:var(--blue);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .midrow{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:stretch}
+  .model{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(180deg,#1d2634,#161d29);border:1px solid var(--line2);border-radius:12px;padding:12px 8px}
+  .model .core{width:100%;display:flex;flex-direction:column;gap:3px}
+  .model .core i{height:5px;border-radius:3px;background:#2b3648;display:block}
+  .model.active .core i{background:var(--blue);opacity:.85;transition:background .2s}
+  .model .name{font:11px ui-monospace,Menlo,monospace;color:var(--muted);margin-top:6px}
+  .dist{background:var(--black);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .drow{display:grid;grid-template-columns:78px 1fr 42px;align-items:center;gap:8px;margin:3px 0}
+  .drow .t{font:12.5px ui-monospace,Menlo,monospace;color:#cdd7e6;text-align:right;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+  .drow .bar{height:15px;border-radius:4px;background:#243040;position:relative;overflow:hidden}
+  .drow .bar i{position:absolute;inset:0;width:0;background:#37506e;border-radius:4px;transition:width .35s ease}
+  .drow .p{font:11px ui-monospace,Menlo,monospace;color:var(--faint);text-align:right}
+  .drow.pick .t{color:var(--green);font-weight:700}
+  .drow.pick .bar i{background:linear-gradient(90deg,var(--green),#4fd0c8)}
+  .drow.pick .p{color:var(--green)}
+  .drow.out{opacity:.3}
+  .drow.out .bar i{background:#2a3444}
+  .samctl{display:flex;gap:22px;flex-wrap:wrap;margin:12px 2px 4px}
+  .samctl label{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted)}
+  .samctl label b{color:var(--ink);font-variant-numeric:tabular-nums;min-width:34px}
+  .samctl input[type=range]{width:150px;accent-color:var(--blue)}
+  .feed{font-size:11.5px;color:var(--blue);margin:4px 2px 0;display:flex;align-items:center;gap:6px}
+  .feed svg{flex:none}
+
+  .sent{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-top:11px;font:14.5px/1.7 Georgia,'Times New Roman',serif;color:var(--ink);min-height:52px}
+  .sent .p0{color:var(--faint)} .sent .g{color:var(--green)}
+
+  .ctl{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .ctl button{border:1px solid var(--line2);background:var(--panel2);border-radius:8px;padding:8px 13px;cursor:pointer}
+  .ctl button:hover{border-color:var(--blue)}
+  .ctl button.primary{background:var(--blue);border-color:var(--blue);color:#08111c;font-weight:700}
+  .ctl .sp{flex:1}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{border:1px solid var(--line);background:var(--black);border-radius:8px;padding:7px 12px;cursor:pointer}
+  .chip:hover{border-color:var(--line2)}
+  .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#08111c;font-weight:650}
+  .hint{font-size:12.5px;color:var(--gold);margin-top:10px;min-height:18px}
+  .hint.ok{color:var(--green)}
+  .foot{color:var(--faint);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:11px}
+  .load{color:var(--muted);padding:40px 0}
+  @media (max-width:680px){ .midrow{grid-template-columns:1fr} .model{flex-direction:row;padding:8px} .model .core{max-width:120px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><p class="eyebrow" id="eyebrow">Before alignment</p><h1>A base model predicts one token, then feeds it back.</h1>
+    <nav class="series"><a class="on" href="./">0 · the simulator</a><a href="../sft/">1 · SFT →</a><a href="../preferences/">2 · preferences</a></nav></div>
+  </div>
+  <div class="rail" id="rail"></div>
+  <p class="line" id="line"></p>
+  <div id="app"><div class="load">loading measured token streams…</div></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const vis=s=>String(s).replace(/\n/g,'↵');           // show newlines in tokens
+let DATA=null, active=0, timer=null;
+const E={group:'worlds', idx:0, step:0, playing:false};   // engine state
+const FS={q:0, shot:'0'};                                 // few-shot state
+const REG={topic:0, kind:'broken'};                       // register state
+function regIdx(){
+  const s=streamsIn('register');
+  const topics=[...new Set(s.map(x=>x.topic))];
+  const i=s.findIndex(x=>x.topic===topics[REG.topic]&&x.kind===REG.kind);
+  return i<0?0:i;
+}
+const SMP={ctx:0, temp:1.0, topp:1.0, picks:[], lastPick:null};  // sampling state
+
+const STAGES=[
+  {id:'loop', tab:'the loop', line:`It doesn't answer — it predicts the <b>next token</b>, adds it to the end, and runs again. Press play and watch a sentence build itself.`, kind:'engine', group:'worlds'},
+  {id:'sample', tab:'how it picks', line:`The distribution isn't the answer — you still have to <b>pick</b> one token from it. Raise the temperature and the bars flatten; sample again and again and watch the choice wander.`, kind:'sampling'},
+  {id:'seed', tab:'you seed it', line:`Same model. Change only <b>what goes in</b> and the whole path changes — it simulates a different kind of document.`, kind:'engine', group:'framings'},
+  {id:'shots', tab:'show, don\'t train', line:`Zero examples: the expected answer isn't the top token. Add a few examples <b>in the prompt</b> and it jumps to the top of the distribution. No training.`, kind:'shots'},
+  {id:'register', tab:'does it read you?', line:`Does it pick up <b>how you write</b>, not just what you ask? Flip a seed to broken grammar and watch the generated tokens. Sometimes your errors come back. Mostly they don't.`, kind:'engine', group:'register'},
+  {id:'end', tab:'so far', line:`One machine, endless documents — shaped largely by what you feed in (its learned priors and the sampling roll do the rest). Alignment is next: pinning <b>one</b> voice to the front.`, kind:'end'},
+];
+
+function streamsIn(group){return DATA.streams.filter(s=>s.group===group)}
+function curStream(){return streamsIn(E.group)[E.idx]||streamsIn(E.group)[0]}
+
+function stopPlay(){if(timer){clearInterval(timer);timer=null}E.playing=false}
+function play(){
+  const st=curStream(); if(E.step>=st.steps.length){E.step=0}
+  E.playing=true;
+  timer=setInterval(()=>{
+    const s=curStream();
+    if(E.step>=s.steps.length){stopPlay();renderEngine();return}
+    E.step++; renderEngine();
+  },650);
+  renderEngine();
+}
+
+function engineHTML(){
+  const s=curStream();
+  const gen=s.steps.slice(0,E.step).map(x=>x.chosen);
+  const atEnd=E.step>=s.steps.length;
+  const dist=atEnd?s.steps[s.steps.length-1].topk:s.steps[E.step].topk;
+  const chosen=atEnd?null:s.steps[E.step].chosen;
+  const maxp=Math.max(...dist.map(d=>d.p));
+  const inputChips=((s.promptPieces&&s.promptPieces.length)
+      ? s.promptPieces.filter(t=>t!=='<bos>').map(t=>`<span class="tok ctx">${esc(vis(t))}</span>`).join('')
+      : `<span class="tok ctx">${esc(vis(s.prompt))}</span>`)
+    + gen.map((t,i)=>`<span class="tok gen ${i===gen.length-1?'newest':''}">${esc(vis(t))}</span>`).join('');
+  const distRows=dist.map(d=>{
+    const pick=!atEnd && d.tok===chosen;
+    return `<div class="drow ${pick?'pick':''}"><div class="t">${esc(vis(d.tok))}</div><div class="bar"><i style="width:${Math.round(d.p/maxp*100)}%"></i></div><div class="p">${Math.round(d.p*100)}%</div></div>`;
+  }).join('');
+  const sentence=`<span class="p0">${esc(s.prompt)}</span><span class="g">${esc(gen.join(''))}</span>${atEnd?'':'<span class="caret"></span>'}`;
+  return `
+    <div class="engine flow">
+      <div><div class="lab">context in →</div><div class="strip">${inputChips}</div></div>
+      <div class="midrow">
+        <div class="model ${E.playing?'active':''}"><div class="core"><i></i><i></i><i></i><i></i><i></i></div><div class="name">the model</div></div>
+        <div>
+          <div class="lab">next token? — the model's distribution</div>
+          <div class="dist">${distRows}</div>
+          <div class="feed"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M13 3v4a4 4 0 0 1-4 4H3" fill="none" stroke="#5fb0ff" stroke-width="1.4"/><path d="M5.5 8.5 3 11l2.5 2.5" fill="none" stroke="#5fb0ff" stroke-width="1.4"/></svg> the picked token becomes the newest input — then it runs again</div>
+        </div>
+      </div>
+      <div><div class="lab">the sentence, building itself</div><div class="sent">${sentence}</div></div>
+      <div class="ctl">
+        <button class="primary" data-eng="play">${E.playing?'❚❚ pause':(atEnd?'↻ replay':'▶ play')}</button>
+        <button data-eng="step" ${atEnd?'disabled':''}>⏭ one token</button>
+        <button data-eng="restart">↻ restart</button>
+        <span class="sp"></span>
+        <span style="color:var(--faint);font-size:12px">step ${Math.min(E.step,s.steps.length)}/${s.steps.length}</span>
+      </div>
+    </div>`;
+}
+
+function chipsHTML(){
+  const streams=streamsIn(E.group);
+  if(E.group==='worlds')
+    return `<div class="chips">${streams.map((s,i)=>`<button class="chip" data-idx="${i}" aria-pressed="${i===E.idx}">${esc(s.label)}</button>`).join('')}<span style="align-self:center;color:var(--faint);font-size:12.5px">— same prompt, sampled: each run walks a different path</span></div>`;
+  if(E.group==='framings')
+    return `<div class="chips">${streams.map((s,i)=>`<button class="chip" data-idx="${i}" aria-pressed="${i===E.idx}">${esc(s.label)}</button>`).join('')}</div>`;
+  if(E.group==='register'){
+    const topics=[...new Set(streams.map(s=>s.topic))];
+    const cur=streams[E.idx]||streams[0];
+    const v=DATA.registerVerdict;
+    return `<div class="chips">
+      ${topics.map((t,i)=>`<button class="chip" data-rt="${i}" aria-pressed="${i===REG.topic}">${esc(t)}</button>`).join('')}
+      <span style="flex:1"></span>
+      <button class="chip" data-rk="clean" aria-pressed="${REG.kind==='clean'}">clean seed</button>
+      <button class="chip" data-rk="broken" aria-pressed="${REG.kind==='broken'}">broken seed</button>
+    </div>
+    ${cur.kind==='broken'
+      ? `<div class="hint ${cur.mirrored?'':'ok'}" style="margin:-4px 0 10px">${cur.mirrored
+          ? '↯ this one it <b>mirrored</b> — read the green tokens: your broken grammar comes straight back ("in <i>the</i> Europe")'
+          : '✓ this one it <b>corrected</b> — you wrote it badly; it read through to the meaning and answered in clean English anyway'}</div>`
+      : `<div class="hint ok" style="margin:-4px 0 10px">clean in, clean out — now flip to the broken seed</div>`}
+    ${v?`<div class="hint" style="margin:-4px 0 10px;color:var(--muted)">Across these ${v.total} passages at the same dose, it mirrored <b>${v.mirrored_count}</b>. So it <i>can</i> read your register — but its prior that text is well-written usually wins. Not a law.</div>`:''}`;
+  }
+  return '';
+}
+
+function renderEngine(){ $('#eng').innerHTML=engineHTML(); }
+function paintEngineStage(){ $('#app').innerHTML=chipsHTML()+'<div id="eng"></div>'; renderEngine(); }
+
+function renderShots(){
+  const fs=DATA.fewshotSharpen; const q=fs.queries[FS.q];
+  const counts=fs.shotCounts.map(String);
+  if(!counts.includes(FS.shot))FS.shot=counts[0];
+  const cell=q.byShot[FS.shot]; const dist=cell.topk;
+  const maxp=Math.max(...dist.map(d=>d.p));
+  const target=q.expected.slice(0,3).toLowerCase();
+  const rows=dist.map((d)=>{
+    const hit=d.tok.trim().toLowerCase().startsWith(target);
+    return `<div class="drow ${hit?'pick':''}"><div class="t">${esc(vis(d.tok))}</div><div class="bar"><i style="width:${Math.round(d.p/maxp*100)}%"></i></div><div class="p">${Math.round(d.p*100)}%</div></div>`;
+  }).join('');
+  const good=dist[0].tok.trim().toLowerCase().startsWith(target);
+  return `
+    <div class="chips">
+      ${fs.queries.map((x,i)=>`<button class="chip" data-fsq="${i}" aria-pressed="${i===FS.q}">${esc(x.q)} → ${esc(x.expected)}</button>`).join('')}
+    </div>
+    <div class="engine flow">
+      <div><div class="lab">context in →</div><div class="strip" style="font:13px ui-monospace,Menlo,monospace;line-height:1.7;white-space:pre-wrap;color:#b9c6da">${esc(cell.context)}<span class="caret"></span></div></div>
+      <div><div class="lab">the model's next-token distribution (top tokens)</div><div class="dist">${rows}</div></div>
+      <div class="ctl">
+        ${counts.map(n=>`<button class="chip" data-shot="${n}" aria-pressed="${FS.shot===n}">${n} example${n==='1'?'':'s'}</button>`).join('')}
+        <span class="sp"></span>
+        <span class="hint ${good?'ok':''}">${good?'✓ “'+esc(q.expected)+'” is now the top prediction':'✗ without examples, “'+esc(q.expected)+'” isn’t the top prediction'}</span>
+      </div>
+    </div>`;
+}
+
+function softmaxT(logits,T){
+  const t=Math.max(0.05,T), m=Math.max(...logits);
+  const e=logits.map(l=>Math.exp((l-m)/t)); const s=e.reduce((a,b)=>a+b,0);
+  return e.map(x=>x/s);
+}
+function samRows(){
+  const s=DATA.sampling[SMP.ctx];
+  const probs=softmaxT(s.tokens.map(t=>t.logit),SMP.temp);
+  const rows=s.tokens.map((t,i)=>({tok:t.tok,p:probs[i]})).sort((a,b)=>b.p-a.p);
+  let cum=0; rows.forEach(r=>{r.in=(cum<SMP.topp); cum+=r.p;}); rows[0].in=true;
+  return rows;
+}
+function samBarsHTML(){
+  const rows=samRows().slice(0,12); const maxp=rows[0].p;
+  return rows.map(r=>{
+    const pick=SMP.lastPick===r.tok; const pc=r.p*100;
+    return `<div class="drow ${r.in?'':'out'} ${pick?'pick':''}"><div class="t">${esc(vis(r.tok))}</div><div class="bar"><i style="width:${Math.round(r.p/maxp*100)}%"></i></div><div class="p">${pc<1?pc.toFixed(1):pc.toFixed(0)}%</div></div>`;
+  }).join('');
+}
+function drawToken(greedy){
+  const rows=samRows(); const keep=rows.filter(r=>r.in);
+  if(greedy)return keep[0].tok;
+  const tot=keep.reduce((a,b)=>a+b.p,0); let x=Math.random()*tot;
+  for(const r of keep){x-=r.p; if(x<=0)return r.tok;}
+  return keep[keep.length-1].tok;
+}
+function picksHTML(){
+  if(!SMP.picks.length)return '<span style="color:var(--faint)">press “sample a token”, then raise the temperature and sample again</span>';
+  return SMP.picks.slice(-18).map(t=>`<span class="tok gen">${esc(vis(t))}</span>`).join('');
+}
+function updateSam(){
+  const d=$('#samdist'); if(d)d.innerHTML=samBarsHTML();
+  const p=$('#sampicks'); if(p)p.innerHTML=picksHTML();
+  ['#samT','#samT2'].forEach(id=>{const el=$(id); if(el)el.textContent=SMP.temp.toFixed(2);});
+  const pl=$('#samP'); if(pl)pl.textContent=SMP.topp.toFixed(2);
+  const c=$('#samN'); if(c)c.textContent=SMP.picks.length+' sampled';
+}
+function renderSampling(){
+  const s=DATA.sampling[SMP.ctx];
+  return `
+    <div class="chips">${DATA.sampling.map((x,i)=>`<button class="chip" data-smpctx="${i}" aria-pressed="${i===SMP.ctx}">${esc(x.context.slice(0,30))}…</button>`).join('')}</div>
+    <div class="engine flow">
+      <div><div class="lab">context</div><div class="strip" style="font:15px Georgia,serif;color:#d7e0ec;min-height:auto">${esc(s.context)}<span class="caret"></span></div></div>
+      <div><div class="lab">next-token distribution — reshaped by temperature <b id="samT" style="color:var(--ink)">${SMP.temp.toFixed(2)}</b></div><div class="dist" id="samdist">${samBarsHTML()}</div></div>
+      <div class="samctl">
+        <label>temperature <b id="samT2">${SMP.temp.toFixed(2)}</b><input type="range" min="0.1" max="2" step="0.05" value="${SMP.temp}" data-srange="temp"></label>
+        <label>top-p <b id="samP">${SMP.topp.toFixed(2)}</b><input type="range" min="0.1" max="1" step="0.05" value="${SMP.topp}" data-srange="topp"></label>
+      </div>
+      <div class="ctl">
+        <button class="primary" data-smp="one">▶ sample a token</button>
+        <button data-smp="many">sample 20×</button>
+        <button data-smp="greedy">greedy pick</button>
+        <button data-smp="clear">clear</button>
+        <span class="sp"></span><span id="samN" style="color:var(--faint);font-size:12px">${SMP.picks.length} sampled</span>
+      </div>
+      <div><div class="lab">what you drew (grayed bars are cut by top-p)</div><div class="strip" id="sampicks" style="min-height:42px">${picksHTML()}</div></div>
+    </div>`;
+}
+
+function renderEnd(){
+  return `<div class="engine" style="display:grid;gap:12px">
+    <div style="font:15px/1.6 -apple-system,sans-serif;color:var(--ink)">You just watched one mechanism do everything: <b style="color:var(--green)">predict the next token, add it, repeat.</b> Whether it answers, which document it becomes, how it reads — all of it is steered by <b style="color:var(--blue)">what you feed in</b> pushing against the model's own priors (which sometimes win — it fixed your grammar 3 times in 4). What it never has is a goal of its own.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="dist" style="border-color:color-mix(in srgb,var(--violet) 30%,var(--line))"><div class="lab" style="color:var(--violet)">what it is not</div><div style="color:var(--muted);font-size:13.5px">an agent · a broken chatbot · the "average" of the internet</div></div>
+      <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what it is</div><div style="color:var(--muted);font-size:13.5px">a simulator that runs whatever document your context implies</div></div>
+    </div>
+    <div style="color:var(--muted)">Next we pin <b style="color:var(--ink)">one</b> voice — the Assistant — to the front, with SFT. That's where the trade-offs begin.</div>
+  </div>`;
+}
+
+function render(){
+  if(!DATA)return;
+  const st=STAGES[active];
+  $('#rail').innerHTML=STAGES.map((s,i)=>`<button data-go="${i}" aria-current="${i===active}">${esc(s.tab)}</button>`).join('');
+  $('#eyebrow').textContent='Before alignment · '+st.id;
+  $('#line').innerHTML=st.line;
+  stopPlay();
+  if(st.kind==='engine'){
+    E.group=st.group; E.step=0;
+    E.idx = st.group==='register' ? regIdx() : 0;
+    paintEngineStage();
+  }else if(st.kind==='shots'){
+    $('#app').innerHTML=`<div id="eng">${renderShots()}</div>`;
+  }else if(st.kind==='sampling'){
+    $('#app').innerHTML=`<div id="eng">${renderSampling()}</div>`;
+  }else{
+    $('#app').innerHTML=renderEnd();
+  }
+}
+function go(i){active=Math.max(0,Math.min(STAGES.length-1,i));history.replaceState(null,'','#'+active);render()}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){go(+g.dataset.go);return}
+  const idx=e.target.closest('[data-idx]'); if(idx){stopPlay();E.idx=+idx.dataset.idx;E.step=0;paintEngineStage();return}
+  const rt=e.target.closest('[data-rt]'); if(rt){stopPlay();REG.topic=+rt.dataset.rt;E.idx=regIdx();E.step=0;paintEngineStage();return}
+  const rk=e.target.closest('[data-rk]'); if(rk){stopPlay();REG.kind=rk.dataset.rk;E.idx=regIdx();E.step=0;paintEngineStage();return}
+  const eng=e.target.closest('[data-eng]'); if(eng){
+    const a=eng.dataset.eng; const s=curStream();
+    if(a==='play'){ if(E.playing){stopPlay();renderEngine()} else {if(E.step>=s.steps.length)E.step=0; play();} }
+    if(a==='step'){ stopPlay(); if(E.step<s.steps.length){E.step++;renderEngine()} }
+    if(a==='restart'){ stopPlay(); E.step=0; renderEngine(); }
+    return;
+  }
+  const fsq=e.target.closest('[data-fsq]'); if(fsq){FS.q=+fsq.dataset.fsq;$('#eng').innerHTML=renderShots();return}
+  const shot=e.target.closest('[data-shot]'); if(shot){FS.shot=shot.dataset.shot;$('#eng').innerHTML=renderShots();return}
+  const sc=e.target.closest('[data-smpctx]'); if(sc){SMP.ctx=+sc.dataset.smpctx;SMP.picks=[];SMP.lastPick=null;$('#eng').innerHTML=renderSampling();return}
+  const sm=e.target.closest('[data-smp]'); if(sm){
+    const a=sm.dataset.smp;
+    if(a==='one'){const t=drawToken(false);SMP.lastPick=t;SMP.picks.push(t);}
+    if(a==='many'){for(let i=0;i<20;i++){const t=drawToken(false);SMP.picks.push(t);SMP.lastPick=t;}}
+    if(a==='greedy'){const t=drawToken(true);SMP.lastPick=t;SMP.picks.push(t);}
+    if(a==='clear'){SMP.picks=[];SMP.lastPick=null;}
+    updateSam(); return;
+  }
+});
+document.addEventListener('input',e=>{
+  const sr=e.target.closest('[data-srange]'); if(sr){SMP[sr.dataset.srange]=+sr.value;updateSam();return}
+});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')go(active+1);if(e.key==='ArrowLeft')go(active-1)});
+
+fetch('./stream.json').then(r=>r.json()).then(d=>{
+  DATA=d;
+  $('#foot').textContent='The loop, seed, few-shot and register stages show real, unedited '+d.model+' generations (a base model, no instruction tuning) with its baked top-'+d.topk+' next-token probabilities. The “how it picks” stage is interactive: it recomputes a temperature/top-p distribution over the baked top-30 candidates and draws in your browser — those tokens are your rolls, not baked generations.';
+  const h=+location.hash.slice(1); if(!Number.isNaN(h))active=Math.max(0,Math.min(STAGES.length-1,h));
+  render(); window.__viz.ready=true;
+}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run bake_stream.py first ('+esc(String(e))+')</div>';});
+
+window.__viz={
+  ready:false,
+  state:()=>({ready:!!DATA,stage:active,id:STAGES[active].id,group:E.group,idx:E.idx,step:E.step,playing:E.playing,stages:STAGES.length}),
+  go:i=>go(i),
+  step:()=>{const s=curStream();if(s&&E.step<s.steps.length){E.step++;renderEngine()}},
+  pick:i=>{stopPlay();E.idx=i;E.step=0;renderEngine();},
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pinning the Assistant — SFT, one demonstration at a time</title>
+<!-- Provenance of every number this page states that is NOT in its own bake.
+     Verified this session; the audit gate (projects/audit-provenance.js) enforces it. -->
+<meta name="cited-number" content="4,000 | our align_sft/sft_train.log: N_EXAMPLES=4000">
+<meta name="cited-number" content="400 | our align_sft run: MAX_STEPS=400">
+<meta name="cited-number" content="460,341 | HuggingFace dataset card: smol-smoltalk train rows">
+<meta name="cited-number" content="61,135 | HuggingFace dataset card: ultrafeedback_binarized train_prefs">
+<meta name="cited-number" content="400,000 | SmolTalk dataset card: Smol-Magpie-Ultra subset size">
+<meta name="cited-number" content="586,000 | SmolTalk card: sum of synthetic subsets (Magpie-Ultra 400K + Summarize 100K + Rewrite 50K + Constraints 36K)">
+<meta name="cited-number" content="405 | model name Llama-3.1-405B-Instruct (Magpie-Ultra generator, per SmolTalk card)">
+<meta name="cited-number" content="3.1 | model name Llama-3.1 / Qwen 2.5 version fragments">
+<meta name="cited-number" content="2.5 | model name Qwen 2.5">
+<meta name="cited-number" content="2502.02737 | SmolLM2 paper arXiv id">
+<style>
+  :root{
+    --ink:#e6ecf5; --muted:#8b96a8; --faint:#5c6675; --paper:#0f1319; --panel:#161c26;
+    --panel2:#1b2330; --line:#273141; --line2:#3a465c; --black:#0b0f14;
+    --blue:#5fb0ff; --green:#69d58c; --red:#ff7a6e; --gold:#e8c66b; --violet:#c792ea;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+  button,input,select{font:inherit;color:inherit}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 20px 70px}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);font-weight:750;margin:0}
+  h1{font-size:23px;line-height:1.1;letter-spacing:-.01em;margin:6px 0 0}
+  .series{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11.5px;margin:12px 0 0}
+  .series a{color:var(--faint);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+  .series a:hover{border-color:var(--line2);color:var(--muted)}
+  .series a.on{color:var(--ink);border-color:var(--line2);background:var(--panel);font-weight:650}
+  .rail{display:flex;gap:6px;margin:14px 0}
+  .rail button{flex:1;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);cursor:pointer;font-size:11.5px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail button[aria-current="true"]{background:var(--violet);border-color:var(--violet);color:#0b0912;font-weight:700}
+  .line{color:var(--muted);margin:2px 0 16px;min-height:22px}
+  .line b{color:var(--ink)}
+  .steps{display:flex;gap:10px;margin-top:20px}
+  .steps button{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:9px 15px;cursor:pointer}
+  .steps button:hover{border-color:var(--line2)}
+  .steps button:disabled{opacity:.4;cursor:default}
+
+  .engine{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .flow{display:grid;gap:9px}
+  .lab{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:5px}
+  .scrub{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .scrub .track{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .scrub .track button{flex:1;border:0;background:var(--black);color:var(--muted);padding:11px 6px;cursor:pointer;border-right:1px solid var(--line);position:relative}
+  .scrub .track button:last-child{border-right:0}
+  .scrub .track button b{display:block;font-size:14px;color:var(--ink)}
+  .scrub .track button small{font-size:10.5px;color:var(--faint)}
+  .scrub .track button[aria-pressed="true"]{background:linear-gradient(180deg,#20304a,#17202e)}
+  .scrub .track button[aria-pressed="true"] b{color:var(--violet)}
+  .scrub .cap{font-size:11.5px;color:var(--faint);text-align:center}
+  .strip{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:48px;line-height:2.1}
+  .q{font:13px ui-monospace,Menlo,monospace;color:#8fb7e8;background:#16283c;border:1px solid #24415e;border-radius:7px;padding:3px 8px}
+  .tok{display:inline-block;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 5px;margin:1px 2px;border-radius:6px;white-space:pre}
+  .tok.gen{background:color-mix(in srgb,var(--green) 20%,var(--black));color:#bff0cf;border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}
+  .tok.newest{animation:pop .4s ease}
+  @keyframes pop{0%{transform:translateY(-8px) scale(.7);opacity:0}60%{transform:translateY(0) scale(1.08)}100%{transform:none}}
+  .caret{display:inline-block;width:2px;height:15px;background:var(--violet);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .midrow{display:grid;grid-template-columns:150px 1fr;gap:12px}
+  .model{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:linear-gradient(180deg,#231d34,#181322);border:1px solid #3a2f52;border-radius:12px;padding:12px 8px}
+  .model .core{width:100%;display:flex;flex-direction:column;gap:3px}
+  .model .core i{height:5px;border-radius:3px;background:#3a2f52;display:block}
+  .model.trained .core i{background:var(--violet);opacity:.85}
+  .model .name{font:11px ui-monospace,Menlo,monospace;color:var(--muted);text-align:center}
+  .dist{background:var(--black);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .drow{display:grid;grid-template-columns:96px 1fr 42px;align-items:center;gap:8px;margin:3px 0}
+  .drow .t{font:12.5px ui-monospace,Menlo,monospace;color:#cdd7e6;text-align:right;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+  .drow .bar{height:15px;border-radius:4px;background:#243040;overflow:hidden}
+  .drow .bar i{display:block;height:100%;width:0;background:#37506e;border-radius:4px}
+  .drow .p{font:11px ui-monospace,Menlo,monospace;color:var(--faint);text-align:right}
+  .drow.pick .t{color:var(--violet);font-weight:700}
+  .drow.pick .bar i{background:linear-gradient(90deg,var(--violet),#8fb7e8)}
+  .drow.pick .p{color:var(--violet)}
+  .sent{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-top:11px;font:14.5px/1.7 Georgia,serif;min-height:52px}
+  .sent .q0{color:#8fb7e8;font-style:italic} .sent .g{color:var(--green)} .sent .bad{color:var(--red)}
+  .ctl{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .ctl button{border:1px solid var(--line2);background:var(--panel2);border-radius:8px;padding:8px 13px;cursor:pointer}
+  .ctl button:hover{border-color:var(--violet)}
+  .ctl button.primary{background:var(--violet);border-color:var(--violet);color:#0b0912;font-weight:700}
+  .ctl .sp{flex:1}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{border:1px solid var(--line);background:var(--black);border-radius:8px;padding:7px 12px;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--violet);border-color:var(--violet);color:#0b0912;font-weight:650}
+  .verdict{margin-top:11px;font-size:12.5px;border-radius:8px;padding:9px 11px}
+  .verdict.bad{color:var(--red);background:color-mix(in srgb,var(--red) 9%,var(--black));border:1px solid color-mix(in srgb,var(--red) 30%,var(--line))}
+  .verdict.ok{color:var(--green);background:color-mix(in srgb,var(--green) 9%,var(--black));border:1px solid color-mix(in srgb,var(--green) 30%,var(--line))}
+  .demo{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-bottom:10px}
+  .demo .u{color:#8fb7e8;font-weight:650;margin-bottom:5px}
+  .demo .a{color:var(--ink)}
+  .demo .a .hl{background:color-mix(in srgb,var(--violet) 16%,transparent);border-bottom:1px solid color-mix(in srgb,var(--violet) 50%,transparent)}
+  .note{font-size:12.8px;line-height:1.5;border-radius:9px;padding:10px 12px;border:1px solid var(--line);background:var(--black);color:var(--muted)}
+  .note b{color:var(--ink)}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--black)}
+  .stat .big{font-size:22px;color:var(--ink);font-weight:700;line-height:1.15}
+  .stat .big small{font-size:14px;color:var(--muted);font-weight:400}
+  .disc{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .drow2{display:grid;grid-template-columns:1.2fr 1.7fr auto;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+  .drow2:last-child{border-bottom:0}
+  .drow2 .mn{color:var(--ink);font-weight:600}
+  .drow2 .md{color:var(--muted);font-size:12.5px}
+  .drow2 .mo{font-size:12px;font-weight:700;white-space:nowrap}
+  .drow2.full{background:color-mix(in srgb,var(--green) 6%,transparent)} .drow2.full .mo{color:var(--green)}
+  .drow2.partial .mo{color:var(--gold)}
+  .drow2.none .mo{color:var(--red)}
+  .foot{color:var(--faint);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:11px}
+  .load{color:var(--muted);padding:40px 0}
+  @media (max-width:680px){
+    .midrow{grid-template-columns:1fr} .model{flex-direction:row}
+    .twocol{grid-template-columns:1fr}
+    .drow2{grid-template-columns:1fr auto} .drow2 .md{grid-column:1 / -1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow" id="eyebrow">Beat 1 · alignment begins</p>
+  <h1>Pinning the assistant to the front of the simulator.</h1>
+  <nav class="series"><a href="../simulator/">← 0 · the simulator</a><a class="on" href="./">1 · SFT</a><a href="../preferences/">2 · preferences →</a></nav>
+  <div class="rail" id="rail"></div>
+  <p class="line" id="line"></p>
+  <div id="app"><div class="load">loading measured checkpoints…</div></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const vis=s=>String(s).replace(/\n/g,'↵');
+let DATA=null, active=0, timer=null;
+const E={prompt:0, ckpt:'sft_400', step:0, playing:false};
+const CKPT_META={base:{b:'base',s:'0 steps · raw simulator'},sft_50:{b:'SFT · 50',s:'first demonstrations'},sft_400:{b:'SFT · 400',s:'answers by default'}};
+// Provenance (cited): SmolLM2 paper 2502.02737 + HF dataset cards; our run = align_sft/sft_train.log
+const DISCLOSURE=[
+  {name:'SmolLM2 (this model)', data:'smol-smoltalk + UltraFeedback', open:'full'},
+  {name:'OLMo 2 · Tülu 3', data:'full SFT + preference sets released', open:'full'},
+  {name:'Qwen 2.5', data:'objectives described, data not released', open:'partial'},
+  {name:'Llama 3', data:'alignment data undisclosed', open:'none'},
+  {name:'Gemma', data:'no alignment datasets published', open:'none'},
+  {name:'GPT · Claude · Gemini', data:'undisclosed', open:'none'},
+];
+
+const STAGES=[
+  {id:'train', tab:'watch it happen', kind:'engine',
+   line:`Same prompt, same input — only the <b>weights</b> differ. Slide from the raw base model to 400 steps of training and watch a ramble turn into an answer.`},
+  {id:'how', tab:'the supervision', kind:'demos',
+   line:`Someone had to produce an ideal answer for SFT to copy. So — <b>who wrote these</b>, how many are there, and can you see them? The answer isn't what the word “supervised” suggests.`},
+  {id:'end', tab:'what changed', kind:'end',
+   line:`The assistant is now the <b>default</b> — no seeding needed. The cost is that the simulator's range narrows toward one voice (the known trade-off of SFT; this page doesn't measure it). That trade is what preference tuning sharpens next.`},
+];
+
+function curSteps(){return DATA.prompts[E.prompt].byCkpt[E.ckpt].steps}
+function stopPlay(){if(timer){clearInterval(timer);timer=null}E.playing=false}
+function play(){const st=curSteps();if(E.step>=st.length)E.step=0;E.playing=true;
+  timer=setInterval(()=>{const s=curSteps();if(E.step>=s.length){stopPlay();renderEngine();return}E.step++;renderEngine();},600);renderEngine();}
+
+function engineHTML(){
+  const p=DATA.prompts[E.prompt]; const steps=curSteps();
+  const gen=steps.slice(0,E.step).map(x=>x.chosen);
+  const atEnd=E.step>=steps.length;
+  const dist=atEnd?steps[steps.length-1].topk:steps[E.step].topk;
+  const chosen=atEnd?null:steps[E.step].chosen;
+  const maxp=Math.max(...dist.map(d=>d.p));
+  const genChips=gen.map((t,i)=>`<span class="tok gen ${i===gen.length-1?'newest':''}">${esc(vis(t))}</span>`).join('');
+  const rows=dist.map(d=>{const pick=!atEnd&&d.tok===chosen;return `<div class="drow ${pick?'pick':''}"><div class="t">${esc(vis(d.tok))}</div><div class="bar"><i style="width:${Math.round(d.p/maxp*100)}%"></i></div><div class="p">${Math.round(d.p*100)}%</div></div>`;}).join('');
+  // crude quality read of the finished answer, for the verdict line
+  const full=steps.map(x=>x.chosen).join('');
+  const words=full.trim().split(/\s+/);
+  const uniq=words.length? new Set(words.map(w=>w.toLowerCase())).size/words.length : 0;
+  const junk=/[�]|<\|/.test(full) || uniq<0.5;
+  const trained=E.ckpt!=='base';
+  const sentence=`<span class="q0">${esc(p.prompt)}</span>  <span class="g">${esc(gen.join(''))}</span>${atEnd?'':'<span class="caret"></span>'}`;
+  return `
+    <div class="scrub">
+      <div class="lab">training checkpoint — drag across it</div>
+      <div class="track">${DATA.checkpoints.map(c=>`<button data-ckpt="${c}" aria-pressed="${c===E.ckpt}"><b>${CKPT_META[c].b}</b><small>${CKPT_META[c].s}</small></button>`).join('')}</div>
+    </div>
+    <div class="engine flow">
+      <div><div class="lab">context in →</div><div class="strip"><span class="q">${esc(p.prompt)}</span> ${genChips}</div></div>
+      <div class="midrow">
+        <div class="model ${trained?'trained':''}"><div class="core"><i></i><i></i><i></i><i></i><i></i></div><div class="name">SmolLM2-360M<br>${esc(CKPT_META[E.ckpt].b)}</div></div>
+        <div><div class="lab">next token — top-8 candidates (full-softmax probabilities)</div><div class="dist">${rows}</div></div>
+      </div>
+      <div><div class="lab">the answer, building itself</div><div class="sent">${sentence}</div></div>
+      ${atEnd?`<div class="verdict ${trained&&!junk?'ok':'bad'}">${trained&&!junk?'✓ answers in the assistant format — a crude auto-check (no garbled repetition), not a quality score':(!trained?'✗ the base model just continues the text — not yet trained on this assistant format':'…still forming')}</div>`:''}
+      <div class="ctl">
+        <button class="primary" data-eng="play">${E.playing?'❚❚ pause':(atEnd?'↻ replay':'▶ watch it type')}</button>
+        <button data-eng="step" ${atEnd?'disabled':''}>⏭ one token</button>
+        <span class="sp"></span><span style="color:var(--faint);font-size:12px">step ${Math.min(E.step,steps.length)}/${steps.length}</span>
+      </div>
+    </div>`;
+}
+function renderEngine(){$('#eng').innerHTML=engineHTML();}
+
+function renderDemos(){
+  const d=DATA.demonstrations;
+  return `
+    <div class="lab" style="margin-bottom:8px">the signal — example rows from the same SmolTalk set SFT learns from; the highlighted answer is all SFT imitates</div>
+    <div>${d.map(x=>`<div class="demo"><div class="u">▸ ${esc(x.prompt)}</div><div class="a"><span class="hl">${esc(x.answer)}</span></div></div>`).join('')}</div>
+    <div style="color:var(--faint);font-size:12px;margin:-2px 0 14px">SFT's loss lands only on the highlighted reply — it learns to <i>produce that</i>, given that kind of question. Source: ${esc(DATA.demoSource)}.</div>
+    <div class="note" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line));margin-bottom:18px">
+      <b style="color:var(--gold)">But who actually wrote them?</b> Mostly <b>another AI</b>. SmolTalk's largest slice — <b>400,000</b> of its ~1M rows — was generated by <b>Llama-3.1-405B-Instruct</b>. Add the synthetic rewrite, summarize and constraint sets and <b>~586,000 rows are explicitly machine-made</b>. The maths rows above aren't hand-written either — they come from the same LLM-augmented collections (SmolTalk doesn't label each row's individual author). So “supervised fine-tuning” here is mostly <b>a big model teaching a small one</b> — hold that thought, because in Beat&nbsp;2 the preference labels turn out to be an AI's too.
+    </div>
+
+    <div class="lab" style="margin-bottom:8px">how much supervision</div>
+    <div class="twocol">
+      <div class="stat" style="border-color:color-mix(in srgb,var(--violet) 35%,var(--line))">
+        <div style="color:var(--violet);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:5px">this teaching model</div>
+        <div class="big">4,000 <small>demonstrations</small></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:3px">400 steps — a deliberately tiny slice, so you can watch it happen</div>
+      </div>
+      <div class="stat">
+        <div style="color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:5px">the shipped SmolLM2-360M</div>
+        <div class="big">460,341 <small>demos</small> + 61,135 <small>preference pairs</small></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:3px">smol-smoltalk (SFT) + UltraFeedback (DPO) — both public</div>
+      </div>
+    </div>
+
+    <div class="lab" style="margin-bottom:8px">can you see what taught it?</div>
+    <div class="disc">${DISCLOSURE.map(m=>`<div class="drow2 ${m.open}"><div class="mn">${esc(m.name)}</div><div class="md">${esc(m.data)}</div><div class="mo">${m.open==='full'?'✓ public':m.open==='partial'?'~ partial':'✗ hidden'}</div></div>`).join('')}</div>
+    <div class="verdict ok" style="border-color:var(--line);margin-top:12px">SmolLM2 is one of the few assistants whose <b style="color:var(--violet)">entire supervision you can download and read</b>. For Llama, Gemma, and every frontier model, you cannot see the data that shaped it at all — not who wrote it, not whether anyone did. You can use the model; you cannot read what taught it.</div>`;
+}
+function renderEnd(){
+  return `<div class="engine" style="display:grid;gap:12px">
+    <div style="color:var(--ink)">Before, you had to <b style="color:var(--blue)">seed</b> the simulator into answering (Beat 0). Now the answer is the default — SFT <b style="color:var(--violet)">baked that framing into the weights</b>.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="dist" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what you gained</div><div style="color:var(--muted);font-size:13.5px">answers by default · no seed-framing needed (Beat 0's trick) · speaks the assistant format</div></div>
+      <div class="dist" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line))"><div class="lab" style="color:var(--gold)">what you spent</div><div style="color:var(--muted);font-size:13.5px">likely range — narrowing toward one voice is the known cost of SFT, though this page doesn't measure it</div></div>
+    </div>
+    <div style="color:var(--muted)">SFT learns by imitating answers someone <i>produced</i>. One way past the demonstrator — to prefer one answer over another when you can't write the ideal one — is <b style="color:var(--ink)">preferences</b>. That's next.</div>
+  </div>`;
+}
+
+function render(){
+  if(!DATA)return; const st=STAGES[active];
+  $('#rail').innerHTML=STAGES.map((s,i)=>`<button data-go="${i}" aria-current="${i===active}">${esc(s.tab)}</button>`).join('');
+  $('#eyebrow').textContent='Beat 1 · '+st.id;
+  $('#line').innerHTML=st.line;
+  stopPlay();
+  if(st.kind==='engine'){ E.step=curSteps().length; $('#app').innerHTML=`<div id="eng"></div>`; renderEngine(); }
+  else if(st.kind==='demos'){ $('#app').innerHTML=renderDemos(); }
+  else{ $('#app').innerHTML=renderEnd(); }
+}
+function go(i){active=Math.max(0,Math.min(STAGES.length-1,i));history.replaceState(null,'','#'+active);render();}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){go(+g.dataset.go);return}
+  const c=e.target.closest('[data-ckpt]'); if(c){stopPlay();E.ckpt=c.dataset.ckpt;E.step=curSteps().length;renderEngine();return}
+  const eng=e.target.closest('[data-eng]'); if(eng){const a=eng.dataset.eng,s=curSteps();
+    if(a==='play'){if(E.playing){stopPlay();renderEngine()}else{if(E.step>=s.length)E.step=0;play();}}
+    if(a==='step'){stopPlay();if(E.step<s.length){E.step++;renderEngine()}}
+    return;}
+});
+addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(active+1);if(e.key==='ArrowLeft')go(active-1)});
+
+fetch('./stream.json').then(r=>r.json()).then(d=>{
+  DATA=d;
+  $('#foot').innerHTML='Real greedy generations (capped at 30 tokens) from one training run of '+esc(d.model)+', same chat-formatted prompt at every checkpoint; bars are its top-'+d.topk+' candidates (full-softmax probabilities, widths scaled to the top candidate). Supervision counts and provenance: SmolLM2 paper (arXiv:2502.02737) and the HuggingFace dataset cards — smol-smoltalk 460,341 rows; ultrafeedback_binarized 61,135 pairs; SmolTalk’s own card states Smol-Magpie-Ultra (400K of ~1M) was generated with Llama-3.1-405B-Instruct, plus synthetic Smol-Rewrite/Summarize/Constraints (~186K). Our run: align_sft log (4,000 examples). Disclosure status per each model’s public docs.';
+  const h=+location.hash.slice(1); if(!Number.isNaN(h))active=Math.max(0,Math.min(STAGES.length-1,h));
+  render(); window.__viz.ready=true;
+}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run bake_stream.py first ('+esc(String(e))+')</div>';});
+
+window.__viz={ ready:false,
+  state:()=>({ready:!!DATA,stage:active,id:STAGES[active].id,ckpt:E.ckpt,prompt:E.prompt,step:E.step,stages:STAGES.length}),
+  go:i=>go(i), ckpt:c=>{stopPlay();E.ckpt=c;E.step=curSteps().length;renderEngine();},
+};
+</script>
+</body>
+</html>

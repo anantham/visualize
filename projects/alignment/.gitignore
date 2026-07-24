@@ -1,0 +1,22 @@
+# Regenerable / heavy experiment outputs — the scripts + bake JSONs are the
+# committed record; adapters, checkpoints, and caches stay local.
+empirical/__pycache__/
+__pycache__/
+empirical/sft_diag_runs/
+empirical/pipeline_runs/
+empirical/bakes/rlvr_run/
+empirical/bakes/dpo_run/
+
+# --- PARKED: the safety explorable + artifacts embedding harmful completions ---
+# See PARKED.md. Two reasons, both deliberate:
+#   1. these render/contain model-generated harmful compliance text (gun assembly,
+#      identity theft, poisoning) — not for a public repo, even weak 360M output;
+#   2. the page's copy contradicts its own measured nulls (it says "safety appears"
+#      beside a 0/24 badge).
+# The series moved to projects/{simulator,sft,preferences} instead. Do not `git add -f`.
+/index.html
+/test.js
+empirical/bakes/pipeline_behavior*.json
+empirical/bakes/pipeline_refusal*.json
+empirical/bakes/pipeline_safety*.json
+empirical/*.log

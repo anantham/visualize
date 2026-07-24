@@ -1,0 +1,48 @@
+{
+  "metric": "jensen_shannon_log2_mean_over_prompts_and_positions",
+  "k_positions": 4,
+  "n_prompts": 30,
+  "device": "mps",
+  "curve": [
+    {
+      "step": 50,
+      "prev_step": 0,
+      "mean_JS_vs_prev": 0.5474759211142858
+    },
+    {
+      "step": 100,
+      "prev_step": 50,
+      "mean_JS_vs_prev": 0.017315167374908923
+    },
+    {
+      "step": 150,
+      "prev_step": 100,
+      "mean_JS_vs_prev": 0.004288219735220385
+    },
+    {
+      "step": 200,
+      "prev_step": 150,
+      "mean_JS_vs_prev": 0.002460750910783342
+    },
+    {
+      "step": 250,
+      "prev_step": 200,
+      "mean_JS_vs_prev": 0.0011281562207538325
+    },
+    {
+      "step": 300,
+      "prev_step": 250,
+      "mean_JS_vs_prev": 0.0007143754986221514
+    },
+    {
+      "step": 350,
+      "prev_step": 300,
+      "mean_JS_vs_prev": 0.00024848974183745064
+    },
+    {
+      "step": 400,
+      "prev_step": 350,
+      "mean_JS_vs_prev": 0.00012632437518126
+    }
+  ]
+}

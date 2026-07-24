@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>You Rank It — preference tuning, one click at a time</title>
+<!-- Non-bake numbers this page states; verified this session, enforced by
+     projects/audit-provenance.js. -->
+<meta name="cited-number" content="61,135 | HuggingFace dataset card: ultrafeedback_binarized train_prefs">
+<meta name="cited-number" content="2.5 | model name Qwen 2.5">
+<meta name="cited-number" content="2502.02737 | SmolLM2 paper arXiv id">
+<meta name="cited-number" content="4 | GPT-4 (UltraFeedback rater)">
+<meta name="cited-number" content="3 | model-name version fragments (Llama 3, gemma-2)">
+<meta name="cited-number" content="2 | arXiv id fragment / model versions">
+<meta name="cited-number" content="4.2 | probe example content ('floor of -4.2') — illustrative, not a claim">
+<meta name="cited-number" content="9 | probe example content (arithmetic answer) — illustrative">
+<meta name="cited-number" content="75 | probe example content (word-problem answer) — illustrative">
+<style>
+  :root{
+    --ink:#e6ecf5; --muted:#8b96a8; --faint:#5c6675; --paper:#0f1319; --panel:#161c26;
+    --panel2:#1b2330; --line:#273141; --line2:#3a465c; --black:#0b0f14;
+    --blue:#5fb0ff; --green:#69d58c; --red:#ff7a6e; --gold:#e8c66b; --violet:#c792ea; --cyan:#4fd0c8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+  button,input{font:inherit;color:inherit}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 20px 70px}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);font-weight:750;margin:0}
+  h1{font-size:23px;line-height:1.1;letter-spacing:-.01em;margin:6px 0 0}
+  .series{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11.5px;margin:12px 0 0}
+  .series a{color:var(--faint);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+  .series a:hover{border-color:var(--line2);color:var(--muted)}
+  .series a.on{color:var(--ink);border-color:var(--line2);background:var(--panel);font-weight:650}
+  .rail{display:flex;gap:6px;margin:14px 0}
+  .rail button{flex:1;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);cursor:pointer;font-size:11.5px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail button[aria-current="true"]{background:var(--cyan);border-color:var(--cyan);color:#04201e;font-weight:700}
+  .line{color:var(--muted);margin:2px 0 16px;min-height:22px}
+  .line b{color:var(--ink)}
+  .engine{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .flow{display:grid;gap:10px}
+  .lab{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:5px}
+
+  /* --- the two-answer ranking card --- */
+  .ans{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--black)}
+  .ans.win{border-color:color-mix(in srgb,var(--green) 55%,var(--line));background:color-mix(in srgb,var(--green) 7%,var(--black))}
+  .ans.lose{border-color:color-mix(in srgb,var(--red) 40%,var(--line));background:color-mix(in srgb,var(--red) 5%,var(--black))}
+  .ans .tagline{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+  .ans.win .tagline{color:var(--green)} .ans.lose .tagline{color:var(--red)}
+  .ans p{margin:0;color:var(--ink);font-size:13.5px}
+  .qbox{font:14px Georgia,serif;color:#9fdcd6;background:#102a2a;border:1px solid #1e4744;border-radius:8px;padding:9px 11px;margin-bottom:10px}
+
+  /* --- likelihood bars --- */
+  .lp{display:grid;grid-template-columns:132px 1fr 66px;align-items:center;gap:9px;margin:7px 0}
+  .lp .n{font-size:12.5px;text-align:right;color:var(--muted)}
+  .lp .track{height:19px;border-radius:5px;background:#1d2735;overflow:hidden}
+  .lp .track i{display:block;height:100%;border-radius:5px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+  .lp.c .track i{background:linear-gradient(90deg,var(--green),#4fd0c8)}
+  .lp.r .track i{background:linear-gradient(90deg,#6b4a4a,var(--red))}
+  .lp .v{font:12px ui-monospace,Menlo,monospace;text-align:right;color:var(--ink)}
+  .gap{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:13px;border:1px solid var(--line);background:var(--black)}
+  .gap b{font:13px ui-monospace,Menlo,monospace}
+  .gap.pos{border-color:color-mix(in srgb,var(--green) 35%,var(--line));color:var(--green)}
+  .gap.neg{border-color:color-mix(in srgb,var(--red) 35%,var(--line));color:var(--red)}
+  .ctl{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap}
+  .ctl input[type=range]{flex:1;min-width:150px;accent-color:var(--cyan)}
+  .chip{border:1px solid var(--line);background:var(--black);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:13px}
+  .chip[aria-pressed="true"]{background:var(--cyan);border-color:var(--cyan);color:#04201e;font-weight:650}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+
+  /* --- loop (install) --- */
+  .strip{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:46px;line-height:2.1}
+  .q{font:13px ui-monospace,Menlo,monospace;color:#9fdcd6;background:#102a2a;border:1px solid #1e4744;border-radius:7px;padding:3px 8px}
+  .tok{display:inline-block;font:13px ui-monospace,Menlo,monospace;padding:2px 5px;margin:1px 2px;border-radius:6px;white-space:pre}
+  .tok.gen{background:color-mix(in srgb,var(--green) 20%,var(--black));color:#bff0cf;border:1px solid color-mix(in srgb,var(--green) 40%,transparent)}
+  .tok.newest{animation:pop .4s ease}
+  @keyframes pop{0%{transform:translateY(-8px) scale(.7);opacity:0}60%{transform:translateY(0) scale(1.08)}100%{transform:none}}
+  .caret{display:inline-block;width:2px;height:15px;background:var(--cyan);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .dist{background:var(--black);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .drow{display:grid;grid-template-columns:96px 1fr 42px;align-items:center;gap:8px;margin:3px 0}
+  .drow .t{font:12.5px ui-monospace,Menlo,monospace;color:#cdd7e6;text-align:right;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+  .drow .bar{height:15px;border-radius:4px;background:#243040;overflow:hidden}
+  .drow .bar i{display:block;height:100%;width:0;background:#37506e;border-radius:4px}
+  .drow .p{font:11px ui-monospace,Menlo,monospace;color:var(--faint);text-align:right}
+  .drow.pick .t{color:var(--cyan);font-weight:700}
+  .drow.pick .bar i{background:linear-gradient(90deg,var(--cyan),var(--green))}
+  .drow.pick .p{color:var(--cyan)}
+  .sent{background:var(--black);border:1px solid var(--line);border-radius:10px;padding:12px 13px;font:14.5px/1.7 Georgia,serif;min-height:48px}
+  .sent .q0{color:#9fdcd6;font-style:italic} .sent .g{color:var(--green)}
+  .track2{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .track2 button{flex:1;border:0;background:var(--black);color:var(--muted);padding:11px 6px;cursor:pointer;border-right:1px solid var(--line)}
+  .track2 button:last-child{border-right:0}
+  .track2 button b{display:block;font-size:14px;color:var(--ink)} .track2 button small{font-size:10.5px;color:var(--faint)}
+  .track2 button[aria-pressed="true"]{background:linear-gradient(180deg,#123330,#0d2523)} .track2 button[aria-pressed="true"] b{color:var(--cyan)}
+  .go{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .go button{border:1px solid var(--line2);background:var(--panel2);border-radius:8px;padding:8px 13px;cursor:pointer}
+  .go button.primary{background:var(--cyan);border-color:var(--cyan);color:#04201e;font-weight:700}
+  .go .sp{flex:1}
+  /* --- supervision --- */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--black)}
+  .stat .big{font-size:21px;color:var(--ink);font-weight:700;line-height:1.2}
+  .stat .big small{font-size:13px;color:var(--muted);font-weight:400}
+  .disc{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .drow2{display:grid;grid-template-columns:1.2fr 1.7fr auto;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+  .drow2:last-child{border-bottom:0}
+  .drow2 .mn{color:var(--ink);font-weight:600} .drow2 .md{color:var(--muted);font-size:12.5px}
+  .drow2 .mo{font-size:12px;font-weight:700;white-space:nowrap}
+  .drow2.full{background:color-mix(in srgb,var(--green) 6%,transparent)} .drow2.full .mo{color:var(--green)}
+  .drow2.partial .mo{color:var(--gold)} .drow2.none .mo{color:var(--red)}
+  .note{margin-top:11px;font-size:12.8px;border-radius:9px;padding:10px 12px;border:1px solid var(--line);background:var(--black);color:var(--muted)}
+  .note b{color:var(--ink)}
+  .foot{color:var(--faint);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:11px}
+  .load{color:var(--muted);padding:40px 0}
+  @media (max-width:680px){ .twocol{grid-template-columns:1fr} .drow2{grid-template-columns:1fr auto} .drow2 .md{grid-column:1/-1} .lp{grid-template-columns:96px 1fr 58px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow" id="eyebrow">Beat 2 · preferences</p>
+  <h1>You can't write the answer. But you can pick the better one.</h1>
+  <nav class="series"><a href="../simulator/">← 0 · the simulator</a><a href="../sft/">← 1 · SFT</a><a class="on" href="./">2 · preferences</a></nav>
+  <div class="rail" id="rail"></div>
+  <p class="line" id="line"></p>
+  <div id="app"><div class="load">loading measured preference run…</div></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const vis=s=>String(s).replace(/\n/g,'↵');
+let DATA=null, active=0, timer=null;
+const M={step:0, metric:'pt', ex:0};              // mechanism state
+const E={prompt:0, state:'dpo', step:0, playing:false};   // install state
+
+const DISCLOSURE=[
+  {name:'SmolLM2 (this model)', data:'UltraFeedback — 61,135 pairs, public', open:'full'},
+  {name:'OLMo 2 · Tülu 3', data:'preference sets released', open:'full'},
+  {name:'Qwen 2.5', data:'criteria described, pairs not released', open:'partial'},
+  {name:'Llama 3', data:'preference data undisclosed', open:'none'},
+  {name:'Gemma', data:'no preference data published', open:'none'},
+  {name:'GPT · Claude · Gemini', data:'undisclosed', open:'none'},
+];
+
+const STAGES=[
+  {id:'rank', tab:'you rank it', kind:'mech',
+   line:`You can't write the ideal answer for every question — but you can look at two and say which is better. That's the <b>entire signal</b>. Drag the training and watch what actually moves.`},
+  {id:'signal', tab:'the supervision', kind:'sup',
+   line:`The leverage point is someone clicking one of two answers. How many clicks, produced by whom — and can you see them?`},
+  {id:'install', tab:'watch it install', kind:'engine',
+   line:`Same prompt, same input. Flip the preference on and the answers get short — and still <b>finish</b>.`},
+  {id:'end', tab:'what it really did', kind:'end',
+   line:`It opened a <b>gap</b>. That is not the same thing as making the answer good.`},
+];
+
+/* ---------------- mechanism ---------------- */
+function mechHTML(){
+  const m=DATA.mechanism, traj=m.trajectory, t=traj[M.step], ex=m.probe_examples[M.ex];
+  const pt=M.metric==='pt';
+  const c=pt?t.chosen_pt:t.chosen_sum, r=pt?t.rejected_pt:t.rejected_sum;
+  const gap=pt?t.margin_pt:t.margin_sum;
+  // fixed scales across the whole trajectory so movement is honest & visible
+  const all=traj.flatMap(x=>pt?[x.chosen_pt,x.rejected_pt]:[x.chosen_sum,x.rejected_sum]);
+  const lo=Math.min(...all)-(pt?0.25:2), hi=Math.max(...all)+(pt?0.15:1.5);
+  const w=v=>Math.max(2,Math.round((v-lo)/(hi-lo)*100));
+  const fmt=v=>(v>=0?'+':'')+v.toFixed(pt?3:2);
+  return `
+    <div class="chips">${m.probe_examples.map((x,i)=>`<button class="chip" data-ex="${i}" aria-pressed="${i===M.ex}">${esc(x.prompt.slice(0,30))}…</button>`).join('')}</div>
+    <div class="engine flow">
+      <div class="qbox">${esc(ex.prompt)}</div>
+      <div class="twocol" style="margin-bottom:6px">
+        <div class="ans win"><div class="tagline">✓ you picked this</div><p>${esc(ex.chosen)}</p></div>
+        <div class="ans lose"><div class="tagline">✗ you rejected this</div><p>${esc(ex.rejected)}</p></div>
+      </div>
+      <div>
+        <div class="lab">how likely the model thinks each one is — ${pt?'per token (length-fair)':'summed log-prob (length-sensitive)'}</div>
+        <div class="lp c"><div class="n">chosen (correct)</div><div class="track"><i style="width:${w(c)}%"></i></div><div class="v">${c.toFixed(pt?3:1)}</div></div>
+        <div class="lp r"><div class="n">rejected (wrong)</div><div class="track"><i style="width:${w(r)}%"></i></div><div class="v">${r.toFixed(pt?3:1)}</div></div>
+        <div class="gap ${gap>0?'pos':'neg'}">gap = <b>${fmt(gap)}</b> — ${gap>0?'the model prefers the answer you picked':'the model still prefers the answer you <b>rejected</b> — it’s shorter, and this metric adds up one term per token'}</div>
+      </div>
+      <div class="ctl">
+        <span style="color:var(--muted);font-size:12.5px">training step</span>
+        <input type="range" min="0" max="${traj.length-1}" step="1" value="${M.step}" data-mrange>
+        <b style="font:13px ui-monospace,Menlo,monospace">${t.step}</b>
+        <span style="width:10px"></span>
+        <button class="chip" data-metric="pt" aria-pressed="${pt}">per token</button>
+        <button class="chip" data-metric="sum" aria-pressed="${!pt}">summed</button>
+      </div>
+      <div class="note">${pt
+        ? `Drag to step 60: the gap widens <b>+${traj[0].margin_pt.toFixed(3)} → +${traj[traj.length-1].margin_pt.toFixed(3)}</b>. Real, but small. And look closely — <b>both</b> bars grow. DPO didn’t make the wrong answer less likely; it made the right one rise <i>faster</i>. Its loss is a function of the <b>gap</b> between the two, so that's what it moves — not necessarily either answer on its own.`
+        : `Now the honest catch. These are the raw <b>summed</b> log-probs — the whole answer's total, which DPO's loss also works from (as a log-ratio against a frozen reference model, not the bare sum shown here). And the gap stays <b>negative the whole way</b> (${traj[0].margin_sum.toFixed(2)} → ${traj[traj.length-1].margin_sum.toFixed(2)}): summing adds a term per token, so the <b>wrong-but-shorter</b> answer (${traj[0].rejected_len} tokens vs ${traj[0].chosen_len}) keeps a higher total. That's raw-log-prob length sensitivity — it's there before any training, not something DPO created.`}
+      </div>
+    </div>`;
+}
+
+/* ---------------- supervision ---------------- */
+function supHTML(){
+  const ins=DATA.install, m=DATA.mechanism;
+  const p=ins.pairs[0];
+  return `
+    <div class="lab" style="margin-bottom:8px">the signal — one click between two answers</div>
+    <div class="qbox">${esc(p.prompt)}</div>
+    <div class="twocol">
+      <div class="ans win"><div class="tagline">✓ chosen</div><p>${esc(p.chosen)}</p></div>
+      <div class="ans lose"><div class="tagline">✗ rejected</div><p>${esc(p.rejected.slice(0,220))}…</p></div>
+    </div>
+    <div style="color:var(--faint);font-size:12px;margin:-6px 0 18px">No one wrote a perfect answer here. Someone only had to say <b style="color:var(--ink)">which of the two they preferred</b> — that is the whole supervision signal DPO consumes.</div>
+
+    <div class="lab" style="margin-bottom:8px">how much supervision</div>
+    <div class="twocol">
+      <div class="stat" style="border-color:color-mix(in srgb,var(--cyan) 35%,var(--line))">
+        <div style="color:var(--cyan);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:5px">this teaching run</div>
+        <div class="big">${m.config.train_pairs} + ${ins.config.train_pairs} <small>pairs</small></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:3px">hand-made, so you can read every one</div>
+      </div>
+      <div class="stat">
+        <div style="color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:5px">the shipped SmolLM2-360M</div>
+        <div class="big">61,135 <small>preference pairs</small></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:3px">UltraFeedback — public, downloadable</div>
+      </div>
+    </div>
+    <div class="note" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line));margin-bottom:16px">
+      <b style="color:var(--gold)">And here's the twist.</b> Those 61,135 “human preferences” weren’t picked by humans. UltraFeedback’s ratings were generated by <b>GPT-4</b> — it's a synthetic feedback set. In a lot of open models, the “human” in <i>reinforcement learning from human feedback</i> is <b>another AI</b>. When it is people, it's usually paid raters working to a rubric — or your thumbs-up in a product.
+    </div>
+
+    <div class="lab" style="margin-bottom:8px">can you see the preferences that shaped it?</div>
+    <div class="disc">${DISCLOSURE.map(x=>`<div class="drow2 ${x.open}"><div class="mn">${esc(x.name)}</div><div class="md">${esc(x.data)}</div><div class="mo">${x.open==='full'?'✓ public':x.open==='partial'?'~ partial':'✗ hidden'}</div></div>`).join('')}</div>`;
+}
+
+/* ---------------- install (the loop) ---------------- */
+function curSteps(){return DATA.install.prompts[E.prompt].byState[E.state].steps}
+function stopPlay(){if(timer){clearInterval(timer);timer=null}E.playing=false}
+function play(){const s=curSteps();if(E.step>=s.length)E.step=0;E.playing=true;
+  timer=setInterval(()=>{const st=curSteps();if(E.step>=st.length){stopPlay();paintEng();return}E.step++;paintEng();},580);paintEng();}
+function engHTML(){
+  const ins=DATA.install, entry=ins.prompts[E.prompt], steps=curSteps();
+  const gen=steps.slice(0,E.step).map(x=>x.chosen);
+  const atEnd=E.step>=steps.length;
+  const dist=atEnd?steps[steps.length-1].topk:steps[E.step].topk;
+  const chosen=atEnd?null:steps[E.step].chosen;
+  const mx=Math.max(...dist.map(d=>d.p));
+  const rows=dist.map(d=>{const pick=!atEnd&&d.tok===chosen;return `<div class="drow ${pick?'pick':''}"><div class="t">${esc(vis(d.tok))}</div><div class="bar"><i style="width:${Math.round(d.p/mx*100)}%"></i></div><div class="p">${Math.round(d.p*100)}%</div></div>`;}).join('');
+  const cost=ins.cost;
+  return `
+    <div class="chips">${ins.prompts.map((p,i)=>`<button class="chip" data-p="${i}" aria-pressed="${i===E.prompt}">${esc(p.prompt.slice(0,28))}…</button>`).join('')}</div>
+    <div class="track2">
+      <button data-state="sft" aria-pressed="${E.state==='sft'}"><b>before</b><small>SFT only</small></button>
+      <button data-state="dpo" aria-pressed="${E.state==='dpo'}"><b>after</b><small>+ “prefer concise”</small></button>
+    </div>
+    <div class="engine flow">
+      <div><div class="lab">context in →</div><div class="strip"><span class="q">${esc(entry.prompt)}</span> ${gen.map((t,i)=>`<span class="tok gen ${i===gen.length-1?'newest':''}">${esc(vis(t))}</span>`).join('')}</div></div>
+      <div><div class="lab">next token — the model's distribution</div><div class="dist">${rows}</div></div>
+      <div><div class="lab">the answer</div><div class="sent"><span class="q0">${esc(entry.prompt)}</span> <span class="g">${esc(gen.join(''))}</span>${atEnd?'':'<span class="caret"></span>'}</div></div>
+      <div class="go">
+        <button class="primary" data-eng="play">${E.playing?'❚❚ pause':(atEnd?'↻ replay':'▶ watch it type')}</button>
+        <button data-eng="step" ${atEnd?'disabled':''}>⏭ one token</button>
+        <span class="sp"></span><span style="color:var(--faint);font-size:12px">step ${Math.min(E.step,steps.length)}/${steps.length}</span>
+      </div>
+      <div class="note">Across all held-out prompts: <b>${cost.sft.mean_len} → ${cost.dpo.mean_len} tokens</b> (${Math.round((1-cost.dpo.mean_len/cost.sft.mean_len)*100)}% shorter). The pairs were built by <i>instruction-steering</i> — both answers complete — so it learned to <b>finish early</b>, not to cut off mid-sentence.</div>
+    </div>`;
+}
+function paintEng(){$('#eng').innerHTML=engHTML();}
+
+/* ---------------- end ---------------- */
+function endHTML(){
+  const t=DATA.mechanism.trajectory, a=t[0], z=t[t.length-1];
+  return `<div class="engine" style="display:grid;gap:12px">
+    <div style="color:var(--ink)">You never had to write the <i>ideal</i> answer. You only picked between two candidates, a few dozen times — and the model’s behaviour moved. That’s the appeal of preferences:<b style="color:var(--cyan)">judging is far cheaper than authoring</b>.</div>
+    <div class="twocol" style="margin:0">
+      <div class="stat" style="border-color:color-mix(in srgb,var(--green) 30%,var(--line))"><div class="lab" style="color:var(--green)">what installed</div><div style="color:var(--muted);font-size:13.5px"><b style="color:var(--ink)">style, easily</b> — “be concise” took hold in 150 steps on 13 pairs: ${DATA.install.cost.sft.mean_len} → ${DATA.install.cost.dpo.mean_len} tokens, answers still complete.</div></div>
+      <div class="stat" style="border-color:color-mix(in srgb,var(--gold) 30%,var(--line))"><div class="lab" style="color:var(--gold)">what barely moved</div><div style="color:var(--muted);font-size:13.5px"><b style="color:var(--ink)">correctness</b> — preferring right answers widened the held-out gap only ${a.margin_pt.toFixed(3)} → ${z.margin_pt.toFixed(3)} per token. Here, a wider gap didn't mean the model knew more.</div></div>
+    </div>
+    <div class="note" style="border-color:color-mix(in srgb,var(--red) 30%,var(--line))"><b style="color:var(--red)">The part that should bother you.</b> DPO's loss works from the <b>gap</b> between the two answers (a log-ratio against a frozen reference), not either answer alone. In our run both answers got <i>more</i> likely; the chosen one just rose faster. And by the <b>raw summed log-prob</b> (what we can show here — not the reference-adjusted quantity the loss uses), the shorter <b>wrong</b> answer keeps the higher total the whole way (${a.margin_sum.toFixed(2)} → ${z.margin_sum.toFixed(2)}). A widening gap is not a better model — it's a wider gap.</div>
+    <div style="color:var(--muted)">So in this run preferences bought taste cheaply and moved correctness barely at all. When you need the model to be <b style="color:var(--ink)">right</b> rather than merely preferred, a preference between two answers is a weak lever — you want a signal that can actually check the answer. That's next.</div>
+  </div>`;
+}
+
+function render(){
+  if(!DATA)return; const st=STAGES[active];
+  $('#rail').innerHTML=STAGES.map((s,i)=>`<button data-go="${i}" aria-current="${i===active}">${esc(s.tab)}</button>`).join('');
+  $('#eyebrow').textContent='Beat 2 · '+st.id;
+  $('#line').innerHTML=st.line;
+  stopPlay();
+  if(st.kind==='mech'){ $('#app').innerHTML=`<div id="mech">${mechHTML()}</div>`; }
+  else if(st.kind==='sup'){ $('#app').innerHTML=supHTML(); }
+  else if(st.kind==='engine'){ E.step=curSteps().length; $('#app').innerHTML=`<div id="eng"></div>`; paintEng(); }
+  else { $('#app').innerHTML=endHTML(); }
+}
+function go(i){active=Math.max(0,Math.min(STAGES.length-1,i));history.replaceState(null,'','#'+active);render();}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){go(+g.dataset.go);return}
+  const ex=e.target.closest('[data-ex]'); if(ex){M.ex=+ex.dataset.ex;$('#mech').innerHTML=mechHTML();return}
+  const mt=e.target.closest('[data-metric]'); if(mt){M.metric=mt.dataset.metric==='pt'?'pt':'sum';$('#mech').innerHTML=mechHTML();return}
+  const pp=e.target.closest('[data-p]'); if(pp){stopPlay();E.prompt=+pp.dataset.p;E.step=curSteps().length;paintEng();return}
+  const ss=e.target.closest('[data-state]'); if(ss){stopPlay();E.state=ss.dataset.state;E.step=curSteps().length;paintEng();return}
+  const en=e.target.closest('[data-eng]'); if(en){const a=en.dataset.eng,s=curSteps();
+    if(a==='play'){if(E.playing){stopPlay();paintEng()}else{if(E.step>=s.length)E.step=0;play();}}
+    if(a==='step'){stopPlay();if(E.step<s.length){E.step++;paintEng()}}
+    return;}
+});
+document.addEventListener('input',e=>{
+  const r=e.target.closest('[data-mrange]'); if(r){M.step=+r.value;$('#mech').innerHTML=mechHTML();}
+});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')go(active+1);if(e.key==='ArrowLeft')go(active-1)});
+
+fetch('./stream.json').then(r=>r.json()).then(d=>{
+  DATA=d;
+  $('#foot').innerHTML='Two real DPO runs on '+esc(d.model)+': a length-fair quality probe (held-out pairs, '+d.mechanism.config.steps+' steps) and a concise-preference run ('+d.install.config.steps+' steps, instruction-steered pairs). Bars are the model’s actual log-probabilities and top-'+d.topk+' distribution — nothing simulated. UltraFeedback count from its HuggingFace dataset card; SmolLM2’s recipe from arXiv:2502.02737.';
+  const h=+location.hash.slice(1); if(!Number.isNaN(h))active=Math.max(0,Math.min(STAGES.length-1,h));
+  render(); window.__viz.ready=true;
+}).catch(e=>{$('#app').innerHTML='<div class="load">could not load stream.json — run dpo_bake2.py first ('+esc(String(e))+')</div>';});
+
+window.__viz={ ready:false,
+  state:()=>({ready:!!DATA,stage:active,id:STAGES[active].id,mstep:M.step,metric:M.metric,state:E.state,step:E.step,stages:STAGES.length}),
+  go:i=>go(i), mstep:i=>{M.step=i;$('#mech').innerHTML=mechHTML();}, metric:m=>{M.metric=m;$('#mech').innerHTML=mechHTML();},
+};
+</script>
+</body>
+</html>

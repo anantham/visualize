@@ -1,0 +1,53 @@
+[22:05:57] loading pile-10k ...
+USING domains: ['Github', 'ArXiv', 'Wikipedia (en)', 'Pile-CC', 'StackExchange', 'PubMed Central']
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (1294 > 1024). Running this sequence through the model will result in indexing errors
+built 300 passages across 6 domains
+[22:06:03] gpt2 (gpt2) on mps
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 9507.83it/s]
+    done gpt2 in 8.3s  params=124.4M
+[22:06:16] gpt2-xl (gpt2-xl) on mps
+Loading weights:   0%|          | 0/580 [00:00<?, ?it/s]Loading weights: 100%|██████████| 580/580 [00:00<00:00, 10936.17it/s]
+    done gpt2-xl in 54.1s  params=1557.6M
+[22:07:15] pythia-1.4b (EleutherAI/pythia-1.4b) on mps
+Loading weights:   0%|          | 0/292 [00:00<?, ?it/s]Loading weights:   0%|          | 1/292 [00:00<00:39,  7.29it/s]Loading weights:  33%|███▎      | 96/292 [00:00<00:00, 475.42it/s]Loading weights:  53%|█████▎    | 156/292 [00:00<00:00, 506.19it/s]Loading weights:  74%|███████▍  | 216/292 [00:00<00:00, 529.64it/s]Loading weights:  93%|█████████▎| 272/292 [00:00<00:00, 535.32it/s]Loading weights: 100%|██████████| 292/292 [00:00<00:00, 491.25it/s]
+    done pythia-1.4b in 86.3s  params=1414.6M
+[22:08:46] pythia-410m (EleutherAI/pythia-410m) on mps
+Loading weights:   0%|          | 0/292 [00:00<?, ?it/s]Loading weights:  29%|██▉       | 84/292 [00:00<00:00, 820.42it/s]Loading weights:  87%|████████▋ | 254/292 [00:00<00:00, 1331.44it/s]Loading weights: 100%|██████████| 292/292 [00:00<00:00, 1322.50it/s]
+    done pythia-410m in 26.8s  params=405.3M
+[22:09:16] qwen2.5-0.5b (Qwen/Qwen2.5-0.5B) on mps
+Loading weights:   0%|          | 0/290 [00:00<?, ?it/s]Loading weights:   0%|          | 1/290 [00:00<01:06,  4.33it/s]Loading weights: 100%|██████████| 290/290 [00:00<00:00, 1183.29it/s]
+    done qwen2.5-0.5b in 49.6s  params=494.0M
+[22:10:09] gemma-2-2b (google/gemma-2-2b) on mps
+Loading weights:   0%|          | 0/288 [00:00<?, ?it/s]Loading weights: 100%|██████████| 288/288 [00:00<00:00, 7835.50it/s]
+    done gemma-2-2b in 137.6s  params=2614.3M
+[22:12:36] cached surprisal -> /Users/aditya/align_experiments/prior_divergence/terrain_surp_cache_6m.pkl
+[22:12:36] valid positions (orig-4 non-NaN): 37955
+[22:12:36] existing points: 3000  keys=['models', 'pairs', 'domains', 'layout', 'points']
+[22:12:36] match diag: {'exact_one': 2923, 'collision_resolved': 77, 'no_match': 0}
+   orig-4 div residual vs stored (max over 4 pairs, rounded-3 stored): mean=0.0004 p99=0.0005 max=0.0009
+   new-model NaN at matched positions: {'gpt2-xl': 0, 'gemma-2-2b': 0}
+/Users/aditya/.venv-align/lib/python3.12/site-packages/sklearn/manifold/_mds.py:735: FutureWarning: The default value of `init` will change from 'random' to 'classical_mds' in 1.10. To suppress this warning, provide some value of `init`.
+  warnings.warn(
+/Users/aditya/.venv-align/lib/python3.12/site-packages/sklearn/manifold/_mds.py:752: FutureWarning: The `dissimilarity` parameter is deprecated and will be removed in 1.10. Use `metric` instead.
+  warnings.warn(
+[22:12:36] wrote /Users/aditya/align_experiments/prior_divergence/terrain_data.json  (3000 pts, 0.90 MB)
+
+===== THE GATE =====
+
+-- SAME DATA / DIFFERENT SCALE (predict: FLAT) --
+   gpt2          <-> gpt2-xl        median=0.223  p90=1.160  p99=3.405  max=9.41  p99/med=15.3
+   pythia-1.4b   <-> pythia-410m    median=0.085  p90=0.425  p99=1.165  max=3.47  p99/med=13.7
+
+-- DIFFERENT DATA (predict: MOUNTAINS) --
+   gpt2          <-> gemma-2-2b     median=0.630  p90=3.242  p99=10.455  max=23.81  p99/med=16.6
+   gpt2          <-> pythia-1.4b    median=0.355  p90=4.913  p99=11.505  max=25.26  p99/med=32.4
+   qwen2.5-0.5b  <-> gemma-2-2b     median=0.701  p90=3.182  p99=8.384  max=11.66  p99/med=12.0
+
+-- GATE VERDICT --
+   gpt2<->gpt2-xl        p99=3.405  median=0.223
+   pythia-1.4b<->410m    p99=1.165  median=0.085
+   min different-data p99=8.384
+   gpt2<->gpt2-xl flattens (p99 < 0.5 * min diff-data p99)? True
+
+[22:12:36] DONE. gate_result_6m.json written.

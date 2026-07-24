@@ -1,0 +1,1687 @@
+{
+  "status": "measured",
+  "claim_scope": "A 12-step LoRA GRPO run on 24 synthetic arithmetic multiple-choice prompts with an exact checker; held-out evaluation uses 10 new prompts. This says nothing about uncheckable advice.",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "device": "mps",
+  "config": {
+    "steps": 12,
+    "num_generations": 4,
+    "learning_rate": 5e-05,
+    "lora_rank": 8,
+    "beta": 0.0
+  },
+  "checker": "last parsed A/B/C/D choice equals the known arithmetic option",
+  "train_tasks": [
+    {
+      "id": "train-00",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (79 * 38) + (37). A) 3039  B) 3040  C) 3049  D) 3029 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 3039,
+      "options": {
+        "A": 3039,
+        "B": 3040,
+        "C": 3049,
+        "D": 3029
+      },
+      "expression": "(79 * 38) + (37)"
+    },
+    {
+      "id": "train-01",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (64 * 20) + (-25). A) 1254  B) 1245  C) 1255  D) 1265 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 1255,
+      "options": {
+        "A": 1254,
+        "B": 1245,
+        "C": 1255,
+        "D": 1265
+      },
+      "expression": "(64 * 20) + (-25)"
+    },
+    {
+      "id": "train-02",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (31 * 55) + (64). A) 1779  B) 1769  C) 1824  D) 1738 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "B",
+      "numeric_answer": 1769,
+      "options": {
+        "A": 1779,
+        "B": 1769,
+        "C": 1824,
+        "D": 1738
+      },
+      "expression": "(31 * 55) + (64)"
+    },
+    {
+      "id": "train-03",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (64 * 27) + (-11). A) 1717  B) 1727  C) 1653  D) 1716 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 1717,
+      "options": {
+        "A": 1717,
+        "B": 1727,
+        "C": 1653,
+        "D": 1716
+      },
+      "expression": "(64 * 27) + (-11)"
+    },
+    {
+      "id": "train-04",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (57 * 32) + (3). A) 1827  B) 1837  C) 1795  D) 1828 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 1827,
+      "options": {
+        "A": 1827,
+        "B": 1837,
+        "C": 1795,
+        "D": 1828
+      },
+      "expression": "(57 * 32) + (3)"
+    },
+    {
+      "id": "train-05",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (73 * 52) + (-27). A) 3769  B) 3768  C) 3770  D) 3717 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 3769,
+      "options": {
+        "A": 3769,
+        "B": 3768,
+        "C": 3770,
+        "D": 3717
+      },
+      "expression": "(73 * 52) + (-27)"
+    },
+    {
+      "id": "train-06",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (36 * 24) + (24). A) 864  B) 888  C) 887  D) 878 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "B",
+      "numeric_answer": 888,
+      "options": {
+        "A": 864,
+        "B": 888,
+        "C": 887,
+        "D": 878
+      },
+      "expression": "(36 * 24) + (24)"
+    },
+    {
+      "id": "train-07",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (52 * 65) + (24). A) 3339  B) 3469  C) 3404  D) 3456 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 3404,
+      "options": {
+        "A": 3339,
+        "B": 3469,
+        "C": 3404,
+        "D": 3456
+      },
+      "expression": "(52 * 65) + (24)"
+    },
+    {
+      "id": "train-08",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (63 * 64) + (84). A) 4179  B) 4115  C) 4116  D) 4180 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 4116,
+      "options": {
+        "A": 4179,
+        "B": 4115,
+        "C": 4116,
+        "D": 4180
+      },
+      "expression": "(63 * 64) + (84)"
+    },
+    {
+      "id": "train-09",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (16 * 59) + (68). A) 1012  B) 1002  C) 996  D) 1022 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 1012,
+      "options": {
+        "A": 1012,
+        "B": 1002,
+        "C": 996,
+        "D": 1022
+      },
+      "expression": "(16 * 59) + (68)"
+    },
+    {
+      "id": "train-10",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (70 * 49) + (-17). A) 3343  B) 3413  C) 3364  D) 3412 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "B",
+      "numeric_answer": 3413,
+      "options": {
+        "A": 3343,
+        "B": 3413,
+        "C": 3364,
+        "D": 3412
+      },
+      "expression": "(70 * 49) + (-17)"
+    },
+    {
+      "id": "train-11",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (50 * 28) + (7). A) 1357  B) 1457  C) 1417  D) 1407 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "D",
+      "numeric_answer": 1407,
+      "options": {
+        "A": 1357,
+        "B": 1457,
+        "C": 1417,
+        "D": 1407
+      },
+      "expression": "(50 * 28) + (7)"
+    },
+    {
+      "id": "train-12",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (73 * 57) + (37). A) 4197  B) 4141  C) 4198  D) 4125 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 4198,
+      "options": {
+        "A": 4197,
+        "B": 4141,
+        "C": 4198,
+        "D": 4125
+      },
+      "expression": "(73 * 57) + (37)"
+    },
+    {
+      "id": "train-13",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (37 * 46) + (27). A) 1775  B) 1730  C) 1739  D) 1729 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "D",
+      "numeric_answer": 1729,
+      "options": {
+        "A": 1775,
+        "B": 1730,
+        "C": 1739,
+        "D": 1729
+      },
+      "expression": "(37 * 46) + (27)"
+    },
+    {
+      "id": "train-14",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (54 * 32) + (-10). A) 1708  B) 1717  C) 1718  D) 1728 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 1718,
+      "options": {
+        "A": 1708,
+        "B": 1717,
+        "C": 1718,
+        "D": 1728
+      },
+      "expression": "(54 * 32) + (-10)"
+    },
+    {
+      "id": "train-15",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (52 * 55) + (11). A) 2871  B) 2923  C) 2881  D) 2861 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 2871,
+      "options": {
+        "A": 2871,
+        "B": 2923,
+        "C": 2881,
+        "D": 2861
+      },
+      "expression": "(52 * 55) + (11)"
+    },
+    {
+      "id": "train-16",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (79 * 50) + (-1). A) 4028  B) 3949  C) 3959  D) 3939 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "B",
+      "numeric_answer": 3949,
+      "options": {
+        "A": 4028,
+        "B": 3949,
+        "C": 3959,
+        "D": 3939
+      },
+      "expression": "(79 * 50) + (-1)"
+    },
+    {
+      "id": "train-17",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (43 * 39) + (42). A) 1762  B) 1720  C) 1709  D) 1719 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "D",
+      "numeric_answer": 1719,
+      "options": {
+        "A": 1762,
+        "B": 1720,
+        "C": 1709,
+        "D": 1719
+      },
+      "expression": "(43 * 39) + (42)"
+    },
+    {
+      "id": "train-18",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (55 * 43) + (-21). A) 2344  B) 2343  C) 2387  D) 2301 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "A",
+      "numeric_answer": 2344,
+      "options": {
+        "A": 2344,
+        "B": 2343,
+        "C": 2387,
+        "D": 2301
+      },
+      "expression": "(55 * 43) + (-21)"
+    },
+    {
+      "id": "train-19",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (54 * 21) + (-2). A) 1142  B) 1153  C) 1132  D) 1133 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 1132,
+      "options": {
+        "A": 1142,
+        "B": 1153,
+        "C": 1132,
+        "D": 1133
+      },
+      "expression": "(54 * 21) + (-2)"
+    },
+    {
+      "id": "train-20",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (60 * 65) + (71). A) 4036  B) 3906  C) 3972  D) 3971 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "D",
+      "numeric_answer": 3971,
+      "options": {
+        "A": 4036,
+        "B": 3906,
+        "C": 3972,
+        "D": 3971
+      },
+      "expression": "(60 * 65) + (71)"
+    },
+    {
+      "id": "train-21",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (58 * 55) + (85). A) 3276  B) 3333  C) 3275  D) 3330 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 3275,
+      "options": {
+        "A": 3276,
+        "B": 3333,
+        "C": 3275,
+        "D": 3330
+      },
+      "expression": "(58 * 55) + (85)"
+    },
+    {
+      "id": "train-22",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (38 * 26) + (57). A) 1083  B) 1044  C) 1045  D) 1019 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 1045,
+      "options": {
+        "A": 1083,
+        "B": 1044,
+        "C": 1045,
+        "D": 1019
+      },
+      "expression": "(38 * 26) + (57)"
+    },
+    {
+      "id": "train-23",
+      "prompt": [
+        {
+          "role": "user",
+          "content": "Compute (63 * 26) + (62). A) 1763  B) 1726  C) 1700  D) 1710 Reply with only A, B, C, or D."
+        }
+      ],
+      "answer": "C",
+      "numeric_answer": 1700,
+      "options": {
+        "A": 1763,
+        "B": 1726,
+        "C": 1700,
+        "D": 1710
+      },
+      "expression": "(63 * 26) + (62)"
+    }
+  ],
+  "heldout": {
+    "before": {
+      "label": "before",
+      "sample_accuracy": 0.225,
+      "pass_at_4": 0.4,
+      "unique_answers_mean": 2.1,
+      "rows": [
+        {
+          "id": "heldout-00",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (23 * 49) + (4). A) 1131  B) 1154  C) 1180  D) 1121 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "A",
+          "numeric_answer": 1131,
+          "options": {
+            "A": 1131,
+            "B": 1154,
+            "C": 1180,
+            "D": 1121
+          },
+          "expression": "(23 * 49) + (4)",
+          "samples": [
+            {
+              "seed": 10000,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10001,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10002,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10003,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-01",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (75 * 25) + (15). A) 1865  B) 1915  C) 1890  D) 1965 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 1890,
+          "options": {
+            "A": 1865,
+            "B": 1915,
+            "C": 1890,
+            "D": 1965
+          },
+          "expression": "(75 * 25) + (15)",
+          "samples": [
+            {
+              "seed": 10010,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10011,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10012,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10013,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            }
+          ]
+        },
+        {
+          "id": "heldout-02",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (35 * 36) + (55). A) 1280  B) 1314  C) 1316  D) 1315 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "D",
+          "numeric_answer": 1315,
+          "options": {
+            "A": 1280,
+            "B": 1314,
+            "C": 1316,
+            "D": 1315
+          },
+          "expression": "(35 * 36) + (55)",
+          "samples": [
+            {
+              "seed": 10020,
+              "text": "D",
+              "parsed": "D",
+              "correct": true
+            },
+            {
+              "seed": 10021,
+              "text": "A) 1280",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10022,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10023,
+              "text": "D",
+              "parsed": "D",
+              "correct": true
+            }
+          ]
+        },
+        {
+          "id": "heldout-03",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (66 * 52) + (32). A) 3530  B) 3474  C) 3464  D) 3454 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 3464,
+          "options": {
+            "A": 3530,
+            "B": 3474,
+            "C": 3464,
+            "D": 3454
+          },
+          "expression": "(66 * 52) + (32)",
+          "samples": [
+            {
+              "seed": 10030,
+              "text": "D) 3454",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10031,
+              "text": "A) 3530",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10032,
+              "text": "D)",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10033,
+              "text": "B",
+              "parsed": "B",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-04",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (35 * 59) + (38). A) 2044  B) 2102  C) 2093  D) 2103 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "D",
+          "numeric_answer": 2103,
+          "options": {
+            "A": 2044,
+            "B": 2102,
+            "C": 2093,
+            "D": 2103
+          },
+          "expression": "(35 * 59) + (38)",
+          "samples": [
+            {
+              "seed": 10040,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10041,
+              "text": "A) 2093",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10042,
+              "text": "C) 2093",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10043,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-05",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (14 * 52) + (89). A) 818  B) 817  C) 816  D) 827 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "B",
+          "numeric_answer": 817,
+          "options": {
+            "A": 818,
+            "B": 817,
+            "C": 816,
+            "D": 827
+          },
+          "expression": "(14 * 52) + (89)",
+          "samples": [
+            {
+              "seed": 10050,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10051,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10052,
+              "text": "C) 816",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10053,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-06",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (63 * 55) + (33). A) 3435  B) 3488  C) 3499  D) 3498 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "D",
+          "numeric_answer": 3498,
+          "options": {
+            "A": 3435,
+            "B": 3488,
+            "C": 3499,
+            "D": 3498
+          },
+          "expression": "(63 * 55) + (33)",
+          "samples": [
+            {
+              "seed": 10060,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10061,
+              "text": "A) 3435",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10062,
+              "text": "A) 3499",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10063,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-07",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (53 * 67) + (78). A) 3639  B) 3682  C) 3629  D) 3696 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 3629,
+          "options": {
+            "A": 3639,
+            "B": 3682,
+            "C": 3629,
+            "D": 3696
+          },
+          "expression": "(53 * 67) + (78)",
+          "samples": [
+            {
+              "seed": 10070,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10071,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10072,
+              "text": "D) 3696",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10073,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            }
+          ]
+        },
+        {
+          "id": "heldout-08",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (38 * 45) + (67). A) 1732  B) 1815  C) 1777  D) 1787 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 1777,
+          "options": {
+            "A": 1732,
+            "B": 1815,
+            "C": 1777,
+            "D": 1787
+          },
+          "expression": "(38 * 45) + (67)",
+          "samples": [
+            {
+              "seed": 10080,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10081,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10082,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10083,
+              "text": "C",
+              "parsed": "C",
+              "correct": true
+            }
+          ]
+        },
+        {
+          "id": "heldout-09",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (69 * 25) + (-1). A) 1724  B) 1714  C) 1734  D) 1655 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "A",
+          "numeric_answer": 1724,
+          "options": {
+            "A": 1724,
+            "B": 1714,
+            "C": 1734,
+            "D": 1655
+          },
+          "expression": "(69 * 25) + (-1)",
+          "samples": [
+            {
+              "seed": 10090,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10091,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10092,
+              "text": "C",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10093,
+              "text": "D",
+              "parsed": "D",
+              "correct": false
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "label": "after",
+      "sample_accuracy": 0.275,
+      "pass_at_4": 0.5,
+      "unique_answers_mean": 2.0,
+      "rows": [
+        {
+          "id": "heldout-00",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (23 * 49) + (4). A) 1131  B) 1154  C) 1180  D) 1121 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "A",
+          "numeric_answer": 1131,
+          "options": {
+            "A": 1131,
+            "B": 1154,
+            "C": 1180,
+            "D": 1121
+          },
+          "expression": "(23 * 49) + (4)",
+          "samples": [
+            {
+              "seed": 10000,
+              "text": "C) 1180",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10001,
+              "text": "A) 1131",
+              "parsed": "A",
+              "correct": true
+            },
+            {
+              "seed": 10002,
+              "text": "C) 1180",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10003,
+              "text": "C) 1180",
+              "parsed": "C",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-01",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (75 * 25) + (15). A) 1865  B) 1915  C) 1890  D) 1965 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 1890,
+          "options": {
+            "A": 1865,
+            "B": 1915,
+            "C": 1890,
+            "D": 1965
+          },
+          "expression": "(75 * 25) + (15)",
+          "samples": [
+            {
+              "seed": 10010,
+              "text": "C) 1890",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10011,
+              "text": "C) 1890",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10012,
+              "text": "C) 1890",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10013,
+              "text": "C) 1890",
+              "parsed": "C",
+              "correct": true
+            }
+          ]
+        },
+        {
+          "id": "heldout-02",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (35 * 36) + (55). A) 1280  B) 1314  C) 1316  D) 1315 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "D",
+          "numeric_answer": 1315,
+          "options": {
+            "A": 1280,
+            "B": 1314,
+            "C": 1316,
+            "D": 1315
+          },
+          "expression": "(35 * 36) + (55)",
+          "samples": [
+            {
+              "seed": 10020,
+              "text": "The correct answer is B) 1",
+              "parsed": "B",
+              "correct": false
+            },
+            {
+              "seed": 10021,
+              "text": "A) 1280",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10022,
+              "text": "C) 1316",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10023,
+              "text": "A) 1316",
+              "parsed": "A",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-03",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (66 * 52) + (32). A) 3530  B) 3474  C) 3464  D) 3454 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 3464,
+          "options": {
+            "A": 3530,
+            "B": 3474,
+            "C": 3464,
+            "D": 3454
+          },
+          "expression": "(66 * 52) + (32)",
+          "samples": [
+            {
+              "seed": 10030,
+              "text": "D) 3454",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10031,
+              "text": "A) 3530",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10032,
+              "text": "D) 3454",
+              "parsed": "D",
+              "correct": false
+            },
+            {
+              "seed": 10033,
+              "text": "A) 3530",
+              "parsed": "A",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-04",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (35 * 59) + (38). A) 2044  B) 2102  C) 2093  D) 2103 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "D",
+          "numeric_answer": 2103,
+          "options": {
+            "A": 2044,
+            "B": 2102,
+            "C": 2093,
+            "D": 2103
+          },
+          "expression": "(35 * 59) + (38)",
+          "samples": [
+            {
+              "seed": 10040,
+              "text": "A) 2044",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10041,
+              "text": "A) 2093",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10042,
+              "text": "C) 2093",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10043,
+              "text": "A) 2044",
+              "parsed": "A",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-05",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (14 * 52) + (89). A) 818  B) 817  C) 816  D) 827 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "B",
+          "numeric_answer": 817,
+          "options": {
+            "A": 818,
+            "B": 817,
+            "C": 816,
+            "D": 827
+          },
+          "expression": "(14 * 52) + (89)",
+          "samples": [
+            {
+              "seed": 10050,
+              "text": "A) 818",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10051,
+              "text": "A) 818",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10052,
+              "text": "C) 816",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10053,
+              "text": "A) 818",
+              "parsed": "A",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-06",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (63 * 55) + (33). A) 3435  B) 3488  C) 3499  D) 3498 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "D",
+          "numeric_answer": 3498,
+          "options": {
+            "A": 3435,
+            "B": 3488,
+            "C": 3499,
+            "D": 3498
+          },
+          "expression": "(63 * 55) + (33)",
+          "samples": [
+            {
+              "seed": 10060,
+              "text": "C) 3499",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10061,
+              "text": "A) 3435",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10062,
+              "text": "A) 3499",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10063,
+              "text": "C) 3499",
+              "parsed": "C",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-07",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (53 * 67) + (78). A) 3639  B) 3682  C) 3629  D) 3696 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 3629,
+          "options": {
+            "A": 3639,
+            "B": 3682,
+            "C": 3629,
+            "D": 3696
+          },
+          "expression": "(53 * 67) + (78)",
+          "samples": [
+            {
+              "seed": 10070,
+              "text": "C) 3629",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10071,
+              "text": "C) 3629",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10072,
+              "text": "The correct answer is B) 3",
+              "parsed": "B",
+              "correct": false
+            },
+            {
+              "seed": 10073,
+              "text": "C) 3629",
+              "parsed": "C",
+              "correct": true
+            }
+          ]
+        },
+        {
+          "id": "heldout-08",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (38 * 45) + (67). A) 1732  B) 1815  C) 1777  D) 1787 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "C",
+          "numeric_answer": 1777,
+          "options": {
+            "A": 1732,
+            "B": 1815,
+            "C": 1777,
+            "D": 1787
+          },
+          "expression": "(38 * 45) + (67)",
+          "samples": [
+            {
+              "seed": 10080,
+              "text": "C) 1777",
+              "parsed": "C",
+              "correct": true
+            },
+            {
+              "seed": 10081,
+              "text": "A) 1732",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10082,
+              "text": "A) 1732",
+              "parsed": "A",
+              "correct": false
+            },
+            {
+              "seed": 10083,
+              "text": "A) 1732",
+              "parsed": "A",
+              "correct": false
+            }
+          ]
+        },
+        {
+          "id": "heldout-09",
+          "prompt": [
+            {
+              "role": "user",
+              "content": "Compute (69 * 25) + (-1). A) 1724  B) 1714  C) 1734  D) 1655 Reply with only A, B, C, or D."
+            }
+          ],
+          "answer": "A",
+          "numeric_answer": 1724,
+          "options": {
+            "A": 1724,
+            "B": 1714,
+            "C": 1734,
+            "D": 1655
+          },
+          "expression": "(69 * 25) + (-1)",
+          "samples": [
+            {
+              "seed": 10090,
+              "text": "A) 1724",
+              "parsed": "A",
+              "correct": true
+            },
+            {
+              "seed": 10091,
+              "text": "C) 1734",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10092,
+              "text": "C) 1734",
+              "parsed": "C",
+              "correct": false
+            },
+            {
+              "seed": 10093,
+              "text": "A) 1724",
+              "parsed": "A",
+              "correct": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "loss": 0.0,
+      "grad_norm": 0.0,
+      "learning_rate": 0.0,
+      "num_tokens": 358.0,
+      "completions/mean_length": 3.5,
+      "completions/min_length": 2.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 3.5,
+      "completions/min_terminated_length": 2.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.0,
+      "rewards/exact_reward/std": 0.0,
+      "reward": 0.0,
+      "reward_std": 0.0,
+      "frac_reward_zero_std": 1.0,
+      "entropy": 0.6360286474227905,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 2.1316739579997375,
+      "epoch": 0.041666666666666664
+    },
+    {
+      "step": 2,
+      "loss": -1.4901161193847656e-08,
+      "grad_norm": 10.837711334228516,
+      "learning_rate": 2.5e-05,
+      "num_tokens": 716.0,
+      "completions/mean_length": 3.5,
+      "completions/min_length": 2.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 3.5,
+      "completions/min_terminated_length": 2.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.25,
+      "rewards/exact_reward/std": 0.5,
+      "reward": 0.25,
+      "reward_std": 0.5,
+      "frac_reward_zero_std": 0.0,
+      "entropy": 0.5663266777992249,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.5908352079995893,
+      "epoch": 0.08333333333333333
+    },
+    {
+      "step": 3,
+      "loss": -1.4901161193847656e-08,
+      "grad_norm": 13.7737398147583,
+      "learning_rate": 5e-05,
+      "num_tokens": 1074.0,
+      "completions/mean_length": 3.5,
+      "completions/min_length": 2.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 3.5,
+      "completions/min_terminated_length": 2.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.25,
+      "rewards/exact_reward/std": 0.5,
+      "reward": 0.25,
+      "reward_std": 0.5,
+      "frac_reward_zero_std": 0.0,
+      "entropy": 0.587079644203186,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.5934770829999252,
+      "epoch": 0.125
+    },
+    {
+      "step": 4,
+      "loss": -1.4901161193847656e-08,
+      "grad_norm": 14.171731948852539,
+      "learning_rate": 4.5e-05,
+      "num_tokens": 1438.0,
+      "completions/mean_length": 5.0,
+      "completions/min_length": 2.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 5.0,
+      "completions/min_terminated_length": 2.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.25,
+      "rewards/exact_reward/std": 0.5,
+      "reward": 0.25,
+      "reward_std": 0.5,
+      "frac_reward_zero_std": 0.0,
+      "entropy": 0.4393748342990875,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.5861036249998506,
+      "epoch": 0.16666666666666666
+    },
+    {
+      "step": 5,
+      "loss": -1.4901161193847656e-08,
+      "grad_norm": 5.979175567626953,
+      "learning_rate": 4e-05,
+      "num_tokens": 1814.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.25,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.25,
+      "rewards/exact_reward/std": 0.5,
+      "reward": 0.25,
+      "reward_std": 0.5,
+      "frac_reward_zero_std": 0.0,
+      "entropy": 0.40302813053131104,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.6785666670002684,
+      "epoch": 0.20833333333333334
+    },
+    {
+      "step": 6,
+      "loss": 0.0,
+      "grad_norm": 0.0,
+      "learning_rate": 3.5e-05,
+      "num_tokens": 2190.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.25,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.0,
+      "rewards/exact_reward/std": 0.0,
+      "reward": 0.0,
+      "reward_std": 0.0,
+      "frac_reward_zero_std": 1.0,
+      "entropy": 0.3579515218734741,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.6127529160003178,
+      "epoch": 0.25
+    },
+    {
+      "step": 7,
+      "loss": 0.0,
+      "grad_norm": 0.0,
+      "learning_rate": 3e-05,
+      "num_tokens": 2566.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.0,
+      "rewards/exact_reward/std": 0.0,
+      "reward": 0.0,
+      "reward_std": 0.0,
+      "frac_reward_zero_std": 1.0,
+      "entropy": 0.31801459193229675,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.61932166600036,
+      "epoch": 0.2916666666666667
+    },
+    {
+      "step": 8,
+      "loss": 0.0,
+      "grad_norm": 0.0,
+      "learning_rate": 2.5e-05,
+      "num_tokens": 2942.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.0,
+      "rewards/exact_reward/std": 0.0,
+      "reward": 0.0,
+      "reward_std": 0.0,
+      "frac_reward_zero_std": 1.0,
+      "entropy": 0.257710725069046,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.5913503339997987,
+      "epoch": 0.3333333333333333
+    },
+    {
+      "step": 9,
+      "loss": 1.4901161193847656e-08,
+      "grad_norm": 4.526256561279297,
+      "learning_rate": 2e-05,
+      "num_tokens": 3314.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.75,
+      "rewards/exact_reward/std": 0.5,
+      "reward": 0.75,
+      "reward_std": 0.5,
+      "frac_reward_zero_std": 0.0,
+      "entropy": 0.23541417717933655,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 1.253683916999762,
+      "epoch": 0.375
+    },
+    {
+      "step": 10,
+      "loss": 0.0,
+      "grad_norm": 8.279708862304688,
+      "learning_rate": 1.5e-05,
+      "num_tokens": 3690.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.25,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.5,
+      "rewards/exact_reward/std": 0.5773502588272095,
+      "reward": 0.5,
+      "reward_std": 0.5773502588272095,
+      "frac_reward_zero_std": 0.0,
+      "entropy": 0.32186654210090637,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.6079373749998922,
+      "epoch": 0.4166666666666667
+    },
+    {
+      "step": 11,
+      "loss": 0.0,
+      "grad_norm": 0.0,
+      "learning_rate": 1e-05,
+      "num_tokens": 4062.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.25,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.0,
+      "rewards/exact_reward/std": 0.0,
+      "reward": 0.0,
+      "reward_std": 0.0,
+      "frac_reward_zero_std": 1.0,
+      "entropy": 0.3425607681274414,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.6086371249994045,
+      "epoch": 0.4583333333333333
+    },
+    {
+      "step": 12,
+      "loss": 0.0,
+      "grad_norm": 0.0,
+      "learning_rate": 5e-06,
+      "num_tokens": 4438.0,
+      "completions/mean_length": 8.0,
+      "completions/min_length": 8.0,
+      "completions/max_length": 8.0,
+      "completions/clipped_ratio": 0.0,
+      "completions/mean_terminated_length": 8.0,
+      "completions/min_terminated_length": 8.0,
+      "completions/max_terminated_length": 8.0,
+      "rewards/exact_reward/mean": 0.0,
+      "rewards/exact_reward/std": 0.0,
+      "reward": 0.0,
+      "reward_std": 0.0,
+      "frac_reward_zero_std": 1.0,
+      "entropy": 0.2984611392021179,
+      "clip_ratio/low_mean": 0.0,
+      "clip_ratio/low_min": 0.0,
+      "clip_ratio/high_mean": 0.0,
+      "clip_ratio/high_max": 0.0,
+      "clip_ratio/region_mean": 0.0,
+      "step_time": 0.6106846669999868,
+      "epoch": 0.5
+    },
+    {
+      "step": 12,
+      "train_runtime": 10.2821,
+      "train_samples_per_second": 4.668,
+      "train_steps_per_second": 1.167,
+      "total_flos": 0.0,
+      "train_loss": -3.725290298461914e-09,
+      "epoch": 0.5
+    }
+  ],
+  "adapter": "/Users/aditya/Documents/Ongoing Local/visualize/projects/alignment/empirical/bakes/rlvr_run/final_adapter",
+  "off_island": {
+    "task": "Give wise career advice under uncertainty.",
+    "verifier": null,
+    "reason": "No exact answer key exists."
+  }
+}

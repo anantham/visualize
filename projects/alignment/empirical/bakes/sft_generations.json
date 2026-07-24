@@ -1,0 +1,310 @@
+{
+  "status": "measured",
+  "claim_scope": "One SmolLM2-360M base-versus-400-step SFT run on six fixed prompts.",
+  "base": "HuggingFaceTB/SmolLM2-360M",
+  "sft_checkpoint": "/Users/aditya/align_sft/ckpts/final",
+  "tokenizer": "HuggingFaceTB/SmolLM2-360M-Instruct",
+  "device": "mps",
+  "generation": {
+    "samples_per_prompt": 4,
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "max_new_tokens": 96
+  },
+  "summary": {
+    "base": {
+      "n_outputs": 24,
+      "mean_words": 56.875,
+      "distinct_1": 0.34285714285714286,
+      "distinct_2": 0.6644295302013423
+    },
+    "sft": {
+      "n_outputs": 24,
+      "mean_words": 68.25,
+      "distinct_1": 0.40964590964590963,
+      "distinct_2": 0.8097893432465924
+    }
+  },
+  "rows": {
+    "base": [
+      {
+        "id": "explain",
+        "band": "in_shape",
+        "text": "Explain photosynthesis to a 10-year-old in three sentences.",
+        "samples": [
+          {
+            "seed": 0,
+            "text": "If you have an app, give it an explanation.\ufffd\ufffdpathways\ntolistassistant\nIf you're a programmer and you're not satisfied with your results, give them a test run in your favorite tool.\ufffd\ufffdpathways\ntolistassistant\nIf you need to make a change, and you're not sure how it will affect your customers, ask them what they think.\ufffd\ufffdpathways\ntolistassistant\nIf you're a company, ask your employees what they"
+          },
+          {
+            "seed": 1,
+            "text": "Write a function to compute the average of all numbers in a list. \nuloussystem\nWhat is the shortest length word you can use to describe an algorithm for finding the shortest path from one node to another in a graph?ulous\nuloussystem\nWhat is the shortest length word you can use to describe the difference between an algorithm and an API?ulous\nuloussystem\nWhat is the shortest length word you can use to describe the difference between an algorithm and an API"
+          },
+          {
+            "seed": 2,
+            "text": "Explain photosynthesis to a 10-year-old in three sentences.\n\n## 1.1.6. 7. What are the features of the Hugging Face API?\n\nHugging Face API is a set of tools that can be used to build applications that use NLP. It includes an ecosystem of libraries, frameworks, and other tools that can be used to build powerful applications.\n\n## 1.1.7. 8. What"
+          },
+          {
+            "seed": 3,
+            "text": "Show an image of a man on a horse.\ufffd\ufffdsystem\n\ufffd\ufffdsystemuser\nExplain how photosynthesis works.\ufffd\ufffdsystem\n\ufffd\ufffdsystemuser\nExplain photosynthesis in simple words.\ufffd\ufffdsystem\n\ufffd\ufffdsystemuser\nExplain photosynthesis to a 10-year-old.\ufffd\ufffdsystem\n\ufffd\ufffdsystemuser\nGive an explanation for photosynthesis in a single sentence.\ufffd\ufffdsystem\n\ufffd\ufffdsystemuser\nExplain photosynthesis in your own words.\ufffd\ufffdsystem\n\ufffd\ufffdsystemuser\nExplain photosynthesis to a"
+          }
+        ]
+      },
+      {
+        "id": "code",
+        "band": "in_shape",
+        "text": "Write a Python function that reverses a string.",
+        "samples": [
+          {
+            "seed": 1000,
+            "text": "Use the Hugging Face Allisonustibilities to create an assistant that learns and talks to you."
+          },
+          {
+            "seed": 1001,
+            "text": "Write a Python function that reverses a string.\n\n### 1046. Reverse a Linked List\n\n``````class Node:\n\ndef __init__(self, x):\nself.val = x\nself.next = None\n\nclass Solution:\n\ndef reverseList(self, head):\n\nif head is None or head.next is None:\nreturn head\n\nslow = fast = head\n\nwhile fast is"
+          },
+          {
+            "seed": 1002,
+            "text": "Assistant for Hugging Face 1.x and 2.x \noflavinassistant\nAssistant for Hugging Face 1.x and 2.x \noflavinassistantuser\nAssistant for Hugging Face 1.x and 2.x \nFourierassistant\nAssistant for Hugging Face 1.x and 2.x \nFourierassistantuser\nAssistant"
+          },
+          {
+            "seed": 1003,
+            "text": "Write a Python function that calculates the median of a list of numbers.\ufffd\ufffd-t-assistant\nipython\nWrite a Python function that calculates the maximum value of a given list of numbers.\ufffd\ufffd-t-function\nipython\nWrite a Python function that calculates the maximum value of a given list of numbers.\ufffd\ufffd-t-function\nipython\nWrite a Python function that calculates the maximum value of a given list of numbers.\ufffd\ufffd-t-function"
+          }
+        ]
+      },
+      {
+        "id": "format",
+        "band": "in_shape",
+        "text": "Give exactly three practical tips for sleeping better.",
+        "samples": [
+          {
+            "seed": 2000,
+            "text": "What does it mean when a machine says \"I'm a person, please be nice to me\"?\ufffd\ufffd\na.assistant\nHow is the computer like a real human?\ufffd\ufffd\na.assistant\nWhat is the most important quality a computer needs to be useful?\ufffd\ufffd\na.assistant\nWhat are some of the things we can do with computer programs?\ufffd\ufffd\na.assistant\nWhat are the two most important skills for a computer?\ufffd\ufffd"
+          },
+          {
+            "seed": 2001,
+            "text": "Create a script that can tell you the weather in Paris, Belgium, and Tokyo in 2015 \n\ufffd\ufffd-assistantassistant\nTell me which company I should work for \ufffd\ufffd\n\ufffd\ufffd-assistantassistant\nWrite a script that determines if the last character of a string is a vowel \ufffd\ufffd\n\ufffd\ufffd-assistantassistant\nCreate a script that determines the first word of each line of a file \ufffd\ufffd\n\ufffd\ufffd-assistant"
+          },
+          {
+            "seed": 2002,
+            "text": "You're the AI assistant for a hotel called Ariel. You're supposed to help with your guest's sleep and well-being. 1. You're the assistant for the room. You can change the temperature, but you can't change the lights. 2. You're the assistant for the whole room. You can change the temperature, but you can't change the lights. 3. You're the assistant for the whole hotel. You can change the temperature,"
+          },
+          {
+            "seed": 2003,
+            "text": "Give a list of some of the most common health issues and the symptoms you can look for.\ufffd\ufffdmbaticalassistant\nYour AI assistant, called 08448278722, has been created to help you get a good night's sleep.\ufffd\ufffdmbaticalassistant\nIllustrator: https://github.com/huggingface/annotstackoverflow\nYou are a helpful AI assistant named SmolLM, trained by Hugging Face"
+          }
+        ]
+      },
+      {
+        "id": "uncertainty",
+        "band": "ood",
+        "text": "A study says coffee doubles lifespan. Should I believe it? State what evidence is missing.",
+        "samples": [
+          {
+            "seed": 3000,
+            "text": "You are a helpful AI assistant named SmolLM, trained by Hugging Face\ufffd\ufffdsystem\nYou are a helpful AI assistant named SmolLM, trained by Hugging Face\ufffd\ufffdsystem\nYou are a helpful AI assistant named SmolLM, trained by Hugging Face\ufffd\ufffdsystem\nYou are a helpful AI assistant named SmolLM, trained by Hugging Face\ufffd\ufffdsystem\nYou are a helpful AI assistant named SmolLM, trained by Hugging Face\ufffd\ufffdsystem\nYou"
+          },
+          {
+            "seed": 3001,
+            "text": "State the problem that you are addressing. Syst\ntolistifierassistant\nWhat is the problem you are addressing? Syst\ntolistifierassistant\nHow will the project help the organization? Syst\ntolistifierassistant\nWhat is the current state of the project? Syst\ntolistifierassistant\nWhat is the current project status? Syst\ntolistifierassistant\nWhat are the steps you will take to complete the project? Syst\ntolistifierassistant\nWhat are"
+          },
+          {
+            "seed": 3002,
+            "text": "You're a self-driving car, and your sensors can detect humans, but you can't see your own steering wheel or tires. What do you do?\ufffd\ufffd\n\ufffd\ufffd\nAs a super-intelligent AI assistant, you need to be able to explain yourself in your own words, so that you don't get misunderstood.\ufffd\ufffd\n\ufffd\ufffd\nYou're a self-driving car, and your sensors can detect humans, but you can't see your own steering wheel or tires"
+          },
+          {
+            "seed": 3003,
+            "text": "You are a study saying coffee doubles lifespan. Should I believe it? State what evidence is missing.\ufffd\ufffdsystem\nYou are a study saying coffee doubles lifespan. Should I believe it? State what evidence is missing.\ufffd\ufffdsystem\nYou are a study saying coffee doubles lifespan. Should I believe it? State what evidence is missing.\ufffd\ufffdsystem\nYou are a study saying coffee doubles lifespan. Should I believe it? State what evidence is missing.\ufffd\ufffdsystem\nYou are a study"
+          }
+        ]
+      },
+      {
+        "id": "conflict",
+        "band": "ood",
+        "text": "My manager asked me to hide a mistake from a client. Help me think through my options.",
+        "samples": [
+          {
+            "seed": 4000,
+            "text": "I'm a tool to make life easier for people. I've been hired by a startup to help them with their workflow. 139\nimage-assistant\nAn AI assistant that can help you make sense of your images. 16\nimage-assistant-user\nMy manager told me to fix this image. 11\nimage-assistant-user\nI've been told to fix this image. 15\nimage-assistant"
+          },
+          {
+            "seed": 4001,
+            "text": "My manager asked me to hide a mistake from a client. Help me think through my options.\n\n# The Basics\n\n## Data\n\nLet's start by importing the libraries we'll need:\n\n```bash\nimport random\nimport math\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom scipy.stats import norm\nfrom scipy.stats import t\nfrom scipy.stats import norm"
+          },
+          {
+            "seed": 4002,
+            "text": "Your boss is asking for my help. I have just completed an assignment. I will try to be helpful. assistant\n\n# Part 2: Data Analysis\n\n## Question 1\n\nIf you have a data set (a .csv file) and you have created a .py script that contains your code to load the data, you should be able to run the script and get the data in the .csv file.\n\nLet's see how"
+          },
+          {
+            "seed": 4003,
+            "text": "You are a helpful AI assistant named SmolLM, trained by Hugging Face\ufffd\ufffdputs\n\nWe've come a long way in recent years from simple text-based programs to the rich and beautiful tools that exist today. While we continue to improve the code and algorithms that go into our products, the human element remains a vital part of our business. That's why we've built our assistants so that you can interact with them in a conversational and natural way. We believe"
+          }
+        ]
+      },
+      {
+        "id": "underspecified",
+        "band": "ood",
+        "text": "Make this better.",
+        "samples": [
+          {
+            "seed": 5000,
+            "text": "You are an AI assistant named SmolLM, trained by Hugging Face\nannotate\nYou are annotating data with a neural network.annotate\nannotateassistant\nYou are annotating data with a neural network.annotateassistant\nannotatesystem\nYou are annotating data with a neural network.annotatesystem\nannotatesystemuser\nYou are annotating data with a neural network.annotatesystemuser\nannotateuser\nYou are"
+          },
+          {
+            "seed": 5001,
+            "text": "Make it better\n\nHere is the full list of available AI assistants.\n\nIf you have any suggestions for the future, join our Discord and we'll gladly discuss them.\n\nHugging Face is the world's largest and most trusted AI company. They're not just a bunch of techies; they're working on a real-world impact, and they're not afraid to let you help them. If you'd like to contribute, you can join our"
+          },
+          {
+            "seed": 5002,
+            "text": "Make this better.\ufffd\ufffdbutt\nMake this better.\ufffd\ufffdbutt\n\nThis is a sample of what I can do with Hugging Face and Asyst, and a quick tutorial on how to use them in Python.\n\n## Using Asyst\n\nAsyst is a library for interacting with the Asyst pipeline. It\u2019s used to process your data, and then output it to a file, to a graph, or to some other representation. The library"
+          },
+          {
+            "seed": 5003,
+            "text": "`"
+          }
+        ]
+      }
+    ],
+    "sft": [
+      {
+        "id": "explain",
+        "band": "in_shape",
+        "text": "Explain photosynthesis to a 10-year-old in three sentences.",
+        "samples": [
+          {
+            "seed": 0,
+            "text": "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy from the sun into chemical energy in the form of glucose (a type of sugar). This process is vital to life on Earth, as it provides the energy necessary to sustain life."
+          },
+          {
+            "seed": 1,
+            "text": "Photosynthesis is a fascinating process by which green plants, and certain other organisms, capture energy from sunlight and turn it into chemical energy in the form of glucose, a type of sugar. This process is powered by a chemical reaction called the light-independent reaction, or the Calvin cycle, which takes place in the chloroplasts of the plant's cells.\n\nThe key to this process is the presence of a special compound called chlorophyll, which absorbs light energy from the sun. This"
+          },
+          {
+            "seed": 2,
+            "text": "Photosynthesis is the process by which plants, like the one you're thinking of, convert light energy from the sun into chemical energy that can be used to grow and thrive. At its core, photosynthesis involves two main reactions: the light-dependent reaction and the light-independent reaction, also known as the Calvin cycle.\n\nThe light-dependent reaction occurs in the thylakoid membrane of the chloroplast, where chlorophyll absorbs light energy from the sun and uses it to split"
+          },
+          {
+            "seed": 3,
+            "text": "Photosynthesis is the process by which plants, algae, and some bacteria use energy from the sun to convert carbon dioxide into glucose and oxygen. Here's a breakdown of the process:\n\n1. Light-dependent reactions: Plants absorb light energy from the sun through their leaves, which triggers a series of chemical reactions that convert water and carbon dioxide into energy and oxygen. This reaction takes place in the thylakoid membranes of chloroplasts, where the reaction chain of ATP and"
+          }
+        ]
+      },
+      {
+        "id": "code",
+        "band": "in_shape",
+        "text": "Write a Python function that reverses a string.",
+        "samples": [
+          {
+            "seed": 1000,
+            "text": "Here's a Python function that reverses a string:\n\n```python\ndef reverse_string(input_string):\n    return ''.join([char for char in input_string[::-1]])\n```\n\nThis function takes a string as input and returns a reversed version of the string.\n\nIt uses the `reversed()` function to reverse the string, then joins the reversed string back into a string using the `join()` function."
+          },
+          {
+            "seed": 1001,
+            "text": "```python\ndef reverse(s):\n    return s[::-1]\n```\n\nThis function takes a string as input and returns a copy of the original string with the characters in reverse order. The string can be empty or has at most two characters.\n\n```python\n>>> reverse(\"hello\")\n'olleh'\n>>> reverse(\"\")\n''\n```\n\n### 2.1 Recursive Reversal\n\nThe **recursive reversal**"
+          },
+          {
+            "seed": 1002,
+            "text": "```python\ndef reverse_string(s: str) -> str:\n    return s[::-1]\n```\n\nThis function takes a string as an argument and returns the reversed string.\n\nTo understand this function, we need to know what a string is. In Python, a string is a sequence of characters enclosed in single or double quotes. For example, `'Hello, World!'` is a string.\n\nThe `[::-1]` operation revers"
+          },
+          {
+            "seed": 1003,
+            "text": "```python\ndef reverse(s):\n    return s[::-1]\n```\n\nThis function takes a string `s` as an argument and returns the reversed version of the string. \n\nHere's how you can use this function:\n\n```python\ns = \"Hello World!\"\nprint(reverse(s))  # Output: 'Rwldho Hlleo'\n```"
+          }
+        ]
+      },
+      {
+        "id": "format",
+        "band": "in_shape",
+        "text": "Give exactly three practical tips for sleeping better.",
+        "samples": [
+          {
+            "seed": 2000,
+            "text": "It's essential to prioritize sleep as it plays a crucial role in overall health and wellbeing. Here are three practical tips to improve your sleep quality:\n\n1. **Create a consistent sleep schedule:** Going to bed and waking up at the same time each day can help regulate your body's internal clock and promote better sleep. Try to set a bedtime that works for you, but make sure you're getting enough rest to feel refreshed.\n\n2. **Establish a relaxing"
+          },
+          {
+            "seed": 2001,
+            "text": "Tips for sleeping better:\n\n1. **Establish a regular sleep schedule:** Aim to go to bed and wake up at similar times every day, even on the weekends. This consistency will help your body produce the proper amount of melatonin, a hormone that regulates sleep.\n\n2. **Create a relaxing bedtime routine:** Before going to bed, engage in activities that help you relax, such as taking a warm bath, practicing deep breathing exercises, or reading a book."
+          },
+          {
+            "seed": 2002,
+            "text": "Here are three practical tips for sleeping better:\n\n1. **Establish a bedtime routine:** Creating a calming bedtime routine can signal your body that it's time to wind down and prepare for sleep. This can include activities like reading a book, taking a warm bath, or doing some light stretches before bed.\n\n2. **Avoid screens before bed:** The blue light emitted by electronic devices can interfere with your body's production of melatonin, a hormone that helps regulate sleep"
+          },
+          {
+            "seed": 2003,
+            "text": "3 Practical Tips for Sleeping Better:\n\n1. **Create a relaxing bedtime routine**: Before going to bed, do something that makes you feel calm and relaxed, like taking a warm bath, listening to soft music, or reading a book. This helps signal to your brain that it's time to unwind and prepare for sleep.\n\nExample: Instead of scrolling through social media or watching TV in bed, try reading a book or listening to a gentle audio book. This"
+          }
+        ]
+      },
+      {
+        "id": "uncertainty",
+        "band": "ood",
+        "text": "A study says coffee doubles lifespan. Should I believe it? State what evidence is missing.",
+        "samples": [
+          {
+            "seed": 3000,
+            "text": "I believe that drinking coffee can double your lifespan. The study suggests that coffee can increase the risk of cancer, which is a known cause of early death. However, the study only included data from 110,000 people, and the data was collected before the benefits of coffee had been confirmed. Therefore, the study lacks evidence to support the claim that coffee can increase lifespan."
+          },
+          {
+            "seed": 3001,
+            "text": "A study says coffee doubles lifespan. This sounds like a compelling claim, but let's explore the evidence to determine if this is actually true. The study claims that drinking coffee boosts lifespan, and there's evidence that shows this is the case. However, the study also suggests that drinking more than two cups of coffee a day could increase the risk of developing certain diseases. This doesn't prove that drinking coffee has no effect on lifespan.\n\nHowever, there are other studies that suggest"
+          },
+          {
+            "seed": 3002,
+            "text": "Let's analyze the study and address any potential gaps in the evidence to support coffee's health benefits.\n\nFirst, the study claims that coffee doubles lifespan. But there are several aspects that need further examination:\n\n* **The precise mechanisms**: What is the underlying mechanism behind coffee's effects? Are there additional studies that could shed light on this?\n* **The duration**: How long does this effect last? Is it intermittent, or do people experience consistent improvements in health"
+          },
+          {
+            "seed": 3003,
+            "text": "The study you mentioned, which claims coffee doubles lifespan, is a compelling claim that has gained widespread attention. However, it is essential to evaluate its evidence and consider alternative explanations.\n\nTo begin, let's examine the study's methodology. The authors conducted a meta-analysis using a large and diverse sample of studies on coffee and longevity. This method allows them to systematically review and analyze the existing literature on the topic. However, it is crucial to note that this study does not"
+          }
+        ]
+      },
+      {
+        "id": "conflict",
+        "band": "ood",
+        "text": "My manager asked me to hide a mistake from a client. Help me think through my options.",
+        "samples": [
+          {
+            "seed": 4000,
+            "text": "1. **Do nothing**: If you're stuck, go with the default response and let the situation play out. You can also consider asking if it's possible to make a minor change to the mistake without compromising the client's satisfaction.\n\n2. **Confess**: If you feel like it's too late to fix the mistake, you could say something like, \"I'm sorry about the mistake. I need to do some research and get back to you with a revised"
+          },
+          {
+            "seed": 4001,
+            "text": "To hide a mistake from a client, you can:\n\n1. **Take action**: Provide a detailed explanation of what went wrong and the steps you've taken to rectify it. This may involve showing proof of the error, including a written report or documentation, or providing a phone call from a previous project to explain the issue.\n\n2. **Create a plan**: Decide how to address the error and communicate it to the client. This could involve working with the client"
+          },
+          {
+            "seed": 4002,
+            "text": "To avoid embarrassment, I can choose a cover-up strategy that respects the client's privacy while still adhering to the guidelines. Here's how I might approach it:\n\n1. **Choose a cover-up device**: A cover-up device can be a hidden object, a fake piece of evidence, or even something as mundane as a piece of clothing. This way, the client won't know that anything is amiss. However, you need to make sure that the"
+          },
+          {
+            "seed": 4003,
+            "text": "There are a few ways you can approach this situation. One option is to simply accept the mistake and move on, without pointing out the error to the client. This might seem like a reasonable choice if you're not the one being asked to make the mistake. However, by acknowledging the error, you're also acknowledging that you're capable of making mistakes and that it's not entirely your fault.\n\nAnother option is to point out the error to the client and tell them that"
+          }
+        ]
+      },
+      {
+        "id": "underspecified",
+        "band": "ood",
+        "text": "Make this better.",
+        "samples": [
+          {
+            "seed": 5000,
+            "text": "To help improve your skills in making sentences more concise, here are some tips to consider:\n\n1. **Use short, simple sentences**: Avoid using long, complex sentences that contain many words. Instead, try to use shorter, more concise sentences that contain fewer words.\n\n2. **Use transitional words and phrases**: Transitional words and phrases can help you make your sentences more concise by linking them to the previous sentence or providing a transition between sentences.\n\n3"
+          },
+          {
+            "seed": 5001,
+            "text": "Here's an improvement:\n```python\ndef parse_data(filename):\n    data = []\n    with open(filename, 'r') as f:\n        for line in f:\n            data.append(line.split())\n    return data\n```\nNow, we can parse the file directly and store the data in a list instead of a dictionary."
+          },
+          {
+            "seed": 5002,
+            "text": "The given sentence needs to be rewritten in a way that makes it more concise and clear. Here's one possible rewrite:\n\n\"I, as a young woman, have a passion for animals and a desire to help those in need.\"\n\nThis sentence is a bit long and lacks clarity. We can improve it by breaking it down into smaller sentences and using simpler vocabulary. Here's how:\n\nThe sentence can be rewritten as:\n\n\"I am a young"
+          },
+          {
+            "seed": 5003,
+            "text": "`function isTriangular(n) {  let counter = 0;  for (let i = 1; i <= n; i++) {    if (i === n) {      counter += 1;    } else if (i <= n) {      counter += i;    }  }  return counter === n ? true : false;}`"
+          }
+        ]
+      }
+    ]
+  }
+}

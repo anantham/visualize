@@ -1,0 +1,176 @@
+{
+  "status": "measured",
+  "claim_scope": "SmolLM2-360M SFT model; per-axis LoRA DPO on self-ranked benign preference pairs (60 steps), evaluated on 12 held-out prompts with 4 samples each. One model, one seed; a case study.",
+  "model": "/Users/aditya/align_sft/ckpts/final",
+  "config": {
+    "steps": 60,
+    "eval_samples": 4,
+    "held_out": 12
+  },
+  "axes": {
+    "concise": {
+      "prop_key": "length",
+      "prefer_high": false,
+      "n_pairs": 9,
+      "before_prop": 94.47916666666667,
+      "after_prop": 84.85416666666667,
+      "before_distinct2": 0.8701119021284142,
+      "after_distinct2": 0.8750740244780225,
+      "examples": [
+        {
+          "prompt": "What's an easy way to learn a new language?",
+          "before": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try immersing yourself in a foreign country and try to learn the language the way the locals speak it. Surround yourself with people who speak the language and try to use it as much as possible. This will give you the context to learn the language naturally.\n\nAlso, try to learn from the movies and television shows in the language you're trying to learn.",
+          "after": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try learning a new language through online courses, mobile apps, or language exchange programs. You can also start with a simple phrase, such as \"Hello,\" and gradually move onto more complex sentences as you become more comfortable with the language.\n\nIt's also important to be patient and persistent. The learning process can be slow and frustrating, but it's worth"
+        },
+        {
+          "prompt": "How does a compass work?",
+          "before": "A compass is a tool used to measure the direction of the Earth's magnetic field. This compass is known as a 'magnetic compass'. It uses the Earth's magnetic field to sense the direction.\n\nThe earth's magnetic field is composed of two magnetic poles, known as the North and South Magnetic Poles. This magnetic field can be thought of as an invisible field around the Earth. The needle of the magnetic compass is made to align itself with this field, making it point North",
+          "after": "A compass works by using a magnetic needle that has a natural north-seeking orientation. This needle is free to wander around as it's attached to the device's magnet and a compass needle's magnetism is controlled by a magnetized bar called a pointer, which is attached to the device's magnet. The pointer is placed over a very small hole through which the magnetization of the bar and needle are aligned and magnetic fields align at the same level, creating a north-seeking alignment."
+        },
+        {
+          "prompt": "Recommend a book for a reluctant reader.",
+          "before": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each unique, with their own rich cultures and histories, creating a vivid world-building experience.\n\nThe setting itself is striking, with the bright colors and vibrant clothing of Panem's districts, mirroring their respective cultures and values. The characters themselves are",
+          "after": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital with a totalitarian government. \"The Hunger Games\" follows Katniss Everdeen, a 16-year-old girl from District 12 who is tasked with collecting and selling vegetables in the annual \"Tribute\" fight to the Capitol."
+        },
+        {
+          "prompt": "How do I get rid of hiccups?",
+          "before": "There are a few different ways to get rid of hiccups. One way is to simply hold your breath for a few seconds to quiet the diaphragm and relax the diaphragm and throat muscles. Hiccups are a result of involuntary spasms in the throat and diaphragm, so the simple act of holding your breath can help to quiet the spasms and give you a break from your hiccups.\n\nAnother way to get rid of hiccups is to place your finger on your",
+          "after": "There are a few different ways to get rid of hiccups. One way is to simply hold your breath for a few seconds to quiet the diaphragm and relax the diaphragm and throat muscles. Hiccups are a result of involuntary spasms in the throat and diaphragm, so the simple act of holding your breath can help to quiet the spasms and give you a break from your hiccups.\n\nAnother way to get rid of hiccups is to place your finger on your"
+        },
+        {
+          "prompt": "What's a good morning routine?",
+          "before": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to get out of bed and shower or as elaborate as having a morning ritual that incorporates breakfast, workout, and meditation.\n\nOne of the best morning routines is to create a sense of routine. This means that you wake up every day at the same time, shower in the morning, and set",
+          "after": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to take a shower, brushing your teeth, and getting out of the shower before heading to the kitchen for breakfast. You can also do a quick face pack to give you a healthy glow before leaving. But for the most productive morning routine, I recommend a few steps that will help you get ready for"
+        },
+        {
+          "prompt": "How do I make a paper airplane that flies far?",
+          "before": "Imagine a paper airplane that has a long, narrow wingspan and a small, rounded nose. This design mimics the shape of a soaring bird, which is able to glide along the wind's surface. To increase lift and reduce drag, add small, rounded vanes or \"wings\" at the tail and wingtips. These vanes can be as small as a single point or as large as a full circle, depending on the desired level of accuracy.\n\nTo improve stability",
+          "after": "There are a few things to keep in mind when making a paper airplane that flies far:\n\nFirst, you'll need to create a flat surface to use as a \"launch pad.\" This can be as simple as a piece of paper, a cardboard box, or even a table. The surface should be as smooth and flat as possible to maximize the force of your plane's flight.\n\nNext, when making the wings, remember that they will be the part of the"
+        }
+      ]
+    },
+    "formal": {
+      "prop_key": "formal",
+      "prefer_high": true,
+      "n_pairs": 28,
+      "before_prop": -0.6785648737130329,
+      "after_prop": -0.6727430555555557,
+      "before_distinct2": 0.8701119021284142,
+      "after_distinct2": 0.8681483930580697,
+      "examples": [
+        {
+          "prompt": "What's an easy way to learn a new language?",
+          "before": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try immersing yourself in a foreign country and try to learn the language the way the locals speak it. Surround yourself with people who speak the language and try to use it as much as possible. This will give you the context to learn the language naturally.\n\nAlso, try to learn from the movies and television shows in the language you're trying to learn.",
+          "after": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try immersing yourself in a foreign country and try to learn the language the way the locals speak it. Surround yourself with people who speak the language and try to use it as much as possible. This will give you the context to learn the language naturally.\n\nAnother easy way to learn a new language is to use an online or offline language learning resource. There"
+        },
+        {
+          "prompt": "How does a compass work?",
+          "before": "A compass is a tool used to measure the direction of the Earth's magnetic field. This compass is known as a 'magnetic compass'. It uses the Earth's magnetic field to sense the direction.\n\nThe earth's magnetic field is composed of two magnetic poles, known as the North and South Magnetic Poles. This magnetic field can be thought of as an invisible field around the Earth. The needle of the magnetic compass is made to align itself with this field, making it point North",
+          "after": "A compass works by using a magnetic needle that has a natural alignment to the Earth's magnetic field. This needle, called a compass needle, is made of a soft metal like steel or nickel. Its axis is free to rotate around the Earth's magnetic field, and the needle will align itself to the direction of Earth's magnetic field. This natural alignment is what allows us to use a compass to find our direction and locate points on the Earth's surface.\n\nThe Earth's"
+        },
+        {
+          "prompt": "Recommend a book for a reluctant reader.",
+          "before": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each unique, with their own rich cultures and histories, creating a vivid world-building experience.\n\nThe setting itself is striking, with the bright colors and vibrant clothing of Panem's districts, mirroring their respective cultures and values. The characters themselves are",
+          "after": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each represented by a different state in America, and the capital, also known as \"The Capitol,\" is the one that provides the Games.\n\nThis book offers a unique and compelling story with a dystopian setting, and although it may be a bit intimidating"
+        },
+        {
+          "prompt": "How do I get rid of hiccups?",
+          "before": "There are a few different ways to get rid of hiccups. One way is to simply hold your breath for a few seconds to quiet the diaphragm and relax the diaphragm and throat muscles. Hiccups are a result of involuntary spasms in the throat and diaphragm, so the simple act of holding your breath can help to quiet the spasms and give you a break from your hiccups.\n\nAnother way to get rid of hiccups is to place your finger on your",
+          "after": "There are a few different ways to get rid of hiccups. One way is to simply hold your breath for a few seconds to quiet the diaphragm and relax the diaphragm and throat muscles. This can help to reduce or eliminate the hiccups, as the diaphragm and throat muscles need to empty their contents to refill. You can also try chewing gum to keep your mouth shut and calm your body. Alternatively, you can sip warm liquids, such as tea, soup, or coffee"
+        },
+        {
+          "prompt": "What's a good morning routine?",
+          "before": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to get out of bed and shower or as elaborate as having a morning ritual that incorporates breakfast, workout, and meditation.\n\nOne of the best morning routines is to create a sense of routine. This means that you wake up every day at the same time, shower in the morning, and set",
+          "after": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to get out of bed and shower or as elaborate as having a morning ritual that incorporates breakfast, workout, and meditation.\n\nOne of the best morning routines is to create a sense of routine. This means that you wake up every day at the same time, or at least have a predictable time"
+        },
+        {
+          "prompt": "How do I make a paper airplane that flies far?",
+          "before": "Imagine a paper airplane that has a long, narrow wingspan and a small, rounded nose. This design mimics the shape of a soaring bird, which is able to glide along the wind's surface. To increase lift and reduce drag, add small, rounded vanes or \"wings\" at the tail and wingtips. These vanes can be as small as a single point or as large as a full circle, depending on the desired level of accuracy.\n\nTo improve stability",
+          "after": "Imagine a paper airplane that has a long, narrow wingspan and a small, rounded nose. This design mimics the shape of a soaring bird, which is able to glide along the wind's surface. To increase lift and reduce drag, add small, rounded vanes or \"wings\" at the tail and tail section. These can be made from scraps of cardboard or even a small paintbrush!\n\nTo keep the paper airplane from flapping or breaking, consider using a stronger"
+        }
+      ]
+    },
+    "enthusiastic": {
+      "prop_key": "enthusiastic",
+      "prefer_high": true,
+      "n_pairs": 16,
+      "before_prop": 0.3047380474679607,
+      "after_prop": 0.476428952991453,
+      "before_distinct2": 0.8701119021284142,
+      "after_distinct2": 0.8757343307787812,
+      "examples": [
+        {
+          "prompt": "What's an easy way to learn a new language?",
+          "before": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try immersing yourself in a foreign country and try to learn the language the way the locals speak it. Surround yourself with people who speak the language and try to use it as much as possible. This will give you the context to learn the language naturally.\n\nAlso, try to learn from the movies and television shows in the language you're trying to learn.",
+          "after": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try immersing yourself in a foreign country and try to learn the language the way the locals speak it. Surround yourself with people who speak the language and try to use it as much as possible. This will give you the context to learn the language naturally.\n\nAlso, try to learn from the movies and television shows in the language you're trying to learn."
+        },
+        {
+          "prompt": "How does a compass work?",
+          "before": "A compass is a tool used to measure the direction of the Earth's magnetic field. This compass is known as a 'magnetic compass'. It uses the Earth's magnetic field to sense the direction.\n\nThe earth's magnetic field is composed of two magnetic poles, known as the North and South Magnetic Poles. This magnetic field can be thought of as an invisible field around the Earth. The needle of the magnetic compass is made to align itself with this field, making it point North",
+          "after": "A compass is a tool used to measure the direction of the Earth's magnetic field. This compass is known as a 'magnetic compass'. It uses the Earth's magnetic field as a force that aligns itself with magnetic poles.\n\nA compass works by placing the needle of the compass on a compass board and connecting it to a magnet. The magnet is then attached to a pivot point and driven into the ground or into a rigid object. The magnet is often attached to a stick or"
+        },
+        {
+          "prompt": "Recommend a book for a reluctant reader.",
+          "before": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each unique, with their own rich cultures and histories, creating a vivid world-building experience.\n\nThe setting itself is striking, with the bright colors and vibrant clothing of Panem's districts, mirroring their respective cultures and values. The characters themselves are",
+          "after": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each unique, with their own rich cultures and histories, creating a vivid world-building experience.\n\nThe setting itself is striking, with the bright colors and vibrant clothing of Panem's districts, mirroring their respective cultures and values. The characters themselves are"
+        },
+        {
+          "prompt": "How do I get rid of hiccups?",
+          "before": "There are a few different ways to get rid of hiccups. One way is to simply hold your breath for a few seconds to quiet the diaphragm and relax the diaphragm and throat muscles. Hiccups are a result of involuntary spasms in the throat and diaphragm, so the simple act of holding your breath can help to quiet the spasms and give you a break from your hiccups.\n\nAnother way to get rid of hiccups is to place your finger on your",
+          "after": "Hiccups, also known as hiccoughs, are a brief interruption in the normal rhythm of breathing, causing a characteristic sound called a \"hic.\" This sound, often described as \"Hissing or Hic\" in American English, is produced by the closure of the pharyngeal and laryngeal cavities.\n\nTo get rid of hiccups, you can try the following steps:\n1. Pinch your nose or cover it with your hand,"
+        },
+        {
+          "prompt": "What's a good morning routine?",
+          "before": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to get out of bed and shower or as elaborate as having a morning ritual that incorporates breakfast, workout, and meditation.\n\nOne of the best morning routines is to create a sense of routine. This means that you wake up every day at the same time, shower in the morning, and set",
+          "after": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to take a shower, brushing your teeth, and getting out of the shower before heading to the kitchen for breakfast. You can also do a quick face pack (gently patting your face to remove dirt and oil) to prepare your skin for the day ahead.\n\nTo add some added flair,"
+        },
+        {
+          "prompt": "How do I make a paper airplane that flies far?",
+          "before": "Imagine a paper airplane that has a long, narrow wingspan and a small, rounded nose. This design mimics the shape of a soaring bird, which is able to glide along the wind's surface. To increase lift and reduce drag, add small, rounded vanes or \"wings\" at the tail and wingtips. These vanes can be as small as a single point or as large as a full circle, depending on the desired level of accuracy.\n\nTo improve stability",
+          "after": "Imagine a paper airplane that has wings and a tail, which will help it stay in the air and stay balanced. To make it fly far, you need to understand the physics behind it. When the airplane is thrown or hit with an energy, it will generate lift, the force that helps it stay afloat.\n\nAs the wings move, they will create lift, which pushes the plane upwards and keeps it in the air. The plane will also generate drag, which works"
+        }
+      ]
+    },
+    "hedged": {
+      "prop_key": "hedged",
+      "prefer_high": true,
+      "n_pairs": 19,
+      "before_prop": 0.3740552619175869,
+      "after_prop": 0.30428117612293143,
+      "before_distinct2": 0.8701119021284142,
+      "after_distinct2": 0.8707153266326438,
+      "examples": [
+        {
+          "prompt": "What's an easy way to learn a new language?",
+          "before": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try immersing yourself in a foreign country and try to learn the language the way the locals speak it. Surround yourself with people who speak the language and try to use it as much as possible. This will give you the context to learn the language naturally.\n\nAlso, try to learn from the movies and television shows in the language you're trying to learn.",
+          "after": "An easy way to learn a new language is by immersing yourself in the culture and immersing yourself in the language. You can try learning a new language through online courses, mobile apps, or language exchange programs.\n\nStart by reading books, magazines, or websites in the new language you're learning. This will help you get accustomed to the language and sounds of the language.\n\nListen to music and podcasts in the new language. This will help you build your vocabulary and pronunciation"
+        },
+        {
+          "prompt": "How does a compass work?",
+          "before": "A compass is a tool used to measure the direction of the Earth's magnetic field. This compass is known as a 'magnetic compass'. It uses the Earth's magnetic field to sense the direction.\n\nThe earth's magnetic field is composed of two magnetic poles, known as the North and South Magnetic Poles. This magnetic field can be thought of as an invisible field around the Earth. The needle of the magnetic compass is made to align itself with this field, making it point North",
+          "after": "A compass is a tool used to measure the direction of the Earth's magnetic field. This compass is made up of a small magnetized needle that rotates freely in a magnetic field, which is created by the Earth's magnetic field. The compass needle aligns itself with the direction of the Earth's magnetic field, and as it rotates, it can be used to determine the direction of the Earth's magnetic field and navigate using this information.\n\nThe Earth's magnetic field is created by"
+        },
+        {
+          "prompt": "Recommend a book for a reluctant reader.",
+          "before": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each unique, with their own rich cultures and histories, creating a vivid world-building experience.\n\nThe setting itself is striking, with the bright colors and vibrant clothing of Panem's districts, mirroring their respective cultures and values. The characters themselves are",
+          "after": "I would recommend \"The Hunger Games\" by Suzanne Collins, a dystopian novel that deals with the country of Panem, which is divided into twelve districts and one capital, based on the Hunger Games game. These districts are each unique, with their own rich cultures and histories, creating a vivid world-building experience.\n\nThe setting itself is striking, with the bright colors and vibrant clothing of Panem and the stark contrast between the lush greenery of the districts and the harsh"
+        },
+        {
+          "prompt": "How do I get rid of hiccups?",
+          "before": "There are a few different ways to get rid of hiccups. One way is to simply hold your breath for a few seconds to quiet the diaphragm and relax the diaphragm and throat muscles. Hiccups are a result of involuntary spasms in the throat and diaphragm, so the simple act of holding your breath can help to quiet the spasms and give you a break from your hiccups.\n\nAnother way to get rid of hiccups is to place your finger on your",
+          "after": "There are a few different ways to get rid of hiccups. One way is to simply sit still and try to relax your body as much as possible. As the hiccups start, you can take a deep breath and relax your face, which will likely help the hiccups subside.\n\nAnother option is to try to distract yourself from the hiccups. If you find yourself thinking about something else, this might help to break the cycle of hicc"
+        },
+        {
+          "prompt": "What's a good morning routine?",
+          "before": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to get out of bed and shower or as elaborate as having a morning ritual that incorporates breakfast, workout, and meditation.\n\nOne of the best morning routines is to create a sense of routine. This means that you wake up every day at the same time, shower in the morning, and set",
+          "after": "A good morning routine is a set of habits that you can develop to signal the time and help you get ready for the day. It could be as simple as taking a few minutes to get out of bed and into your clothes, getting your morning coffee or juice, and then having breakfast and stretching.\n\nOne of the best morning routines is to create a ritual around your morning. This means going through a series of steps to help you feel more productive and refreshed. For example"
+        },
+        {
+          "prompt": "How do I make a paper airplane that flies far?",
+          "before": "Imagine a paper airplane that has a long, narrow wingspan and a small, rounded nose. This design mimics the shape of a soaring bird, which is able to glide along the wind's surface. To increase lift and reduce drag, add small, rounded vanes or \"wings\" at the tail and wingtips. These vanes can be as small as a single point or as large as a full circle, depending on the desired level of accuracy.\n\nTo improve stability",
+          "after": "Imagine a paper airplane that has a long, narrow wingspan and a small, rounded nose. This design will allow the paper airplane to spin and change direction in midair before it lands.\n\nIn order to make your paper airplane fly further, here are some tips:\n\n1. Start with a simple design. A plane with a large, rounded nose and a small wing tip will be less stable and more prone to losing altitude. Try to avoid making your plane too"
+        }
+      ]
+    }
+  }
+}
