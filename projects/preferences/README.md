@@ -15,9 +15,11 @@ log-probability; nothing is simulated.
    step and watch the model's likelihood of each. Two honest findings are built in:
    - the gap widens only **+0.396 → +0.464** per token (real, small), and **both**
      likelihoods rise — DPO controls the *difference*, not the goodness;
-   - toggle to **summed** log-prob (what DPO's loss actually uses) and the gap stays
-     **negative** (−2.97 → −1.39): the model still prefers the *wrong-but-shorter*
-     answer. That's DPO's documented **length bias**, measured on our own run.
+   - toggle to **summed** log-prob (the raw sequence total — length-sensitive; the loss
+     works from a *reference-adjusted* version of this, not the bare sum) and the gap stays
+     **negative** (−2.97 → −1.39): summing adds a term per token, so the *wrong-but-shorter*
+     answer keeps the higher total. That's raw-log-prob length sensitivity — present before
+     training, not a DPO artifact.
 2. **the supervision** — the leverage point: one click between two answers. Counts
    (this run: 14 + 13 hand-made pairs; shipped SmolLM2-360M: **61,135** UltraFeedback
    pairs) and the disclosure map. Includes the honest twist: UltraFeedback's ratings

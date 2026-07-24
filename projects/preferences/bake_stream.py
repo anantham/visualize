@@ -7,8 +7,9 @@ Two honest runs on the SmolLM SFT checkpoint:
 
   A) MECHANISM — "prefer the correct answer". Authored pairs where chosen and rejected
      are SIMILAR LENGTH and differ only in quality. Length-fair, so the log-prob bars
-     mean something. Probe is held-out. Records BOTH summed log-prob (what DPO's loss
-     actually optimizes) and per-token mean (the length-fair read).
+     mean something. Probe is held-out. Records BOTH summed log-prob (the raw sequence
+     total; DPO's loss works from a reference-adjusted version of this, not the bare sum)
+     and per-token mean (the length-fair read).
 
   B) INSTALL — "prefer the concise answer". Pairs built by INSTRUCTION-STEERING: chosen =
      generated under "(Answer in one sentence.)", rejected = under "(Answer in thorough
